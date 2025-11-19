@@ -1,0 +1,333 @@
+/* src/styles/MainLayout.css (ПОЛНОСТЬЮ ПЕРЕПИСАН) */
+
+/* ========================================================================= */
+/* 0. ГЛОБАЛЬНЫЙ СБРОС (Без изменений) */
+/* ========================================================================= */
+* {
+    box-sizing: border-box; 
+    margin: 0; 
+    padding: 0;
+}
+body, #root { 
+    margin: 0; 
+    padding: 0; 
+    min-height: 100vh;
+}
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif,
+    "Apple Color Emoji", "Segoe UI", "Segoe UI Symbol";
+    
+    /* 💡 ИЗМЕНЕНИЕ: Фон Twitter - белый, а не серый */
+    background-color: #fff;
+    color: #0F1419; /* Стандартный черный цвет текста Twitter */
+}
+
+/* ========================================================================= */
+/* 1. Основной контейнер приложения */
+/* ========================================================================= */
+.app-container {
+     display: flex;
+     min-height: 100vh;
+     /* 💡 ИЗМЕНЕНИЕ: Убираем серый фон */
+     background-color: #fff;
+}
+
+/* ========================================================================= */
+/* 2. Боковая панель (Sidebar) - СТИЛЬ TWITTER */
+/* ========================================================================= */
+.sidebar {
+  /* 💡 ИЗМЕНЕНИЕ: Фиксированная ширина, как в Twitter, вместо 20% */
+  width: 20%; 
+  flex-shrink: 0; /* Запрещаем сжиматься */
+
+  background-color: #fff;
+  border-right: 1px solid #eee; /* Линия, отделяющая сайдбар */
+
+  /* 💡 ИЗМЕНЕНИЕ: Управляем отступами внутри */
+  padding: 0 12px; 
+  display: flex;
+  flex-direction: column;
+  height: 100vh; /* Растягиваем на всю высоту */
+  position: sticky; /* "Приклеиваем" сайдбар при прокрутке */
+  top: 0;
+}
+
+.sidebar-header {
+  /* 💡 ИЗМЕНЕНИЕ: Убираем фикс. высоту, даем отступ для лого */
+  padding: 12px 12px; 
+  font-size: 2rem;
+  font-weight: 700;
+  color: #696cff; /* Оставляем ваш цвет */
+  display: flex;
+  align-items: center;
+  justify-content: flex-start; /* Лого слева */
+}
+
+.sidebar-nav-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  width: 100%;
+}
+
+/* Стили для ссылок, кнопок и т.д. в сайдбаре */
+.sidebar a.sidebar-nav-item,
+.sidebar div.sidebar-nav-item {
+  text-decoration: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  transition: background-color 0.2s, color 0.2s;
+  
+  /* 💡 ИЗМЕНЕНИЕ: Стиль Twitter */
+  font-size: 19px;     /* Крупный шрифт */
+  font-weight: 700;  /* Жирный шрифт */
+  color: #0F1419;     /* Черный текст */
+  padding: 12px;     /* Равномерный отступ */
+  border-radius: 9999px; /* "Таблетка" */
+  margin-bottom: 4px; /* Отступ между элементами */
+  
+  /* 💡 ИЗМЕНЕНИЕ: "Таблетка" растягивается только по контенту */
+  width: fit-content; 
+}
+
+/* 💡 ИЗМЕНЕНИЕ: Наведение мыши */
+.sidebar a.sidebar-nav-item:hover,
+.sidebar div.sidebar-nav-item:hover {
+  background-color: #E7E7E8; /* Светло-серый фон */
+  color: #0F1419; /* Цвет не меняется */
+}
+
+/* 💡 ИЗМЕНЕНИЕ: Активная ссылка */
+.sidebar a.sidebar-nav-item.active,
+.sidebar div.sidebar-nav-item.active {
+  color: #696cff; /* Ваш активный цвет */
+  background-color: transparent;
+  font-weight: 700;
+  border-left: none; /* Убираем старую синюю линию */
+}
+
+.sidebar-icon {
+  /* 💡 ИЗМЕНЕНИЕ: Большие иконки, как в Twitter */
+  font-size: 26px;
+  width: 26px;
+  height: 26px;
+  margin-right: 20px; /* Больший отступ от текста */
+}
+
+/* 💡 ИЗМЕНЕНИЕ: Прижимаем блок "Настройки/Выход" к низу */
+.bottom-nav {
+    margin-top: auto; /* ГЛАВНОЕ ИЗМЕНЕНИЕ */
+    border-top: none; /* Убираем разделитель */
+    padding-top: 0;
+    padding-bottom: 10px; /* Небольшой отступ от низа */
+}
+
+/* ========================================================================= */
+/* 3. Основная область контента */
+/* ========================================================================= */
+.main-content {
+  flex-grow: 1;
+  display: flex;
+  justify-content: flex-start;
+  padding: 0;
+
+  /* 💡 ИЗМЕНЕНИЕ: Линии по бокам, как в Twitter */
+  border-right: 1px solid #eee;
+}
+
+.content-area {
+  width: 100%;
+  margin: 0;
+  background-color: #fff;
+
+  /* 💡 ЗАДАЧА 2: Убираем все отступы сверху и снизу */
+  padding: 0;
+}
+
+/* ========================================================================= */
+/* 4. Профиль и вкладки (ProfilePage) */
+/* ========================================================================= */
+.profile-section {
+  background-color: #fff;
+  padding: 0;
+  /* 💡 ИЗМЕНЕНИЕ: Добавляем отступы, которые убрали из .content-area */
+  padding: 16px;
+}
+
+/* ... (остальные стили .profile-header, .user-avatar и т.д. остаются без изменений) ... */
+
+.profile-header {
+  display: flex;
+  align-items: center;
+  margin-bottom: 20px; 
+  padding: 10px 0;
+}
+.user-avatar {
+  width: 150px;
+  height: 150px;
+  border-radius: 50%;
+  background-color: #d8d8d8;
+  box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+  margin-right: 20px;
+  flex-shrink: 0;
+  overflow: hidden; 
+}
+.user-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+.profile-content {
+  position: relative;
+  /* 💡 ИЗМЕНЕНИЕ: Twitter не имеет нижней границы на табах, но мы оставим для разделения */
+  border-bottom: 1px solid #e0e0e0; 
+}
+.profile-tab-active-line {
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  height: 3px;
+  background-color: #696cff;
+  transition: transform 0.3s, width 0.3s;
+  z-index: 10;
+}
+.profile-tabs {
+  display: flex;
+  justify-content: flex-start;
+  margin-top: 10px;
+  padding-bottom: 0; 
+}
+.profile-tab {
+  background: none;
+  border: none; 
+  cursor: pointer;
+  padding: 10px 15px;
+  font-weight: 500;
+  color: #88909c;
+  margin-right: 20px;
+  transition: color 0.2s;
+}
+.profile-tab.active {
+  color: #696cff;
+  font-weight: 600;
+}
+
+/* ========================================================================= */
+/* 5. Лента (оставляем как есть) */
+/* ========================================================================= */
+.main-feed {
+  margin-top: 0; /* Убрали отступ */
+}
+.post-item {
+  padding: 15px;
+  border-bottom: 1px solid #eee;
+  transition: background-color 0.1s;
+}
+.post-item:hover {
+  background-color: #fafafa;
+}
+
+/* ========================================================================= */
+/* 6. Форма редактирования (оставляем как есть) */
+/* ========================================================================= */
+.profile-edit-form-container {
+    padding: 20px;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    background-color: #f9f9f9;
+    margin-top: 20px;
+}
+/* ... (все остальные стили .edit-avatar-section, .edit-input и т.д. остаются) ... */
+.edit-avatar-section{
+  display:flex;
+  align-items:center;
+  margin-bottom:30px;
+  padding-bottom:20px;
+  border-bottom:1px solid #e0e0e0
+}
+  
+.edit-user-avatar{
+  width:60px;
+  height:60px;
+  border-radius:50%;
+  background-color:#5d5d5d;
+  margin-right:15px;
+  flex-shrink:0;
+  overflow:hidden
+}
+
+.edit-username-placeholder{
+  font-size:1.1rem;
+  font-weight:500;
+  color:#5d5d5d;
+  margin-right:auto
+}
+
+.change-photo-button{
+  display:flex;
+  align-items:center;
+  background-color:#eef1ff;
+  color:#696cff;
+  border:none;
+  padding:8px 15px;
+  border-radius:6px;
+  cursor:pointer;
+  font-weight:500;
+  transition:background-color .2s
+}
+
+.change-photo-button:hover{
+  background-color:#dbe0ff
+}
+
+.edit-field-group{
+  margin-bottom:20px
+}
+
+.edit-label{
+  display:block;
+  font-weight:600;
+  color:#5d5d5d;
+  margin-bottom:8px;
+  font-size:.9rem
+}
+
+.edit-input,.edit-textarea{
+  width:100%;
+  padding:10px;
+  border:1px solid #dcdcdc;
+  border-radius:4px;
+  font-size:1rem
+}
+
+.edit-textarea{
+  resize:vertical;
+  min-height:100px
+}
+
+.edit-actions{
+  display:flex;
+  justify-content:flex-end;
+  gap:10px;
+  margin-top:30px
+}
+
+.save-button,.cancel-button{
+  padding:10px 20px;
+  border-radius:6px;
+  cursor:pointer;
+  font-weight:600
+}
+
+.save-button{
+  background-color:#696cff;
+  color:#fff;
+  border:none
+}
+
+.cancel-button{
+  background-color:#f8f8f8;
+  color:#5d5d5d;
+  border:1px solid #dcdcdc
+}

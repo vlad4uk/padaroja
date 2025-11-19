@@ -1,0 +1,19 @@
+/* src/index.css */
+body {
+  margin: 0;
+  font-family: 'Inter', sans-serif; /* Используем современный шрифт */
+  background-color: #f4f5f7; /* Светло-серый фон как в Sneat */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* Сброс стилей для Box-модели */
+*, *::before, *::after {
+  box-sizing: border-box;
+}
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}

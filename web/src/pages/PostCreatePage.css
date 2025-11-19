@@ -1,0 +1,330 @@
+/* src/pages/PostCreatePage.css (Полный, исправленный код) */
+
+/* --- Общая структура --- */
+.create-post-container {
+    display: flex;
+    justify-content: center;
+    align-items: flex-start;
+    width: 100%;
+    padding: 20px;
+    box-sizing: border-box;
+    min-height: 100vh;
+}
+
+.create-post-form {
+    width: 100%;
+    max-width: 600px;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    background: transparent;
+    position: relative;
+}
+
+.form-title {
+    text-align: center;
+    font-size: 1.2rem;
+    color: #333;
+    margin-bottom: 10px;
+    font-weight: 500;
+}
+
+/* --- Стилизация инпутов --- */
+.custom-input {
+    width: 100%;
+    padding: 15px;
+    border: 2px solid #9d9ef5;
+    border-radius: 20px;
+    outline: none;
+    font-size: 14px;
+    color: #333;
+    background: #fff;
+    box-sizing: border-box;
+    transition: border-color 0.3s;
+}
+
+.custom-input:focus {
+    border-color: #696cff;
+    box-shadow: 0 0 0 2px rgba(105, 108, 255, 0.1);
+}
+
+.custom-input::placeholder {
+    color: #888;
+}
+
+/* --- Область слайдера --- */
+.slide-container {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 10px;
+    position: relative;
+}
+
+/* Кнопки навигации (стрелки) */
+.nav-arrow {
+    background: none;
+    border: 2px solid #a5a6f6;
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: #696cff;
+    font-size: 18px;
+    transition: all 0.2s;
+    flex-shrink: 0;
+}
+
+.nav-arrow:hover:not(:disabled) {
+    background: #696cff;
+    color: white;
+}
+
+.nav-arrow:disabled {
+    border-color: #e0e0e0;
+    color: #e0e0e0;
+    cursor: default;
+}
+
+/* --- Блок контента слайда (Карточка) --- */
+.slide-content-box {
+    flex-grow: 1;
+    position: relative;
+    height: 380px; /* Увеличим высоту, чтобы разместить фото */
+    border: 2px solid #a5a6f6;
+    border-radius: 20px;
+    background: #fff;
+    display: flex; /* Используем flexbox для разделения на текст и фото */
+    flex-direction: column;
+    padding: 15px;
+    box-sizing: border-box;
+}
+
+/* Оболочка для текста */
+.text-area-wrapper {
+    flex-grow: 1; /* Текст занимает основное пространство */
+    min-height: 100px;
+    margin-bottom: 10px;
+}
+
+/* Текстовая область */
+.slide-textarea {
+    width: 100%;
+    height: 100%;
+    border: none;
+    outline: none;
+    resize: none;
+    font-family: inherit;
+    font-size: 14px;
+    background: transparent;
+    z-index: 1; 
+}
+
+
+/* --- Область действий (Фото) --- */
+
+.slide-action-area {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding: 10px 0 0;
+    border-top: 1px dashed #eee; /* Визуально отделяем от текста */
+}
+
+/* Кнопка добавления фото */
+.add-photo-btn-container {
+    /* Больше не нужен absolute position */
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    margin-bottom: 10px;
+    z-index: 3; 
+}
+
+.add-photo-btn {
+    width: 30px;
+    height: 30px;
+    border: 1px solid #a5a6f6;
+    border-radius: 8px;
+    background: #fff;
+    color: #696cff;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 18px;
+    transition: 0.2s;
+}
+
+.add-photo-btn:hover:not(:disabled) {
+    background: #f0f0ff;
+}
+
+.add-photo-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.photo-label {
+    font-size: 10px;
+    color: #333;
+    margin-bottom: 4px;
+}
+
+/* --- Превью фото (Новый, организованный блок) --- */
+.image-preview-area {
+    position: relative;
+    max-width: 100%;
+    display: flex;
+    justify-content: center;
+    margin-top: 10px;
+    z-index: 3;
+}
+
+.slide-image-preview {
+    max-height: 120px; /* Ограничиваем высоту для органичности */
+    width: auto;
+    border-radius: 10px;
+    object-fit: contain; /* Используем contain, чтобы не обрезать, а вписать */
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+/* Кнопка удаления фото */
+.remove-image-btn {
+    position: absolute;
+    top: -10px;
+    right: -10px; /* Привязываем к правому верхнему углу контейнера */
+    background: red;
+    color: white;
+    border-radius: 50%;
+    width: 20px;
+    height: 20px;
+    border: none;
+    cursor: pointer;
+    font-size: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    z-index: 10;
+}
+
+.loading-message {
+    text-align: center;
+    color: #696cff; 
+    font-size: 12px; 
+    padding-top: 5px;
+}
+
+/* --- Счетчики и кнопки удаления --- */
+
+/* СЧЕТЧИК СЛАЙДОВ */
+.slide-counter {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    background: #f0f0ff;
+    color: #696cff;
+    padding: 5px 10px;
+    border-radius: 15px;
+    font-size: 12px;
+    font-weight: 600;
+    z-index: 5;
+}
+
+/* Кнопки действий под слайдером (Добавить и Удалить) */
+.slide-actions-bottom {
+    display: flex;
+    justify-content: center;
+    gap: 30px;
+    margin-top: 5px;
+}
+
+/* Кнопка "Добавить слайд" */
+.add-slide-action, .remove-slide-action {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    cursor: pointer;
+    transition: opacity 0.3s;
+}
+
+.add-slide-icon-box, .remove-slide-icon-box {
+    width: 30px;
+    height: 30px;
+    border: 1px solid #a5a6f6;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #696cff;
+    font-size: 16px;
+    margin-bottom: 5px;
+    transition: 0.2s;
+}
+
+.add-slide-action:hover .add-slide-icon-box {
+    background: #696cff;
+    color: white;
+}
+
+.remove-slide-action .remove-slide-icon-box {
+    color: #ff5757;
+    border-color: #ff5757;
+}
+
+.remove-slide-action:hover .remove-slide-icon-box {
+    background: #ff5757;
+    color: white;
+}
+
+/* Стили для disabled состояния */
+.add-slide-action.disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.add-slide-action.disabled .add-slide-icon-box {
+    border-color: #e0e0e0;
+    color: #a0a0a0;
+}
+
+.add-slide-text, .remove-slide-text {
+    font-size: 11px;
+    color: #333;
+}
+
+.limit-message {
+    text-align: center;
+    color: #ff5757;
+    font-size: 12px;
+    margin-top: 5px;
+}
+
+/* --- Кнопка "Опубликовать" --- */
+.publish-btn {
+    width: 100%;
+    background: #8c57ff;
+    color: white;
+    border: none;
+    padding: 15px;
+    border-radius: 30px;
+    font-size: 16px;
+    font-weight: 600;
+    cursor: pointer;
+    margin-top: 20px;
+    transition: background 0.3s;
+}
+
+.publish-btn:hover {
+    background: #7a48e6;
+}
+
+.publish-btn:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+}
