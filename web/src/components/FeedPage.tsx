@@ -1,26 +1,26 @@
 // src/pages/FeedPage.tsx
 
 import React from 'react';
-import FeedHeader from '../components/FeedHeader.tsx';
-import PostFeed from '../components/PostFeed.tsx'; // ✅ Будем использовать его
-import Sidebar from '../components/Sidebar.tsx';
-import '../components/MainLayout.css'; // Общие стили для layout
+import PostFeed from '../components/PostFeed.tsx';
+import RightFilters from '../components/RightFilters.tsx'; // Новый компонент
+import ContentLayout from '../components/ContentLayout.tsx';
+import '../components/UserPostsFeed.css'; // Убедимся, что стили подключены
 
 const FeedPage: React.FC = () => {
     return (
-        <div className="app-container">
-            <Sidebar />
-
-            <main className="main-content">
-                <div className="content-area">
-                    {/* Заголовок с поиском и фильтрами */}
-                    <FeedHeader />
-                    
-                    {/* Лента всех постов */}
-                    <PostFeed endpoint="/api/posts" />
+        <ContentLayout>
+            <div className="feed-page-layout">
+                {/* Левая часть контента: Лента постов */}
+                <div className="feed-content-area">
+                    <PostFeed />
                 </div>
-            </main>
-        </div>
+
+                {/* Правая часть контента: Фильтры */}
+                <div className="feed-filters-area">
+                    <RightFilters />
+                </div>
+            </div>
+        </ContentLayout>
     );
 };
 

@@ -1,0 +1,62 @@
+type DetailPostResponse struct {
+	ID          string    `json:"id"`
+	UserID      uint      `json:"user_id"`
+	Title       string    `json:"title"`
+	Date        time.Time `json:"created_at"`
+	PlaceName   string    `json:"place_name"`
+	Tags        []string  `json:"tags"`
+	PreviewText string    `json:"preview_text"`
+	// Добавляем полные данные для детального просмотра
+	Paragraphs []models.Paragraph `json:"paragraphs"`
+	Photos     []models.PostPhoto `json:"photos"`
+	LikesCount int                `json:"likes_count"`
+}
+
+func GetPost(c *gin.Context) {
+	postID := c.Param("postID")
+
+	var post models.Post
+
+	// Загружаем пост со всеми связями, сортируя параграфы и фото по порядку
+	result := database.DB.Where("id = ?", postID).
+		Preload("Place").
+		Preload("Paragraphs", func(db *gorm.DB) *gorm.DB {
+			return db.Order("paragraphs.order ASC")
+		}).
+		Preload("Photos", func(db *gorm.DB) *gorm.DB {
+			return db.Order("photos.order ASC")
+		}).
+		First(&post)
+
+	if result.Error != nil {
+		if result.Error == gorm.ErrRecordNotFound {
+			c.JSON(http.StatusNotFound, gin.H{"error": "Post not found"})
+		} else {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Database error", "details": result.Error.Error()})
+		}
+		return
+	}
+
+	// Получаем теги
+	var tags []string
+	database.DB.Table("tags").
+		Joins("JOIN place_tags ON place_tags.tag_id = tags.id").
+		Where("place_tags.place_id = ?", post.PlaceID).
+		Pluck("tags.name", &tags)
+
+	// Формируем ответ
+	response := PostResponse{
+		ID:          post.ID,
+		UserID:      post.UserID,
+		Title:       post.Title,
+		Date:        post.CreatedAt,
+		PlaceName:   post.Place.Name,
+		Tags:        tags,
+		PreviewText: "", // Для одиночного поста превью не обязательно, у нас есть Paragraphs
+		Paragraphs:  post.Paragraphs, // ✅ Отдаем все параграфы
+		Photos:      post.Photos,     // ✅ Отдаем все фото
+		LikesCount:  12,              // Заглушка по дизайну
+	}
+
+	c.JSON(http.StatusOK, response)
+}

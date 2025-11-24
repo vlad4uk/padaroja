@@ -1,31 +1,58 @@
 /* src/components/UserPostsFeed.css */
 
-/* Сетка для постов (2 колонки, как на скрине) */
+/* ========================================================================= */
+/* 1. ГЛАВНАЯ РАЗМЕТКА ЛЕНТЫ (FeedPage - три колонки) */
+/* ========================================================================= */
+
+.feed-page-layout {
+    display: flex;
+    width: 100%;
+    height: 100%;
+    gap: 0;
+}
+
+.feed-content-area {
+    flex: 1; /* Занимает всё свободное место */
+    padding: 20px 40px 20px 20px; 
+}
+
+.feed-filters-area {
+    width: 300px; /* Фиксированная ширина */
+    flex-shrink: 0;
+    border-left: 2px solid #8e5bf6; /* Фиолетовая граница */
+    padding: 30px 20px;
+    min-height: 80vh; 
+}
+
+
+/* ========================================================================= */
+/* 2. СЕТКА ПОСТОВ (PostFeed) */
+/* ========================================================================= */
+
 .posts-grid {
     display: grid;
-    grid-template-columns: repeat(2, 1fr); /* Две равные колонки */
-    gap: 20px;
-    padding: 20px 0;
+    grid-template-columns: repeat(2, 1fr); /* Две колонки */
+    gap: 30px; 
     width: 100%;
 }
 
-/* Адаптивность: на мобильных одна колонка */
-@media (max-width: 768px) {
+@media (max-width: 1200px) {
     .posts-grid {
-        grid-template-columns: 1fr;
+        grid-template-columns: 1fr; /* На узких экранах 1 колонка */
     }
 }
 
 /* Карточка поста */
 .post-card {
-    border: 1px solid #a5a6f6; /* Фиолетовая рамка */
+    border: 1px solid #a5a6f6; 
     border-radius: 20px;
     background: #fff;
     padding: 15px;
     display: flex;
     flex-direction: column;
-    gap: 10px;
+    gap: 8px; 
     position: relative;
+    cursor: pointer;
     transition: box-shadow 0.2s;
 }
 
@@ -33,132 +60,95 @@
     box-shadow: 0 4px 15px rgba(165, 166, 246, 0.2);
 }
 
-/* --- Галерея фото (Горизонтальный скролл) --- */
+/* --- Галерея фото --- */
 .post-photos-slider {
     display: flex;
-    gap: 10px;
-    overflow-x: auto; /* Горизонтальная прокрутка */
-    padding-bottom: 5px;
-    /* Скрываем скроллбар для красоты, но оставляем функционал */
-    scrollbar-width: thin;
-    scrollbar-color: #e0e0e0 transparent;
+    gap: 5px;
+    overflow-x: auto;
+    margin-bottom: 5px;
+    scrollbar-width: none; 
 }
-
-.post-photos-slider::-webkit-scrollbar {
-    height: 4px;
-}
-.post-photos-slider::-webkit-scrollbar-thumb {
-    background-color: #e0e0e0;
-    border-radius: 4px;
-}
-
-.post-photo-placeholder {
-    min-width: 100px;
-    height: 100px;
-    background-color: #d9d9d9; /* Серый цвет как на макете */
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    font-size: 12px;
-    color: #000;
-    font-weight: 500;
-    border-radius: 0; /* Квадратные, как на макете */
-    flex-shrink: 0; /* Чтобы не сжимались */
-}
+.post-photos-slider::-webkit-scrollbar { display: none; }
 
 .post-photo-img {
-    min-width: 100px;
-    height: 100px;
+    width: 70px;
+    height: 70px;
     object-fit: cover;
-    border-radius: 4px;
+    background-color: #d9d9d9;
+    border-radius: 0; 
     flex-shrink: 0;
 }
 
-/* --- Заголовок и Дата --- */
 .post-header-row {
     display: flex;
     justify-content: space-between;
-    align-items: center;
     font-size: 14px;
     color: #000;
-    margin-top: 5px;
 }
-
 .post-title {
-    font-weight: 500;
+    font-weight: 600;
 }
-
 .post-date {
-    font-weight: 400;
-    font-size: 12px;
+    color: #999;
 }
 
-/* --- Текст поста --- */
+
+/* --- Ограничение текста до 3-х строк (гарантирует одинаковую высоту) --- */
 .post-text-content {
-    font-size: 12px;
+    text-align: center;
+    font-size: 13px;
     line-height: 1.4;
-    color: #333;
-    text-align: center; /* Центровка текста как на скрине */
-    margin: 10px 0;
+    padding: 10px 0;
+    text-transform: uppercase; 
+    
+    display: -webkit-box;
+    -webkit-line-clamp: 3; /* Ограничиваем тремя строками */
+    -webkit-box-orient: vertical;
+    overflow: hidden; 
+    text-overflow: ellipsis; 
+    min-height: calc(1.4em * 3); /* Фиксированная минимальная высота для 3 строк */
 }
 
-.post-text-line {
-    display: block;
-}
 
-/* --- Футер (Место, Теги, Иконки) --- */
 .post-footer {
     display: flex;
     justify-content: space-between;
     align-items: flex-end;
-    margin-top: auto; /* Прижимаем к низу */
     font-size: 14px;
-    color: #333;
+    color: #555;
+    margin-top: auto; 
 }
 
 .post-meta-left {
     display: flex;
+    flex-direction: row;
     gap: 5px;
-    align-items: center;
 }
-
-.post-place {
-    font-weight: 400;
-}
-
-.post-tags {
-    color: #888;
-    font-size: 12px;
-}
+.post-place { color: #000; font-weight: 600; }
+.post-tags { color: #999; }
 
 .post-meta-right {
-    display: flex;
-    gap: 10px;
+    display: flex; 
     align-items: center;
+    gap: 10px; 
 }
 
-.meta-icon-group {
-    display: flex;
-    align-items: center;
+.meta-icon-group { 
+    display: flex; 
+    align-items: center; 
     gap: 4px;
-    background: #eef; /* Легкий фон под иконку карты */
-    padding: 2px 6px;
-    border-radius: 6px;
-    border: 1px solid #333; /* Черная рамка для иконки карты как на скрине */
+    background: none; 
+    border: 1px solid #333; 
+    padding: 2px 4px; 
+    border-radius: 4px; 
 }
-
-.icon-map {
-    color: #2c8c98; /* Бирюзовый оттенок иконки */
-    font-size: 16px;
-}
-
 .map-count {
     font-weight: 600;
     font-size: 14px;
 }
 
 .icon-bookmark {
-    color: #ffb02e; /* Оранжево-желтый цвет закладки */
+    color: #ffb02e; 
     font-size: 18px;
     cursor: pointer;
 }
@@ -167,9 +157,134 @@
     color: #ff9f00;
 }
 
-/* src/components/UserPostsFeed.css (добавить в конец файла) */
 
-/* --- Стили для FeedHeader (Скрин 1) --- */
+/* ========================================================================= */
+/* 3. ПРАВАЯ ПАНЕЛЬ (RightFilters) */
+/* ========================================================================= */
+
+/* Поле поиска (в RightFilters, если используется) */
+.right-search-box {
+    margin-bottom: 30px;
+}
+.right-search-input {
+    width: 100%;
+    padding: 8px 15px;
+    border: 1px solid #696cff; 
+    border-radius: 20px; /* "Таблетка" */
+    outline: none;
+    color: #696cff;
+    font-size: 16px;
+}
+.right-search-input::placeholder {
+    color: #696cff;
+}
+
+/* Теги (ТОЛЬКО ЗАГОЛОВОК И ЛИНИЯ) */
+.right-tags-block {
+    margin-bottom: 40px;
+}
+.tags-title {
+    color: #696cff;
+    font-size: 18px;
+    margin-bottom: 5px;
+    display: block;
+}
+.tags-line {
+    width: 100%;
+    height: 2px;
+    background-color: #696cff; 
+}
+
+/* 💡 ИЗМЕНЕНИЕ: Стили для поля ввода тегов */
+.right-tags-input {
+    width: 100%;
+    padding: 8px 0; /* Убираем горизонтальный padding */
+    
+    /* 🔑 Ключевые изменения: Убираем border-radius и боковые границы */
+    border: none;
+    border-bottom: 1px solid #c7c7c7; /* Только нижняя граница */
+    border-radius: 0; 
+    color: #696cff;
+    outline: none;
+    font-size: 16px; /* Увеличим размер для лучшего вида */
+    margin-top: 10px;
+    background: transparent; /* Делаем фон прозрачным */
+}
+
+/* Убедимся, что при фокусе не появляется синяя обводка */
+.right-tags-input:focus {
+    border-bottom: 1px solid #696cff; /* Фиолетовая линия при фокусе */
+}
+
+.right-tags-input::-webkit-input-placeholder {
+    color: #696cff; /* Фиолетовый цвет */
+    opacity: 1; /* Убеждаемся, что цвет не ослаблен */
+}
+
+/* Для Firefox (современные версии) */
+.right-tags-input::placeholder {
+    color: #696cff;
+    opacity: 1;
+}
+
+/* Для Firefox (старые версии) */
+.right-tags-input:-moz-placeholder { /* obsolete */
+    color: #696cff;
+    opacity: 1;
+}
+
+/* Для Internet Explorer */
+.right-tags-input:-ms-input-placeholder {
+    color: #696cff;
+}
+
+/* Слайдер сезонов */
+.season-slider-block {
+    padding-top: 20px;
+}
+
+.slider-track-container {
+    display: flex;
+    align-items: center;
+    position: relative;
+    margin-bottom: 10px;
+}
+
+.slider-arrow-icon {
+    color: #4b0082; 
+    font-size: 20px;
+    margin-right: -5px;
+    z-index: 2;
+    transform: rotate(90deg);
+}
+
+.season-range-input {
+    -webkit-appearance: none;
+    width: 100%;
+    height: 2px;
+    background: #696cff; 
+    outline: none;
+    cursor: pointer;
+}
+.season-range-input::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    appearance: none;
+    width: 0;
+    height: 0;
+}
+
+.season-labels {
+    display: flex;
+    justify-content: space-between;
+    color: #696cff;
+    font-size: 14px;
+    padding-left: 10px; 
+}
+
+
+/* ========================================================================= */
+/* 4. Стили для FeedHeader (ОСНОВНОЙ ПОИСК) */
+/* ========================================================================= */
 .feed-header-container {
     display: flex;
     justify-content: space-between;
@@ -184,7 +299,7 @@
 .search-input-group {
     display: flex;
     align-items: center;
-    flex-grow: 1;
+    flex-grow: 1; 
     background: #f8f8f8;
     border-radius: 10px;
     padding: 8px 15px;
@@ -192,40 +307,41 @@
 }
 
 .search-icon {
-    color: #8c57ff;
+    color: #888;
     margin-right: 10px;
+    font-size: 16px;
 }
 
 .feed-search-input {
     border: none;
     outline: none;
     background: transparent;
-    width: 100%;
-    font-size: 14px;
+    flex-grow: 1;
+    font-size: 15px;
+    color: #333;
 }
 
 .filter-buttons {
     display: flex;
     gap: 10px;
+    flex-shrink: 0;
 }
 
 .filter-button {
     display: flex;
     align-items: center;
+    gap: 5px;
+    background-color: #696cff; 
+    color: white;
+    border: none;
     padding: 10px 15px;
-    border: 1px solid #8c57ff;
     border-radius: 10px;
-    background: #fff;
-    color: #8c57ff;
     cursor: pointer;
+    font-size: 14px;
     font-weight: 500;
     transition: background-color 0.2s;
 }
 
-.filter-button svg {
-    margin-right: 5px;
-}
-
 .filter-button:hover {
-    background: #f0f0ff;
+    background-color: #5356e7;
 }

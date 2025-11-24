@@ -5,6 +5,7 @@ import axios from 'axios';
 import './UserPostsFeed.css';
 import { FaRegBookmark } from 'react-icons/fa';
 import { BsGlobeAmericas } from "react-icons/bs";
+import { useNavigate } from 'react-router-dom'; // ✅ Импорт
 
 // Интерфейс, соответствующий ответу Go (PostResponse)
 interface PostData {
@@ -23,13 +24,15 @@ const UserPostsFeed: React.FC = () => {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
 
+    const navigate = useNavigate(); // ✅ Хук навигации
+
     useEffect(() => {
         const fetchPosts = async () => {
             try {
                 const response = await axios.get('http://localhost:8080/api/user/posts', {
                     withCredentials: true // Обязательно для Auth
                 });
-                setPosts(response.data);
+                setPosts(response.data || []);
             } catch (err) {
                 console.error("Ошибка при загрузке постов:", err);
                 setError('Не удалось загрузить публикации');
@@ -50,12 +53,19 @@ const UserPostsFeed: React.FC = () => {
 
     if (loading) return <div style={{ padding: '20px', textAlign: 'center' }}>Загрузка публикаций...</div>;
     if (error) return <div style={{ padding: '20px', textAlign: 'center', color: 'red' }}>{error}</div>;
-    if (posts.length === 0) return <div style={{ padding: '20px', textAlign: 'center', color: '#888' }}>У вас пока нет публикаций.</div>;
+    if (!posts || posts.length === 0) return <div style={{ padding: '20px', textAlign: 'center', color: '#888' }}>Публикаций пока нет.</div>;   
+
+    const handlePostClick = (id: string) => {
+        navigate(`/post/${id}`); // ✅ Переход на страницу поста
+    };
 
     return (
         <div className="posts-grid">
             {posts.map((post) => (
-                <div key={post.id} className="post-card">
+                <div key={post.id} className="post-card"
+                onClick={() => handlePostClick(post.id)} // ✅ Обработчик клика
+                    style={{ cursor: 'pointer' }}
+                >
                     
                     {/* 1. Слайдер фото */}
                     {/* Если фото есть - показываем их. Если нет - показываем заглушку или ничего */}
@@ -98,9 +108,10 @@ const UserPostsFeed: React.FC = () => {
                         <div className="post-meta-left">
                             <span className="post-place">{post.place_name}</span>
                             {/* Теги */}
+                           {/* Теги */}
                             <span className="post-tags">
-                                {post.tags && post.tags.length > 0 
-                                    ? ' #' + post.tags.join(' #') 
+                                {(post.tags ?? []).length > 0 
+                                    ? ' #' + (post.tags ?? []).join(' #') 
                                     : ''}
                             </span>
                         </div>

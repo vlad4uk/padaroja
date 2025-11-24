@@ -41,7 +41,7 @@ const Sidebar: React.FC = () => {
     return (
         <aside className="sidebar">
             <div className="sidebar-header">
-                <span style={{ fontWeight: 700, color: '#696cff' }}>Padaroznik.</span>
+                <span style={{ fontWeight: 700, color: '#696cff' }}>Padaroja.</span>
             </div>
             
             <nav className="sidebar-nav-list">

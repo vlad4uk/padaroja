@@ -1,0 +1,201 @@
+/* src/pages/SinglePostPage.css (Исправлены масштаб и пропорции) */
+
+.single-post-container {
+    width: 100%;
+    max-width: 900px;
+    margin: 0 auto; /* Центрирует контейнер в main-content */
+    padding: 20px;
+    position: relative;
+    font-family: 'Inter', sans-serif;
+}
+
+/* --- Верхняя область (Название, кнопки) --- */
+.sp-top-meta-area {
+    margin-bottom: 20px;
+    padding-bottom: 5px;
+    border-bottom: 1px solid #f0f0f0;
+    position: relative;
+}
+
+.sp-post-title {
+    font-size: 32px; 
+    font-weight: 700;
+    color: #333;
+    margin: 0;
+}
+
+/* Дата, Лайки, Место, Теги */
+.sp-meta-info {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 15px; 
+    font-size: 14px;
+    color: #666;
+    margin-top: 10px;
+}
+.sp-meta-info span {
+    white-space: nowrap;
+}
+.sp-tags { color: #8c57ff; font-weight: 500; }
+.sp-place-name { display: flex; align-items: center; gap: 5px; color: #333; }
+.sp-icon-bookmark { color: #8c57ff; font-size: 16px; cursor: pointer; }
+
+/* Кнопки "Изменить" и "Удалить" - в правом верхнем углу */
+.sp-author-actions {
+    position: absolute;
+    top: 0;
+    right: 0;
+    display: flex;
+    gap: 10px;
+}
+
+.action-btn {
+    padding: 6px 12px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: background-color 0.2s, color 0.2s;
+}
+
+.sp-edit-btn {
+    background: #f0ebff; 
+    color: #8c57ff;
+    border: 1px solid #8c57ff;
+}
+.sp-edit-btn:hover {
+    background: #8c57ff;
+    color: white;
+}
+
+.sp-delete-btn {
+    background: white;
+    color: #ff4d4f;
+    border: 1px solid #ff4d4f;
+}
+.sp-delete-btn:hover {
+    background: #ff4d4f;
+    color: white;
+}
+
+
+/* --- Слайдер с контентом --- */
+.sp-content-slider {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
+    margin-top: 30px;
+}
+
+.sp-slider-box {
+    flex-grow: 1;
+    border: 2px solid #8c57ff; 
+    border-radius: 25px; 
+    padding: 30px;
+    min-height: 500px; 
+    display: flex;
+    flex-direction: column;
+    background: #fff;
+    box-shadow: 0 0 15px rgba(140, 87, 255, 0.1); /* Добавим легкую тень */
+}
+
+.sp-slide-meta {
+    display: flex;
+    justify-content: space-between;
+    font-size: 14px;
+    color: #8c57ff; 
+    margin-bottom: 15px;
+    padding-bottom: 5px;
+}
+
+.sp-slide-body {
+    display: flex;
+    gap: 30px;
+    align-items: flex-start;
+    flex-grow: 1;
+}
+
+.sp-photo-area {
+    /* Меняем пропорции: фото занимает чуть больше места (около 55%) */
+    flex: 1.2; 
+    min-width: 40%;
+    max-width: 55%; 
+    background-color: #f5f5f5; 
+    border-radius: 15px;
+    overflow: hidden;
+    aspect-ratio: 4/3;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+.sp-photo-img { width: 100%; height: 100%; object-fit: cover; }
+
+.sp-text-area {
+    /* Текст занимает меньше места (около 45%) */
+    flex: 1; 
+    font-size: 16px; /* Увеличиваем шрифт для лучшего масштаба */
+    line-height: 1.7;
+    white-space: pre-wrap;
+    max-height: 400px;
+    overflow-y: auto;
+    color: #333;
+}
+
+.sp-user-info {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-top: 20px;
+    justify-content: flex-end;
+}
+
+.sp-avatar { width: 40px; height: 40px; border-radius: 50%; background: #a5a6f6; }
+.sp-username { color: #8c57ff; font-weight: 600; }
+
+
+.sp-comments-placeholder { 
+    margin-top: auto; 
+    text-align: right; 
+    font-weight: 700; 
+    padding-top: 20px; 
+    color: #8c57ff; 
+    border-top: 1px solid #f0f0f0;
+}
+
+/* Стрелки навигации */
+.sp-nav-arrow {
+    background: none;
+    border: 2px solid #8c57ff;
+    border-radius: 50%;
+    width: 50px;
+    height: 50px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    color: #8c57ff;
+    font-size: 24px;
+    transition: background-color 0.2s, color 0.2s;
+}
+
+.sp-nav-arrow:hover:not(:disabled) { 
+    background: #8c57ff; 
+    color: white; 
+    box-shadow: 0 4px 8px rgba(140, 87, 255, 0.3);
+}
+.sp-nav-arrow:disabled { 
+    border-color: #e0e0e0; 
+    color: #e0e0e0;
+    cursor: not-allowed;
+}
+
+.sp-back-btn-container { display: flex; justify-content: center; margin-top: 40px; }
+.sp-back-btn {
+    background: #8c57ff; color: white; border: none;
+    padding: 12px 40px; border-radius: 30px; cursor: pointer;
+    font-weight: 600;
+}
+.sp-back-btn:hover { background: #7a46e6; }

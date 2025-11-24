@@ -1,15 +1,18 @@
-// src/App.tsx
+// src/App.tsx (Исправленная версия)
+
 import React from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
 import LoginPage from './pages/LoginPage.tsx';
 import RegisterPage from './pages/RegisterPage.tsx';
 import MainLayout from './components/MainLayout.tsx';
 import PostCreatePage from './pages/PostCreatePage.tsx';
-import FeedPage from './components/FeedPage.tsx'; // ✅ ИМПОРТ НОВОЙ СТРАНИЦЫ
+import FeedPage from './components/FeedPage.tsx'; 
 import { AuthProvider, useAuth } from './context/AuthContext.tsx'; 
+import SinglePostPage from './pages/SinglePostPage.tsx'; 
+import PostEditPage from './pages/PostEditPage.tsx';
 
 // ==========================================================
-// 1. КОМПОНЕНТ ЗАЩИТЫ МАРШРУТОВ (ProtectedRoute)
+// КОМПОНЕНТ ЗАЩИТЫ МАРШРУТОВ (ProtectedRoute)
 // ==========================================================
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { isLoggedIn } = useAuth(); 
@@ -28,35 +31,47 @@ const App: React.FC = () => {
     <AuthProvider> 
        <Router>
          <Routes>
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/register" element={<RegisterPage />} />         
-          
-          {/* ✅ МАРШРУТ 1: Общая лента/Поиск (открыт для всех) */}
-          <Route path="/search" element={<FeedPage />} /> 
+           <Route path="/login" element={<LoginPage />} />
+           <Route path="/register" element={<RegisterPage />} />         
+           
+           {/* МАРШРУТ 1: Общая лента/Поиск */}
+           <Route path="/search" element={<FeedPage />} /> 
+           <Route path="/post/:id" element={<SinglePostPage />} />
 
-          <Route 
-            path="/post/new" 
-            element={
-              <ProtectedRoute>
-                <PostCreatePage />
-              </ProtectedRoute>
-            } 
-          />
-        
-          <Route 
-            path="/profile" 
-            element={
-              <ProtectedRoute>
-                <MainLayout />
-              </ProtectedRoute>
-            } 
-          /> 
-        
-          {/* ✅ МАРШРУТ 2: Главная страница (показывает общую ленту) */}
-          <Route path="/" element={<FeedPage />} />
-  </Routes>
-      </Router>
-    </AuthProvider>
+           {/* ✅ ИСПРАВЛЕННЫЙ МАРШРУТ ДЛЯ РЕДАКТИРОВАНИЯ */}
+           {/* Теперь он соответствует navigate('/post/edit/123') */}
+           <Route 
+             path="/post/edit/:id" 
+             element={
+               <ProtectedRoute>
+                 <PostEditPage />
+               </ProtectedRoute>
+             } 
+           />
+           
+           <Route 
+             path="/post/new" 
+             element={
+               <ProtectedRoute>
+                 <PostCreatePage />
+               </ProtectedRoute>
+             } 
+           />
+           
+           <Route 
+             path="/profile" 
+             element={
+               <ProtectedRoute>
+                 <MainLayout />
+               </ProtectedRoute>
+             } 
+           /> 
+         
+           {/* МАРШРУТ 2: Главная страница */}
+           <Route path="/" element={<FeedPage />} />
+         </Routes>
+       </Router>
+    </AuthProvider>
   );
 };
 

@@ -1,0 +1,311 @@
+/* src/pages/PostEditPage.css (Исправлено выравнивание и масштаб) */
+
+.edit-post-container {
+    padding: 40px;
+    display: flex;
+    justify-content: center; /* Центрирует форму внутри main-content */
+    align-items: flex-start;
+    min-height: 100vh;
+    background-color: #fff;
+    font-family: 'Inter', sans-serif;
+}
+
+.edit-form-wrapper {
+    width: 100%;
+    /* Увеличиваем максимальную ширину для лучшего масштаба */
+    max-width: 750px; 
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.edit-page-title {
+    font-size: 24px; /* Чуть крупнее */
+    color: #333; 
+    margin-bottom: 35px;
+    text-align: center;
+    font-weight: 500;
+}
+
+/* --- Общие стили для полей ввода (Название, Место, Теги) --- */
+
+.input-wrapper {
+    width: 100%;
+    margin-bottom: 25px;
+    position: relative;
+}
+
+/* Стилизация метки (Label) над полем */
+.input-label {
+    position: absolute;
+    top: -10px; 
+    left: 20px;
+    background: white;
+    padding: 0 5px;
+    font-size: 12px;
+    color: #8c57ff; /* Фиолетовый цвет метки */
+    font-weight: 500;
+    z-index: 1;
+}
+
+/* Основное поле ввода */
+.edit-input {
+    width: 100%;
+    padding: 15px 20px;
+    border: 1px solid #8c57ff; 
+    border-radius: 20px;
+    outline: none;
+    font-size: 15px;
+    color: #333;
+    box-sizing: border-box;
+}
+.edit-input::placeholder {
+    color: transparent; 
+}
+
+
+/* --- Слайдер / Редактор слайда --- */
+.edit-slider-area {
+    /* Теперь используем ограниченную ширину и центрирование, 
+       чтобы блок слайдера оставался центрированным внутри 750px формы */
+    display: flex;
+    align-items: center;
+    width: 100%;
+    max-width: 600px; /* Ограничиваем ширину самого слайдера */
+    justify-content: center;
+    gap: 30px; /* Фиксированный зазор */
+    margin-bottom: 10px;
+}
+
+/* Стрелки навигации (крупные, как на скрине) */
+.edit-nav-btn {
+    background: none;
+    border: 2px solid #a5a6f6; 
+    border-radius: 50%;
+    width: 60px; 
+    height: 60px;
+    min-width: 60px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #8c57ff;
+    font-size: 28px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+.edit-nav-btn:hover {
+    background: #f0ebff;
+}
+.edit-nav-btn:disabled {
+    opacity: 0.3;
+    cursor: default;
+    border-color: #ccc;
+    color: #ccc;
+}
+
+/* Карточка слайда (большой блок Текст/Фото) */
+.edit-slide-card {
+    width: 100%;
+    /* Увеличиваем размер карточки для лучшего масштаба */
+    max-width: 500px; 
+    border: 1px solid #8c57ff;
+    border-radius: 20px;
+    padding: 20px;
+    height: 400px; 
+    display: flex;
+    flex-direction: column;
+    box-sizing: border-box;
+    position: relative;
+}
+
+/* Заголовок-метка "Текст" */
+.slide-text-label {
+    position: absolute;
+    top: -10px; 
+    left: 20px;
+    background: white;
+    padding: 0 5px;
+    font-size: 12px;
+    color: #8c57ff; 
+    font-weight: 500;
+    z-index: 1;
+}
+
+/* Текстовое поле */
+.edit-textarea {
+    width: 100%;
+    flex-grow: 1; 
+    border: none;
+    outline: none;
+    resize: none;
+    font-family: inherit;
+    font-size: 14px;
+    color: #333;
+    padding-top: 10px;
+    background: transparent;
+}
+
+/* Зона Фото */
+.edit-photo-zone {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    margin-top: 15px; 
+}
+
+/* Метка "Фото" (для плейсхолдера) */
+.add-photo-label-inner {
+    position: absolute;
+    top: -10px;
+    left: 20px;
+    background: white;
+    padding: 0 5px;
+    font-size: 12px;
+    color: #8c57ff;
+    font-weight: 500;
+    z-index: 1;
+}
+
+/* Иконка + внутри зоны фото */
+.plus-btn-photo {
+    width: 32px;
+    height: 32px;
+    border: 1px solid #8c57ff;
+    background: white;
+    color: #8c57ff;
+    border-radius: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 18px;
+    transition: 0.2s;
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    z-index: 2; /* Над фоном */
+}
+.plus-btn-photo:hover {
+    background: #f0ebff;
+}
+
+/* Контейнер для фото/превью */
+.photo-container {
+    width: 100%;
+    height: 120px; 
+    border-radius: 8px;
+    overflow: hidden;
+    position: relative;
+    border: 1px dashed #ccc;
+    cursor: pointer;
+    margin-top: 10px;
+}
+.photo-container img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+.remove-img-btn {
+    position: absolute;
+    top: 5px;
+    right: 5px;
+    background: rgba(255, 77, 79, 0.9);
+    color: white;
+    border: none;
+    border-radius: 50%;
+    width: 24px;
+    height: 24px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 12px;
+    z-index: 3; /* Важно, чтобы была выше метки */
+}
+
+.delete-slide-link {
+    color: #333; 
+    cursor: pointer;
+    font-size: 14px;
+    text-decoration: underline;
+    margin-top: 10px;
+    display: inline-block;
+}
+
+/* --- Кнопка "Добавить слайд" --- */
+.add-slide-center {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-top: 15px;
+    margin-bottom: 25px;
+}
+.add-slide-label {
+    font-size: 12px;
+    color: #333;
+    margin-bottom: 5px;
+}
+.plus-btn-large {
+    width: 40px;
+    height: 40px;
+    border: 1px solid #8c57ff;
+    background: white;
+    color: #8c57ff;
+    border-radius: 10px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    font-size: 20px;
+    transition: 0.2s;
+}
+.plus-btn-large:hover {
+    background: #f0ebff;
+}
+
+/* --- Нижние кнопки действий --- */
+.edit-actions-footer {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    gap: 20px;
+    margin-top: 20px;
+}
+
+.btn-delete-post {
+    flex: 1;
+    padding: 12px 0;
+    border: 1px solid #8c57ff;
+    background: white;
+    color: #8c57ff;
+    border-radius: 30px; 
+    font-size: 16px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: 0.2s;
+}
+.btn-delete-post:hover {
+    background: #fbf8ff;
+}
+
+.btn-save-post {
+    flex: 1;
+    padding: 12px 0;
+    border: none;
+    background: #8c57ff;
+    color: white;
+    border-radius: 30px; 
+    font-size: 16px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: 0.2s;
+}
+.btn-save-post:hover {
+    background: #7a46e6;
+}
+.btn-save-post:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+}

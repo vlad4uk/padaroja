@@ -36,13 +36,22 @@ func ConnectDB() {
 	sqlDB.SetConnMaxLifetime(time.Hour)
 
 	// --- Миграции GORM (оставляем без изменений) ---
-	err = db.AutoMigrate(&models.User{})
-	// ... (остальные миграции)
+	err = db.AutoMigrate(
+		&models.User{},
+		&models.Place{},
+		&models.Post{},
+		&models.Paragraph{},
+		&models.PostPhoto{},
+		// Важно: PlaceTags и Tags должны мигрироваться вместе с Place, если есть FK
+		&models.PlaceTags{},
+		&models.Tags{},
+	)
+	if err != nil {
+		// Убираем лишний .Error(), log.Fatal принимает ошибку напрямую
+		log.Fatal("Failed to perform GORM AutoMigrate:", err)
+	}
 
 	// ...
-	if err != nil {
-		log.Fatal("Failed to perform GORM AutoMigrate for related tables:", err.Error())
-	}
 
 	DB = db
 	log.Println("Успех! Подключение к бд + миграция")
