@@ -1,4 +1,4 @@
-/* src/pages/PostEditPage.css (Исправлено выравнивание и масштаб) */
+/* src/pages/PostEditPage.css (ФИНАЛЬНАЯ ВЕРСИЯ) */
 
 .edit-post-container {
     padding: 40px;
@@ -12,17 +12,16 @@
 
 .edit-form-wrapper {
     width: 100%;
-    /* Увеличиваем максимальную ширину для лучшего масштаба */
-    max-width: 750px; 
+    max-width: 800px; /* Увеличена ширина формы для лучшего масштаба */
     display: flex;
     flex-direction: column;
     align-items: center;
 }
 
 .edit-page-title {
-    font-size: 24px; /* Чуть крупнее */
+    font-size: 26px; /* Крупнее */
     color: #333; 
-    margin-bottom: 35px;
+    margin-bottom: 40px;
     text-align: center;
     font-weight: 500;
 }
@@ -33,6 +32,7 @@
     width: 100%;
     margin-bottom: 25px;
     position: relative;
+    max-width: 650px; /* Ограничиваем ширину полей, чтобы не были слишком широкими */
 }
 
 /* Стилизация метки (Label) над полем */
@@ -43,7 +43,7 @@
     background: white;
     padding: 0 5px;
     font-size: 12px;
-    color: #8c57ff; /* Фиолетовый цвет метки */
+    color: #8c57ff; 
     font-weight: 500;
     z-index: 1;
 }
@@ -55,7 +55,7 @@
     border: 1px solid #8c57ff; 
     border-radius: 20px;
     outline: none;
-    font-size: 15px;
+    font-size: 16px; /* Крупнее шрифт */
     color: #333;
     box-sizing: border-box;
 }
@@ -66,14 +66,12 @@
 
 /* --- Слайдер / Редактор слайда --- */
 .edit-slider-area {
-    /* Теперь используем ограниченную ширину и центрирование, 
-       чтобы блок слайдера оставался центрированным внутри 750px формы */
     display: flex;
     align-items: center;
     width: 100%;
-    max-width: 600px; /* Ограничиваем ширину самого слайдера */
+    max-width: 650px; /* Ширина слайдерной области (чуть больше, чем поля) */
     justify-content: center;
-    gap: 30px; /* Фиксированный зазор */
+    gap: 30px; 
     margin-bottom: 10px;
 }
 
@@ -106,12 +104,11 @@
 /* Карточка слайда (большой блок Текст/Фото) */
 .edit-slide-card {
     width: 100%;
-    /* Увеличиваем размер карточки для лучшего масштаба */
-    max-width: 500px; 
+    flex-grow: 1;
     border: 1px solid #8c57ff;
     border-radius: 20px;
     padding: 20px;
-    height: 400px; 
+    height: 450px; /* Увеличиваем высоту */
     display: flex;
     flex-direction: column;
     box-sizing: border-box;
@@ -139,7 +136,7 @@
     outline: none;
     resize: none;
     font-family: inherit;
-    font-size: 14px;
+    font-size: 15px;
     color: #333;
     padding-top: 10px;
     background: transparent;
@@ -147,10 +144,7 @@
 
 /* Зона Фото */
 .edit-photo-zone {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
+    /* Эта зона теперь служит контейнером для плейсхолдера/превью фото */
     margin-top: 15px; 
 }
 
@@ -185,7 +179,7 @@
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    z-index: 2; /* Над фоном */
+    z-index: 2; 
 }
 .plus-btn-photo:hover {
     background: #f0ebff;
@@ -194,7 +188,7 @@
 /* Контейнер для фото/превью */
 .photo-container {
     width: 100%;
-    height: 120px; 
+    height: 150px; /* Увеличиваем высоту контейнера фото */
     border-radius: 8px;
     overflow: hidden;
     position: relative;
@@ -222,7 +216,7 @@
     align-items: center;
     justify-content: center;
     font-size: 12px;
-    z-index: 3; /* Важно, чтобы была выше метки */
+    z-index: 3; 
 }
 
 .delete-slide-link {
@@ -239,26 +233,26 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    margin-top: 15px;
-    margin-bottom: 25px;
+    margin-top: 25px; /* Увеличиваем отступ */
+    margin-bottom: 30px;
 }
 .add-slide-label {
-    font-size: 12px;
+    font-size: 13px;
     color: #333;
-    margin-bottom: 5px;
+    margin-bottom: 8px;
 }
 .plus-btn-large {
-    width: 40px;
-    height: 40px;
+    width: 45px;
+    height: 45px;
     border: 1px solid #8c57ff;
     background: white;
     color: #8c57ff;
-    border-radius: 10px;
+    border-radius: 12px;
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    font-size: 20px;
+    font-size: 22px;
     transition: 0.2s;
 }
 .plus-btn-large:hover {
@@ -268,6 +262,7 @@
 /* --- Нижние кнопки действий --- */
 .edit-actions-footer {
     width: 100%;
+    max-width: 650px; /* Ограничиваем по ширине полей */
     display: flex;
     justify-content: space-between;
     gap: 20px;

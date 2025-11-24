@@ -4,6 +4,7 @@ import (
 	"log"
 	"time"
 
+	// Добавил, если понадобится конвертация ID
 	auth "tourist-blog/internal/handlers/auth"
 	"tourist-blog/internal/handlers/post"
 	profile "tourist-blog/internal/handlers/profile"
@@ -14,6 +15,37 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
+// =========================================================================
+// НОВЫЙ OptionalAuthMiddleware (не блокирует запрос, если токена нет)
+// =========================================================================
+func OptionalAuthMiddleware() gin.HandlerFunc {
+	return func(c *gin.Context) {
+		// 🚨 ВАЖНО: ЗАМЕНИТЕ ЭТОТ БЛОК НА ВАШУ ЛОГИКУ ВАЛИДАЦИИ ТОКЕНА
+		// (например, получение токена из Cookie, его валидация и извлечение userID)
+		//
+		// ********** ПРИМЕРНАЯ ЛОГИКА **********
+		/*
+			token, err := c.Cookie("token")
+			if err == nil {
+				// Предполагаем, что у вас есть функция для валидации и извлечения ID
+				// userID, err := utils.ValidateToken(token)
+
+				// Если валидация успешна:
+				// c.Set("userID", userID)
+			}
+		*/
+		// ****************************************
+
+		// Если вы используете JWT из заголовка Authorization, логика будет другой.
+		// Главное: если токен есть и он валиден, поместите ID в контекст:
+		// c.Set("userID", int(parsedUserID))
+
+		// Этот вызов пропускает запрос к следующему обработчику (GetPublicFeed),
+		// независимо от наличия токена.
+		c.Next()
+	}
+}
+
 func main() {
 	// 1. Подключение к БД
 	database.ConnectDB()
@@ -23,13 +55,9 @@ func main() {
 
 	// 3. Настройка CORS
 	router.Use(cors.New(cors.Config{
-		// Разрешаем ваш фронтенд
-		AllowOrigins: []string{"http://localhost:3000"},
-		// Разрешаем нужные HTTP методы
-		AllowMethods: []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
-		// Разрешаем заголовок Authorization (если вы его используете)
-		AllowHeaders: []string{"Origin", "Content-Type", "Accept", "Authorization"},
-		// Разрешаем отправку куки и учетных данных
+		AllowOrigins:     []string{"http://localhost:3000"},
+		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
+		AllowHeaders:     []string{"Origin", "Content-Type", "Accept", "Authorization"},
 		ExposeHeaders:    []string{"Content-Length"},
 		AllowCredentials: true,
 		MaxAge:           12 * time.Hour,
@@ -54,9 +82,8 @@ func main() {
 		userRoutes.GET("/profile", profile.GetUserProfile)
 		userRoutes.PUT("/profile", profile.UpdateUserProfile)
 
-		// ✅ Получение постов текущего пользователя (GET /api/user/posts)
+		// Получение постов текущего пользователя (GET /api/user/posts)
 		userRoutes.GET("/posts", post.GetUserPosts)
-		// !!! ИСПРАВЛЕНО: УБРАН post.CreatePost, который был здесь ошибочно
 	}
 
 	// 3. Маршруты постов
@@ -66,14 +93,17 @@ func main() {
 		postRoutes.POST("", middleware.AuthMiddleware(), post.CreatePost)
 
 		// ✅ 2. Получение общей ленты (открыт для всех) - GET /api/posts
-		// !!! ИСПРАВЛЕНО: УДАЛЕН ДУБЛИКАТ, который вызвал ошибку
-		postRoutes.GET("", post.GetPublicFeed)
+		// ПРИМЕНЯЕМ OptionalAuthMiddleware!
+		postRoutes.GET("", OptionalAuthMiddleware(), post.GetPublicFeed)
 
 		// 3. Получение одного поста по ID (открыто) - GET /api/posts/:postID
 		postRoutes.GET("/:postID", post.GetPost)
 
 		// 4. Редактирование (защищено) - PUT /api/posts/:postID
 		postRoutes.PUT("/:postID", middleware.AuthMiddleware(), post.UpdatePost)
+
+		// 4. Оставить жалобу (защищено) - POST /api/posts/:postID/report
+		postRoutes.POST("/:postID/report", middleware.AuthMiddleware(), post.ReportPost)
 
 		// 5. Удаление (защищено) - DELETE /api/posts/:postID
 		postRoutes.DELETE("/:postID", middleware.AuthMiddleware(), post.DeletePost)

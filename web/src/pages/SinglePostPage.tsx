@@ -1,4 +1,4 @@
-// src/pages/SinglePostPage.tsx (Финальная версия с обновленной разметкой)
+// src/pages/SinglePostPage.tsx (ФИНАЛЬНАЯ ВЕРСИЯ)
 
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
@@ -6,6 +6,7 @@ import axios from 'axios';
 import Sidebar from '../components/Sidebar.tsx';
 import '../components/MainLayout.css';
 import './SinglePostPage.css';
+import PostActionsMenu from '../components/PostActionsMenu.tsx'; 
 import { BsGlobeAmericas } from "react-icons/bs";
 import { FaRegBookmark, FaAngleDoubleLeft, FaAngleDoubleRight } from 'react-icons/fa';
 import { useAuth } from '../context/AuthContext.tsx'; 
@@ -33,7 +34,7 @@ interface PostDetailData {
     likes_count: number;
     paragraphs: ParagraphData[] | null;
     photos: PhotoData[] | null;
-    user_id: number; // ID автора поста
+    user_id: number; 
 }
 
 const SinglePostPage: React.FC = () => {
@@ -46,20 +47,16 @@ const SinglePostPage: React.FC = () => {
     const [error, setError] = useState('');
     const [currentSlide, setCurrentSlide] = useState(0);
 
-    // Логика для слайдов
     const paragraphs = post?.paragraphs || [];
     const photos = post?.photos || [];
     const maxSlides = Math.max(paragraphs.length, photos.length); 
     
-    // Получаем контент для текущего слайда (используем order, который равен currentSlide + 1)
-    // Внимание: если order в базе начинается с 1, то currentSlide должен быть (order - 1). 
-    // Если order начинается с 0, то currentSlide = order. Мы исправили в PostEditPage на order=index+1.
     const currentOrder = currentSlide + 1;
     const currentText = paragraphs.find(p => p.order === currentOrder);
     const currentPhoto = photos.find(p => p.order === currentOrder);
     
-    const isAuthor = post && user && post.user_id === user.id;
-
+    const postIdNum = post ? parseInt(post.id) : 0;
+    
     useEffect(() => {
         const fetchPost = async () => {
             try {
@@ -86,24 +83,33 @@ const SinglePostPage: React.FC = () => {
         }
     }, [id]);
     
-    // Функция удаления поста
-    const handleDelete = async () => {
-        if (!isAuthor || !post) return;
+    // --- ОБРАБОТЧИКИ ДЛЯ PostActionsMenu ---
 
-        if (window.confirm('Вы уверены, что хотите удалить этот пост? Это действие необратимо.')) {
-            try {
-                await axios.delete(`http://localhost:8080/api/posts/${post.id}`, {
-                    withCredentials: true
-                });
-                alert('Пост успешно удален!');
-                navigate('/profile'); 
-            } catch (error) {
-                console.error('Ошибка удаления поста:', error);
-                alert('Не удалось удалить пост. Убедитесь, что вы являетесь его автором.');
-            }
+    const handleEdit = (postId: number) => {
+        navigate(`/post/edit/${postId}`);
+    };
+
+    const handleDelete = async (postId: number) => {
+        if (!window.confirm('Вы уверены, что хотите удалить этот пост? Это действие необратимо.')) {
+            return;
+        }
+
+        try {
+            await axios.delete(`http://localhost:8080/api/posts/${postId}`, {
+                withCredentials: true
+            });
+            alert('Пост успешно удален!');
+            navigate('/profile'); 
+        } catch (error) {
+            console.error('Ошибка удаления поста:', error);
+            alert('Не удалось удалить пост. Убедитесь, что вы являетесь его автором.');
         }
     };
     
+    const handleReport = (postId: number) => {
+        alert(`Функционал жалобы на пост #${postId} пока не реализован.`);
+    };
+
     // --- НАВИГАЦИЯ ПО СЛАЙДАМ ---
 
     const handleNext = () => {
@@ -136,11 +142,9 @@ const SinglePostPage: React.FC = () => {
             <main className="main-content">
                 <div className="single-post-container">
                     
-                    {/* БЛОК ЗАГОЛОВКА, МЕТЫ И КНОПОК ДЕЙСТВИЯ */}
                     <div className="sp-top-meta-area">
                         <h1 className="sp-post-title">{post.title}</h1>
                         
-                        {/* Метаинформация (под заголовком) */}
                         <div className="sp-meta-info">
                             <span className="sp-date">Опубликовано: {new Date(post.created_at).toLocaleDateString()}</span>
                             <span className="sp-place-name"><BsGlobeAmericas size={14}/> {post.place_name}</span>
@@ -154,26 +158,19 @@ const SinglePostPage: React.FC = () => {
                             </span>
                         </div>
                         
-                        {/* УСЛОВНЫЙ РЕНДЕРИНГ КНОПОК (над заголовком, справа) */}
-                        {isAuthor && (
+                        {/* ИНТЕГРАЦИЯ PostActionsMenu */}
+                        {post.user_id && (
                             <div className="sp-author-actions">
-                                <button
-                                    onClick={() => navigate(`/post/edit/${post.id}`)}
-                                    className="action-btn sp-edit-btn"
-                                >
-                                    Изменить
-                                </button>
-                                <button
-                                    onClick={handleDelete}
-                                    className="action-btn sp-delete-btn"
-                                >
-                                    Удалить
-                                </button>
+                                <PostActionsMenu 
+                                    postID={postIdNum}
+                                    postAuthorID={post.user_id}
+                                    onEdit={handleEdit}
+                                    onDelete={handleDelete}
+                                    onReport={handleReport}
+                                />
                             </div>
                         )}
                     </div>
-                    {/* ---------------------------------- */}
-
 
                     {/* Слайдер с контентом */}
                     <div className="sp-content-slider">
@@ -181,11 +178,9 @@ const SinglePostPage: React.FC = () => {
                             <FaAngleDoubleLeft />
                         </button>
 
-                        {/* Карточка слайда с фиолетовой рамкой */}
                         <div className="sp-slide-view sp-slider-box">
                             <div className="sp-slide-meta">
                                 <span className="sp-slide-info">Слайд {currentSlide + 1} из {maxSlides}</span>
-                                {/* Убрал user_id отсюда, оставим его в блоке sp-user-info ниже, как на макете */}
                             </div>
 
                             <div className="sp-slide-body">
@@ -201,7 +196,6 @@ const SinglePostPage: React.FC = () => {
                                 </div>
                             </div>
                             
-                            {/* Информация об авторе и Комментарии */}
                             <div className="sp-user-info">
                                 <div className="sp-avatar" />
                                 <span className="sp-username">Автор ID: {post.user_id}</span>

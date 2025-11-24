@@ -45,6 +45,7 @@ func ConnectDB() {
 		// Важно: PlaceTags и Tags должны мигрироваться вместе с Place, если есть FK
 		&models.PlaceTags{},
 		&models.Tags{},
+		&models.Complaint{},
 	)
 	if err != nil {
 		// Убираем лишний .Error(), log.Fatal принимает ошибку напрямую

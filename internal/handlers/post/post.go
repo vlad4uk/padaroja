@@ -3,11 +3,13 @@ package post
 import (
 	"fmt"
 	"net/http"
+	"strconv"
 	"time"
 	"tourist-blog/internal/domain/models"
 	database "tourist-blog/internal/storage/postgres"
 
 	"github.com/gin-gonic/gin"
+	"github.com/google/uuid"
 	"gorm.io/gorm"
 )
 
@@ -23,35 +25,36 @@ type PlaceCreationData struct {
 type PostCreationRequest struct {
 	Title      string             `json:"title" binding:"required"`
 	PlaceData  PlaceCreationData  `json:"place_data" binding:"required"`
-	Tags       []string           `json:"tags"` // Принимаем массив строк для тегов
+	Tags       []string           `json:"tags"`
 	Paragraphs []models.Paragraph `json:"paragraphs"`
 	Photos     []models.PostPhoto `json:"photos"`
 }
 
+// PostResponse - DTO для ответа (ID теперь uint)
 type PostResponse struct {
-	ID          string             `json:"id"`
-	UserID      uint               `json:"user_id"` // ID автора
+	ID          uint               `json:"id"`
+	UserID      uint               `json:"user_id"`
 	Title       string             `json:"title"`
 	Date        time.Time          `json:"created_at"`
 	PlaceName   string             `json:"place_name"`
 	Tags        []string           `json:"tags"`
-	PreviewText string             `json:"preview_text"` // Текст первого слайда
+	PreviewText string             `json:"preview_text"`
 	Photos      []models.PostPhoto `json:"photos"`
-	LikesCount  int                `json:"likes_count"` // Заглушка
+	LikesCount  int                `json:"likes_count"`
 }
 
+// DetailPostResponse - DTO для детального ответа (ID теперь uint)
 type DetailPostResponse struct {
-	ID          string    `json:"id"`
-	UserID      uint      `json:"user_id"`
-	Title       string    `json:"title"`
-	Date        time.Time `json:"created_at"`
-	PlaceName   string    `json:"place_name"`
-	Tags        []string  `json:"tags"`
-	PreviewText string    `json:"preview_text"`
-	// Добавляем полные данные для детального просмотра
-	Paragraphs []models.Paragraph `json:"paragraphs"`
-	Photos     []models.PostPhoto `json:"photos"`
-	LikesCount int                `json:"likes_count"`
+	ID          uint               `json:"id"`
+	UserID      uint               `json:"user_id"`
+	Title       string             `json:"title"`
+	Date        time.Time          `json:"created_at"`
+	PlaceName   string             `json:"place_name"`
+	Tags        []string           `json:"tags"`
+	PreviewText string             `json:"preview_text"`
+	Paragraphs  []models.Paragraph `json:"paragraphs"`
+	Photos      []models.PostPhoto `json:"photos"`
+	LikesCount  int                `json:"likes_count"`
 }
 
 type PostUpdateRequest struct {
@@ -62,31 +65,58 @@ type PostUpdateRequest struct {
 	Photos     []models.PostPhoto `json:"photos"`
 }
 
-func CreatePost(c *gin.Context) {
-	// 1. Извлечение UserID из контекста
-	userIDFromContext, exists := c.Get("userID")
+type ReportRequest struct {
+	Reason string `json:"reason" binding:"required"`
+}
+
+// Вспомогательная функция для безопасного извлечения userID
+// В post.go
+// Helper для безопасного извлечения userID из контекста
+// В post.go
+// Helper для безопасного извлечения userID из контекста
+func getUserIDFromContext(c *gin.Context) (uint, bool) {
+	val, exists := c.Get("userID")
 	if !exists {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized: User ID not found in context."})
-		return
+		return 0, false // Ключ "userID" не найден
 	}
 
-	var userID int
-	// ✅ ФИКС: Более надежное приведение типов с использованием switch
-	switch v := userIDFromContext.(type) {
-	case int:
+	var userID uint
+	// Проверяем все возможные типы, которые Gin или middleware могли сохранить (особенно int64 из JWT)
+	switch v := val.(type) {
+	case uint:
 		userID = v
-	case uint: // Поддержка uint
-		userID = int(v)
-	case float64: // Поддержка float64 (наиболее частый случай для JWT)
-		userID = int(v)
-	case int64: // Поддержка int64 (иногда используется для ID)
-		userID = int(v)
+	case int:
+		if v > 0 {
+			userID = uint(v)
+		}
+	case int64: // Тип, наиболее часто используемый для claims в Go JWT
+		if v > 0 {
+			userID = uint(v)
+		}
+	case float64:
+		if v > 0 {
+			userID = uint(v)
+		}
 	default:
-		// Если ни один тип не подошел, возвращаем детальную ошибку
-		c.JSON(http.StatusInternalServerError, gin.H{
-			"error":   "User ID type assertion failed",
-			"details": fmt.Sprintf("Unexpected type: %T", v),
-		})
+		// ID найден, но имеет неверный тип
+		return 0, false
+	}
+
+	if userID == 0 {
+		return 0, false
+	}
+
+	return userID, true // Успешно извлекли валидный ID
+}
+
+// =========================================================================
+// CREATE POST
+// =========================================================================
+
+func CreatePost(c *gin.Context) {
+	userID, exists := getUserIDFromContext(c)
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized: User ID not found in context."})
 		return
 	}
 
@@ -96,7 +126,6 @@ func CreatePost(c *gin.Context) {
 		return
 	}
 
-	// 2. Выполнение транзакции
 	err := database.DB.Transaction(func(tx *gorm.DB) error {
 
 		// A. Создание места (Place)
@@ -112,7 +141,7 @@ func CreatePost(c *gin.Context) {
 
 		// B. Создание поста (Post)
 		newPost := models.Post{
-			UserID:     userID,
+			UserID:     int(userID),
 			PlaceID:    newPlace.ID,
 			Title:      input.Title,
 			IsApproved: false,
@@ -136,7 +165,7 @@ func CreatePost(c *gin.Context) {
 		if len(input.Photos) > 0 {
 			for i := range input.Photos {
 				input.Photos[i].PostID = newPost.ID
-				input.Photos[i].ID = ""
+				input.Photos[i].ID = 0
 				input.Photos[i].IsApproved = true
 			}
 			if result := tx.Create(&input.Photos); result.Error != nil {
@@ -154,19 +183,16 @@ func CreatePost(c *gin.Context) {
 				}
 
 				var tag models.Tags
-				// FirstOrCreate: Ищет тег по Name, если не находит, создает новый.
 				if err := tx.Where("name = ?", tagName).FirstOrCreate(&tag, models.Tags{Name: tagName}).Error; err != nil {
 					return err
 				}
 
-				// Создаем связь PlaceTags
 				placeTagsToCreate = append(placeTagsToCreate, models.PlaceTags{
 					PlaceID: newPlace.ID,
 					TagID:   tag.ID,
 				})
 			}
 
-			// Массовая вставка связей
 			if len(placeTagsToCreate) > 0 {
 				if result := tx.Create(&placeTagsToCreate); result.Error != nil {
 					return result.Error
@@ -174,7 +200,7 @@ func CreatePost(c *gin.Context) {
 			}
 		}
 
-		return nil // Commit транзакции
+		return nil
 	})
 
 	if err != nil {
@@ -185,46 +211,39 @@ func CreatePost(c *gin.Context) {
 	c.JSON(http.StatusCreated, gin.H{"message": "Post created successfully"})
 }
 
-// --- Хендлер для получения постов текущего пользователя ---
+// =========================================================================
+// GET USER POSTS (Личный кабинет: только посты текущего пользователя)
+// =========================================================================
+
 func GetUserPosts(c *gin.Context) {
-	userIDFromContext, exists := c.Get("userID")
-	if !exists {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+	// 1. Извлекаем ID пользователя
+	userID, exists := getUserIDFromContext(c)
+
+	// 🛑 КРИТИЧЕСКИ ВАЖНАЯ ПРОВЕРКА и ЛОГИРОВАНИЕ
+	if !exists || userID == 0 {
+		fmt.Println("GetUserPosts DEBUG: UserID not found (exists:", exists, ", ID:", userID, "). Returning 401.")
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized: User ID not found or invalid in context"})
 		return
 	}
 
-	var userID int
-	switch v := userIDFromContext.(type) {
-	case int:
-		userID = v
-	case uint:
-		userID = int(v)
-	case float64:
-		userID = int(v)
-	default:
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "User ID type error"})
-		return
-	}
+	// 💡 КРИТИЧЕСКИЙ ЛОГ: ДОЛЖЕН БЫТЬ ВИДЕН В КОНСОЛИ
+	fmt.Printf("GetUserPosts DEBUG: Fetching posts for **UserID: %d**\n", userID)
 
 	var posts []models.Post
-
-	result := database.DB.Where("user_id = ?", userID).
-		Preload("Place").
-		// Сортируем параграфы, чтобы первый был первым
-		Preload("Paragraphs", func(db *gorm.DB) *gorm.DB {
-			return db.Order("paragraphs.order ASC")
-		}).
+	// 2. Фильтруем посты СТРОГО по ID текущего пользователя
+	// GORM: Where("поле_в_БД = ?", значение)
+	result := database.DB.
+		Where("user_id = ?", userID). // userID теперь гарантированно > 0 и типа uint
 		Preload("Photos").
-		Order("created_at desc").
+		Preload("Paragraphs").
 		Find(&posts)
 
 	if result.Error != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch posts", "details": result.Error.Error()})
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch user posts"})
 		return
 	}
 
 	response := make([]PostResponse, 0)
-
 	for _, p := range posts {
 		previewText := ""
 		if len(p.Paragraphs) > 0 {
@@ -237,7 +256,6 @@ func GetUserPosts(c *gin.Context) {
 			Where("place_tags.place_id = ?", p.PlaceID).
 			Pluck("tags.name", &tags)
 
-		// ВАЖНОЕ ИСПРАВЛЕНИЕ: Если тегов нет, делаем пустой массив, а не null
 		if tags == nil {
 			tags = []string{}
 		}
@@ -259,27 +277,32 @@ func GetUserPosts(c *gin.Context) {
 	c.JSON(http.StatusOK, response)
 }
 
+// =========================================================================
+// GET SINGLE POST
+// =========================================================================
+
 func GetPost(c *gin.Context) {
-	postID := c.Param("postID")
+	postIDStr := c.Param("postID")
+
+	postID, err := strconv.ParseUint(postIDStr, 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid post ID format"})
+		return
+	}
+
 	var post models.Post
 
 	result := database.DB.Where("id = ?", postID).
 		Preload("Place").
-		// С параграфами обычно работает, так как модель Paragraph -> paragraphs
 		Preload("Paragraphs", func(db *gorm.DB) *gorm.DB {
 			return db.Order("paragraphs.order ASC")
 		}).
-		// ИСПРАВЛЕНИЕ: Убираем жесткую привязку к алиасу "photos" или меняем на "post_photos"
 		Preload("Photos", func(db *gorm.DB) *gorm.DB {
-			// Вариант А (безопасный):
 			return db.Order("\"order\" ASC")
-			// Вариант Б (если таблица называется post_photos):
-			// return db.Order("post_photos.order ASC")
 		}).
 		First(&post)
 
 	if result.Error != nil {
-		// Добавьте логирование ошибки, чтобы видеть её в терминале!
 		fmt.Println("Error fetching post:", result.Error)
 
 		if result.Error == gorm.ErrRecordNotFound {
@@ -289,14 +312,13 @@ func GetPost(c *gin.Context) {
 		}
 		return
 	}
-	// Получаем теги
+
 	var tags []string
 	database.DB.Table("tags").
 		Joins("JOIN place_tags ON place_tags.tag_id = tags.id").
 		Where("place_tags.place_id = ?", post.PlaceID).
 		Pluck("tags.name", &tags)
 
-	// Формируем ответ
 	response := DetailPostResponse{
 		ID:          post.ID,
 		UserID:      uint(post.UserID),
@@ -304,29 +326,36 @@ func GetPost(c *gin.Context) {
 		Date:        post.CreatedAt,
 		PlaceName:   post.Place.Name,
 		Tags:        tags,
-		PreviewText: "",              // Для одиночного поста превью не обязательно, у нас есть Paragraphs
-		Paragraphs:  post.Paragraphs, // ✅ Отдаем все параграфы
-		Photos:      post.Photos,     // ✅ Отдаем все фото
-		LikesCount:  12,              // Заглушка по дизайну
+		PreviewText: "",
+		Paragraphs:  post.Paragraphs,
+		Photos:      post.Photos,
+		LikesCount:  12,
 	}
 
 	c.JSON(http.StatusOK, response)
 }
 
+// =========================================================================
+// GET PUBLIC FEED (Публичная лента: все одобренные посты, кроме постов текущего пользователя)
+// =========================================================================
+
 func GetPublicFeed(c *gin.Context) {
 	var posts []models.Post
-	// Начальный запрос: только одобренные посты
-	db := database.DB.Where("is_approved = ?", true)
+	// ✅ ИСПРАВЛЕНО: Начальный запрос: ВСЕ посты (для целей отладки)
+	db := database.DB.Model(&models.Post{}) // <--- Заменить на этот
 
-	// 1. Обработка общего поиска (Title, PlaceName)
+	// 2. Логика исключения постов текущего пользователя остается
+	userID, exists := getUserIDFromContext(c)
+	if exists && userID != 0 {
+		db = db.Where("user_id != ?", userID)
+	}
+
+	// 1. Обработка общего поиска
 	searchQuery := c.Query("search")
 	if searchQuery != "" {
 		searchTerm := "%" + searchQuery + "%"
-
-		// Делаем явный JOIN для поиска по Place.Name
 		db = db.Joins("JOIN places ON places.id = posts.place_id").
 			Where(
-				// Ищем по названию поста ИЛИ названию места (Case-insensitive LIKE)
 				database.DB.Where("posts.title ILIKE ?", searchTerm).
 					Or("places.name ILIKE ?", searchTerm),
 			)
@@ -337,7 +366,6 @@ func GetPublicFeed(c *gin.Context) {
 	if tagsQuery != "" {
 		tagSearchTerm := "%" + tagsQuery + "%"
 
-		// Находим PlaceID, связанные с тегами, которые соответствуют поисковому запросу
 		var placeIDsWithTags []uint
 		database.DB.Table("place_tags").
 			Select("place_id").
@@ -346,23 +374,21 @@ func GetPublicFeed(c *gin.Context) {
 			Group("place_id").
 			Pluck("place_id", &placeIDsWithTags)
 
-		// Фильтруем посты по найденным PlaceID
 		if len(placeIDsWithTags) > 0 {
 			db = db.Where("posts.place_id IN (?)", placeIDsWithTags)
 		} else {
-			// Если теги введены, но ничего не найдено, возвращаем пустой результат
 			db = db.Where("1 = 0")
 		}
 	}
 
-	// Основной запрос (с учетом примененных выше фильтров)
+	// Основной запрос
 	result := db.
 		Preload("Place").
 		Preload("Paragraphs", func(db *gorm.DB) *gorm.DB {
 			return db.Order("paragraphs.order ASC")
 		}).
 		Preload("Photos").
-		Order("created_at desc"). // Сначала новые
+		Order("created_at desc").
 		Find(&posts)
 
 	if result.Error != nil {
@@ -404,20 +430,23 @@ func GetPublicFeed(c *gin.Context) {
 	c.JSON(http.StatusOK, response)
 }
 
+// =========================================================================
+// UPDATE POST
+// =========================================================================
+
 func UpdatePost(c *gin.Context) {
-	postID := c.Param("postID")
-	userIDFromContext, _ := c.Get("userID") // Предполагаем, что middleware отработал
-	// Приведение типов userID (как в CreatePost)...
-	var userID int
-	switch v := userIDFromContext.(type) {
-	case int:
-		userID = v
-	case uint:
-		userID = int(v)
-	case float64:
-		userID = int(v)
-	default:
-		userID = 0
+	postIDStr := c.Param("postID")
+
+	postID, err := strconv.ParseUint(postIDStr, 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid post ID format"})
+		return
+	}
+
+	userID, exists := getUserIDFromContext(c)
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
 	}
 
 	var input PostUpdateRequest
@@ -426,7 +455,7 @@ func UpdatePost(c *gin.Context) {
 		return
 	}
 
-	err := database.DB.Transaction(func(tx *gorm.DB) error {
+	err = database.DB.Transaction(func(tx *gorm.DB) error {
 		var post models.Post
 		// 1. Проверяем, существует ли пост и принадлежит ли автору
 		if err := tx.First(&post, "id = ? AND user_id = ?", postID, userID).Error; err != nil {
@@ -443,18 +472,23 @@ func UpdatePost(c *gin.Context) {
 		var place models.Place
 		if err := tx.First(&place, "id = ?", post.PlaceID).Error; err == nil {
 			place.Name = input.PlaceData.Name
-			// place.Desc = ... если нужно
-			tx.Save(&place)
+			if saveResult := tx.Save(&place); saveResult.Error != nil {
+				return saveResult.Error
+			}
+		} else if err != gorm.ErrRecordNotFound {
+			return err
 		}
 
-		// 4. Полная перезапись Параграфов (Удалить старые -> Создать новые)
+		// 4. Полная перезапись Параграфов
 		tx.Where("post_id = ?", post.ID).Delete(&models.Paragraph{})
 		if len(input.Paragraphs) > 0 {
 			for i := range input.Paragraphs {
 				input.Paragraphs[i].PostID = post.ID
-				input.Paragraphs[i].ID = 0 // сброс ID для создания новых
+				input.Paragraphs[i].ID = 0
 			}
-			tx.Create(&input.Paragraphs)
+			if err := tx.Create(&input.Paragraphs).Error; err != nil {
+				return err
+			}
 		}
 
 		// 5. Полная перезапись Фото
@@ -462,13 +496,15 @@ func UpdatePost(c *gin.Context) {
 		if len(input.Photos) > 0 {
 			for i := range input.Photos {
 				input.Photos[i].PostID = post.ID
-				input.Photos[i].ID = ""
+				input.Photos[i].ID = 0
 				input.Photos[i].IsApproved = true
 			}
-			tx.Create(&input.Photos)
+			if err := tx.Create(&input.Photos).Error; err != nil {
+				return err
+			}
 		}
 
-		// 6. Обновление тегов (удаляем старые связи -> создаем новые)
+		// 6. Обновление тегов
 		tx.Where("place_id = ?", post.PlaceID).Delete(&models.PlaceTags{})
 		if len(input.Tags) > 0 {
 			for _, tagName := range input.Tags {
@@ -479,7 +515,9 @@ func UpdatePost(c *gin.Context) {
 				if err := tx.Where("name = ?", tagName).FirstOrCreate(&tag, models.Tags{Name: tagName}).Error; err != nil {
 					return err
 				}
-				tx.Create(&models.PlaceTags{PlaceID: post.PlaceID, TagID: tag.ID})
+				if err := tx.Create(&models.PlaceTags{PlaceID: post.PlaceID, TagID: tag.ID}).Error; err != nil {
+					return err
+				}
 			}
 		}
 
@@ -494,64 +532,51 @@ func UpdatePost(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "Post updated successfully"})
 }
 
-func DeletePost(c *gin.Context) {
-	postID := c.Param("postID")
-	userIDFromContext, exists := c.Get("userID")
+// =========================================================================
+// DELETE POST
+// =========================================================================
 
+func DeletePost(c *gin.Context) {
+	postIDStr := c.Param("postID")
+	postID, err := strconv.ParseUint(postIDStr, 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid post ID format"})
+		return
+	}
+
+	userID, exists := getUserIDFromContext(c)
 	if !exists {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
 		return
 	}
 
-	// Приведение типов userID (как вы делали в других хендлерах)
-	var userID int
-	switch v := userIDFromContext.(type) {
-	case int:
-		userID = v
-	case uint:
-		userID = int(v)
-	case float64:
-		userID = int(v)
-	default:
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "User ID type error"})
-		return
-	}
-
-	// ИСПРАВЛЕНИЕ: Используем транзакцию для каскадного удаления
-	err := database.DB.Transaction(func(tx *gorm.DB) error {
+	err = database.DB.Transaction(func(tx *gorm.DB) error {
 		var post models.Post
 
 		// 1. Проверяем существование поста и права пользователя
-		// Используем First, чтобы получить модель для дальнейшего использования
 		if err := tx.Where("id = ? AND user_id = ?", postID, userID).First(&post).Error; err != nil {
-			return err // Вернет ошибку, если пост не найден или чужой
+			return err
 		}
 
-		// 2. Удаляем связанные ПАРАГРАФЫ (решает ошибку fk_posts_paragraphs)
+		// 2. Удаляем связанные сущности
 		if err := tx.Where("post_id = ?", post.ID).Delete(&models.Paragraph{}).Error; err != nil {
 			return err
 		}
 
-		// 3. Удаляем связанные ФОТО
 		if err := tx.Where("post_id = ?", post.ID).Delete(&models.PostPhoto{}).Error; err != nil {
 			return err
 		}
 
-		// 4. (Опционально) Удаляем само МЕСТО (Place) и теги места, если нужно.
-		// Судя по логике CreatePost, вы создаете новое Place на каждый пост.
-		// Если не удалить Place, база засорится "осиротевшими" местами.
-
-		// Сначала удаляем связи тегов с местом
 		if err := tx.Where("place_id = ?", post.PlaceID).Delete(&models.PlaceTags{}).Error; err != nil {
 			return err
 		}
 
-		// Удаляем сам Пост
+		// 3. Удаляем сам Пост
 		if err := tx.Delete(&post).Error; err != nil {
 			return err
 		}
 
-		// Удаляем Место (делаем это ПОСЛЕ удаления поста, так как пост ссылается на место)
+		// 4. Удаляем Место
 		if err := tx.Where("id = ?", post.PlaceID).Delete(&models.Place{}).Error; err != nil {
 			return err
 		}
@@ -563,7 +588,6 @@ func DeletePost(c *gin.Context) {
 		if err == gorm.ErrRecordNotFound {
 			c.JSON(http.StatusNotFound, gin.H{"error": "Post not found or unauthorized"})
 		} else {
-			// Логируем ошибку для дебага
 			fmt.Printf("Delete Error: %v\n", err)
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Delete failed", "details": err.Error()})
 		}
@@ -571,4 +595,57 @@ func DeletePost(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{"message": "Post and associated data deleted successfully"})
+}
+
+// post.go (добавить в post package)
+
+// ReportPost обрабатывает запрос на создание новой жалобы на пост
+func ReportPost(c *gin.Context) {
+	// 1. Проверка авторизации и получение UserID
+	userID, exists := c.Get("userID")
+	if !exists {
+		// Middleware должен был это обработать, но для надежности
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
+	// Преобразование userID в uint, если нужно (зависит от вашей реализации AuthMiddleware)
+	reporterID, ok := userID.(uint)
+	if !ok {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "User ID type error"})
+		return
+	}
+
+	// 2. Получение PostID из URL-параметра
+	postIDStr := c.Param("postID")
+	postID, err := strconv.ParseUint(postIDStr, 10, 32)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid post ID format"})
+		return
+	}
+
+	// 3. Получение данных запроса (Reason)
+	var req ReportRequest
+	if err := c.ShouldBindJSON(&req); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+
+	// 4. Создание новой жалобы
+	newComplaint := models.Complaint{
+		UserID: reporterID,
+		PostID: uint(postID),
+		Reason: req.Reason,
+		Status: models.StatusNew,
+	}
+
+	// Генерируем новый UUID (если он не генерируется автоматически gorm'ом)
+	newComplaint.ID = uuid.New()
+
+	// 5. Сохранение в базе данных
+	if err := database.DB.Create(&newComplaint).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create complaint"})
+		return
+	}
+
+	c.JSON(http.StatusCreated, gin.H{"message": "Complaint successfully reported", "complaint_id": newComplaint.ID})
 }

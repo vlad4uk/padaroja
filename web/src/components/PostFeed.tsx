@@ -1,136 +1,163 @@
-// src/components/UserPostsFeed.tsx
+// src/components/PostFeed.tsx
 
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-import './UserPostsFeed.css';
-import { FaRegBookmark } from 'react-icons/fa';
+import './UserPostsFeed.css'; 
+import { FaRegBookmark, FaUserCircle } from 'react-icons/fa'; 
 import { BsGlobeAmericas } from "react-icons/bs";
-import { useNavigate } from 'react-router-dom'; // ✅ Импорт
+import { useNavigate } from 'react-router-dom';
+import PostActionsMenu from './PostActionsMenu.tsx'; 
+import ReportModal from './ReportModal.tsx'; 
 
-// Интерфейс, соответствующий ответу Go (PostResponse)
 interface PostData {
-    id: string; // UUID это строка
+    id: number;
     title: string;
     created_at: string;
     place_name: string;
     tags: string[];
-    preview_text: string; // Текст первого слайда
-    photos: { url: string }[]; // Нам нужен только url от фото
+    preview_text: string;
+    photos: { url: string }[];
     likes_count: number;
+    user_id: number; 
+    username?: string;
 }
 
-const UserPostsFeed: React.FC = () => {
+// 1. Принимаем пропсы поиска
+interface PostFeedProps {
+    searchQuery?: string;
+    tagQuery?: string;
+}
+
+const PostFeed: React.FC<PostFeedProps> = ({ searchQuery = '', tagQuery = '' }) => {
     const [posts, setPosts] = useState<PostData[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
+    const navigate = useNavigate();
 
-    const navigate = useNavigate(); // ✅ Хук навигации
+    // Модальное окно жалобы
+    const [isReportModalOpen, setReportModalOpen] = useState(false);
+    const [reportPostId, setReportPostId] = useState<number | null>(null);
 
+    // 2. Обновленный useEffect с поддержкой поиска и Debounce
     useEffect(() => {
-        const fetchPosts = async () => {
+        // Устанавливаем таймер (Debounce), чтобы не спамить API при каждом нажатии клавиши
+        const delayDebounceFn = setTimeout(async () => {
+            setLoading(true);
             try {
-                const response = await axios.get('http://localhost:8080/api/user/posts', {
-                    withCredentials: true // Обязательно для Auth
+                // Формируем URL с параметрами
+                // Backend ожидает: ?search=...&tags=...
+                const params = new URLSearchParams();
+                if (searchQuery) params.append('search', searchQuery);
+                if (tagQuery) params.append('tags', tagQuery);
+
+                const response = await axios.get(`http://localhost:8080/api/posts?${params.toString()}`, { 
+                    withCredentials: true 
                 });
+                
                 setPosts(response.data || []);
+                setError('');
             } catch (err) {
-                console.error("Ошибка при загрузке постов:", err);
-                setError('Не удалось загрузить публикации');
+                console.error("Ошибка при получении постов:", err);
+                setError('Не удалось загрузить ленту.');
             } finally {
                 setLoading(false);
             }
-        };
+        }, 500); // Задержка 500мс
 
-        fetchPosts();
-    }, []);
+        // Очистка таймера, если пользователь продолжает печатать
+        return () => clearTimeout(delayDebounceFn);
+        
+    }, [searchQuery, tagQuery]); // 👈 Перезапускаем эффект при изменении ввода
 
-    // Функция форматирования даты (из "2025-11-18T12:00:00Z" в "18.11.2025")
-    const formatDate = (dateString: string) => {
-        if (!dateString) return '';
-        const date = new Date(dateString);
-        return date.toLocaleDateString('ru-RU');
+    // --- Обработчики (остаются без изменений) ---
+    const handlePostClick = (id: number) => navigate(`/post/${id}`);
+    const handleEdit = (id: number) => navigate(`/post/edit/${id}`);
+    
+    const handleDelete = async (id: number) => {
+        if (!window.confirm("Удалить этот пост?")) return;
+        try {
+            await axios.delete(`http://localhost:8080/api/posts/${id}`, { withCredentials: true });
+            setPosts(prev => prev.filter(post => post.id !== id));
+        } catch (err) { alert("Ошибка удаления"); }
     };
 
-    if (loading) return <div style={{ padding: '20px', textAlign: 'center' }}>Загрузка публикаций...</div>;
-    if (error) return <div style={{ padding: '20px', textAlign: 'center', color: 'red' }}>{error}</div>;
-    if (!posts || posts.length === 0) return <div style={{ padding: '20px', textAlign: 'center', color: '#888' }}>Публикаций пока нет.</div>;   
-
-    const handlePostClick = (id: string) => {
-        navigate(`/post/${id}`); // ✅ Переход на страницу поста
+    const handleReport = (id: number) => {
+        setReportPostId(id);
+        setReportModalOpen(true);
     };
+
+    const handleSubmitReport = async (reason: string) => {
+        if (!reportPostId) return;
+        try {
+            await axios.post(`http://localhost:8080/api/posts/${reportPostId}/report`, 
+                { reason: reason }, { withCredentials: true }
+            );
+            alert("Жалоба отправлена.");
+            setReportModalOpen(false);
+        } catch (err: any) {
+            alert(err.response?.status === 401 ? "Нужно авторизоваться." : "Ошибка отправки.");
+        }
+    };
+
+    if (loading) return <div style={{ textAlign: 'center', padding: '20px' }}>Загрузка...</div>;
+    if (error) return <div style={{ textAlign: 'center', padding: '20px', color: 'red' }}>{error}</div>;
+    if (posts.length === 0) return <div style={{ textAlign: 'center', padding: '20px', color: '#666' }}>Публикации не найдены.</div>;
 
     return (
         <div className="posts-grid">
-            {posts.map((post) => (
-                <div key={post.id} className="post-card"
-                onClick={() => handlePostClick(post.id)} // ✅ Обработчик клика
-                    style={{ cursor: 'pointer' }}
-                >
-                    
-                    {/* 1. Слайдер фото */}
-                    {/* Если фото есть - показываем их. Если нет - показываем заглушку или ничего */}
-                    <div className="post-photos-slider">
-                        {post.photos && post.photos.length > 0 ? (
-                            post.photos.map((photo, idx) => (
-                                <img 
-                                    key={idx} 
-                                    src={photo.url} 
-                                    alt="Post slide" 
-                                    className="post-photo-img" 
-                                />
-                            ))
-                        ) : (
-                            // Если фото нет, можно показать заглушку, как на дизайне
-                            <div className="post-photo-placeholder">Нет фото</div>
-                        )}
+            {posts.map(post => (
+                <div key={post.id} className="post-card">
+                    <div className="post-header">
+                        <div className="post-user-info">
+                            <FaUserCircle className="user-avatar-placeholder" /> 
+                            <span className="post-username">{post.username || `User #${post.user_id}`}</span>
+                        </div>
+                        <PostActionsMenu 
+                            postID={post.id} 
+                            postAuthorID={post.user_id}
+                            onEdit={handleEdit}
+                            onDelete={handleDelete}
+                            onReport={handleReport}
+                        />
                     </div>
 
-                    {/* 2. Заголовок и дата */}
-                    <div className="post-header-row">
-                        <span className="post-title">{post.title}</span>
-                        <span className="post-date">{formatDate(post.created_at)}</span>
+                    <div className="post-photo-preview" onClick={() => handlePostClick(post.id)}>
+                        <img 
+                            src={post.photos && post.photos.length > 0 ? post.photos[0].url : 'https://via.placeholder.com/400x300?text=Нет+Фото'} 
+                            alt={post.title} 
+                        />
                     </div>
 
-                    {/* 3. Текст публикации (Тизер из 1 слайда) */}
-                    <div className="post-text-content">
-                        {/* Обрезаем текст, если он слишком длинный, для красоты карточки */}
-                        {post.preview_text ? (
-                             post.preview_text.length > 150 
-                                ? post.preview_text.substring(0, 150) + '...' 
-                                : post.preview_text
-                        ) : (
-                            <span style={{color: '#ccc'}}>Нет описания...</span>
-                        )}
+                    <div className="post-content">
+                        <h3 className="post-title" onClick={() => handlePostClick(post.id)}>{post.title}</h3>
+                        <p className="post-text">{post.preview_text}</p>
                     </div>
 
-                    {/* 4. Футер (Место и иконки) */}
                     <div className="post-footer">
                         <div className="post-meta-left">
                             <span className="post-place">{post.place_name}</span>
-                            {/* Теги */}
-                           {/* Теги */}
                             <span className="post-tags">
-                                {(post.tags ?? []).length > 0 
-                                    ? ' #' + (post.tags ?? []).join(' #') 
-                                    : ''}
+                                {(post.tags ?? []).length > 0 ? ' #' + (post.tags ?? []).join(' #') : ''}
                             </span>
                         </div>
-
                         <div className="post-meta-right">
-                            {/* Иконка с цифрой (лайки) */}
-                            <div className="meta-icon-group" style={{ background: 'none', border: '1px solid #333', padding: '2px 4px', borderRadius: '4px' }}>
+                             <div className="meta-icon-group" style={{ background: 'none', border: '1px solid #333', padding: '2px 4px', borderRadius: '4px' }}>
                                 <BsGlobeAmericas style={{ color: '#2c8c98' }} /> 
                                 <span className="map-count">{post.likes_count}</span>
                             </div>
-                            
-                            {/* Закладка */}
-                            <FaRegBookmark className="icon-bookmark" style={{ strokeWidth: '20px' }} /> 
+                            <FaRegBookmark className="icon-bookmark" /> 
                         </div>
                     </div>
                 </div>
             ))}
+            
+            <ReportModal 
+                isOpen={isReportModalOpen}
+                onClose={() => setReportModalOpen(false)}
+                onSubmit={handleSubmitReport}
+            />
         </div>
     );
 };
 
-export default UserPostsFeed;
+export default PostFeed;

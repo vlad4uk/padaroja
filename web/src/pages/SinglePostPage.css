@@ -1,36 +1,37 @@
-/* src/pages/SinglePostPage.css (Исправлены масштаб и пропорции) */
+/* src/pages/SinglePostPage.css (ФИНАЛЬНАЯ ВЕРСИЯ) */
 
 .single-post-container {
     width: 100%;
-    max-width: 900px;
-    margin: 0 auto; /* Центрирует контейнер в main-content */
-    padding: 20px;
+    max-width: 950px; /* Увеличиваем max-width для лучшего масштаба */
+    margin: 0 auto; 
+    padding: 30px 20px;
     position: relative;
     font-family: 'Inter', sans-serif;
 }
 
 /* --- Верхняя область (Название, кнопки) --- */
 .sp-top-meta-area {
-    margin-bottom: 20px;
+    margin-bottom: 25px;
     padding-bottom: 5px;
     border-bottom: 1px solid #f0f0f0;
     position: relative;
 }
 
 .sp-post-title {
-    font-size: 32px; 
+    font-size: 34px; /* Крупный заголовок */
     font-weight: 700;
     color: #333;
     margin: 0;
+    padding-right: 60px; /* Отступ для иконки меню */
 }
 
-/* Дата, Лайки, Место, Теги */
+/* Метаинформация (под заголовком) */
 .sp-meta-info {
     display: flex;
     flex-wrap: wrap;
     align-items: center;
-    gap: 15px; 
-    font-size: 14px;
+    gap: 20px; 
+    font-size: 15px; /* Чуть крупнее */
     color: #666;
     margin-top: 10px;
 }
@@ -39,44 +40,60 @@
 }
 .sp-tags { color: #8c57ff; font-weight: 500; }
 .sp-place-name { display: flex; align-items: center; gap: 5px; color: #333; }
-.sp-icon-bookmark { color: #8c57ff; font-size: 16px; cursor: pointer; }
+.sp-icon-bookmark { color: #8c57ff; font-size: 18px; cursor: pointer; }
 
-/* Кнопки "Изменить" и "Удалить" - в правом верхнем углу */
+
+/* --- Иконка меню действий (PostActionsMenu) --- */
 .sp-author-actions {
     position: absolute;
     top: 0;
     right: 0;
-    display: flex;
-    gap: 10px;
+    z-index: 10;
 }
-
-.action-btn {
-    padding: 6px 12px;
-    border-radius: 20px;
-    font-size: 13px;
-    font-weight: 600;
+.post-menu-button {
+    background: none;
+    border: none;
+    color: #8c57ff; 
+    font-size: 22px; 
     cursor: pointer;
-    transition: background-color 0.2s, color 0.2s;
+    padding: 8px;
+    border-radius: 50%;
+    transition: background 0.2s;
 }
-
-.sp-edit-btn {
-    background: #f0ebff; 
-    color: #8c57ff;
-    border: 1px solid #8c57ff;
+.post-menu-button:hover {
+    background: #f0ebff;
 }
-.sp-edit-btn:hover {
-    background: #8c57ff;
-    color: white;
-}
-
-.sp-delete-btn {
+/* Стилизация выпадающего меню (добавлены к инлайн-стилям в PostActionsMenu.tsx) */
+.menu-dropdown {
+    position: absolute;
+    top: 35px;
+    right: 0;
     background: white;
-    color: #ff4d4f;
-    border: 1px solid #ff4d4f;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    z-index: 20;
+    min-width: 180px;
+    overflow: hidden;
 }
-.sp-delete-btn:hover {
-    background: #ff4d4f;
-    color: white;
+.menu-dropdown button {
+    display: flex;
+    align-items: center;
+    width: 100%;
+    padding: 10px 15px;
+    text-align: left;
+    border: none;
+    background: none;
+    cursor: pointer;
+    font-size: 14px;
+    color: #333;
+    transition: background-color 0.1s;
+}
+.menu-dropdown button:hover {
+    background-color: #f5f5f5;
+}
+.menu-dropdown .action-delete {
+    color: #ff4d4f;
 }
 
 
@@ -85,7 +102,7 @@
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 20px;
+    gap: 30px; /* Увеличиваем зазор */
     margin-top: 30px;
 }
 
@@ -94,11 +111,11 @@
     border: 2px solid #8c57ff; 
     border-radius: 25px; 
     padding: 30px;
-    min-height: 500px; 
+    min-height: 550px; /* Увеличиваем минимальную высоту */
     display: flex;
     flex-direction: column;
     background: #fff;
-    box-shadow: 0 0 15px rgba(140, 87, 255, 0.1); /* Добавим легкую тень */
+    box-shadow: 0 0 15px rgba(140, 87, 255, 0.1); 
 }
 
 .sp-slide-meta {
@@ -118,8 +135,7 @@
 }
 
 .sp-photo-area {
-    /* Меняем пропорции: фото занимает чуть больше места (около 55%) */
-    flex: 1.2; 
+    flex: 1.2; /* Фото занимает чуть больше половины */
     min-width: 40%;
     max-width: 55%; 
     background-color: #f5f5f5; 
@@ -134,9 +150,8 @@
 .sp-photo-img { width: 100%; height: 100%; object-fit: cover; }
 
 .sp-text-area {
-    /* Текст занимает меньше места (около 45%) */
     flex: 1; 
-    font-size: 16px; /* Увеличиваем шрифт для лучшего масштаба */
+    font-size: 17px; /* Крупнее, как на макете */
     line-height: 1.7;
     white-space: pre-wrap;
     max-height: 400px;
@@ -170,14 +185,14 @@
     background: none;
     border: 2px solid #8c57ff;
     border-radius: 50%;
-    width: 50px;
-    height: 50px;
+    width: 55px; /* Чуть крупнее стрелки */
+    height: 55px;
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
     color: #8c57ff;
-    font-size: 24px;
+    font-size: 28px;
     transition: background-color 0.2s, color 0.2s;
 }
 

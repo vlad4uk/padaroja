@@ -1,23 +1,39 @@
 // src/pages/FeedPage.tsx
 
-import React from 'react';
+import React, { useState } from 'react';
 import PostFeed from '../components/PostFeed.tsx';
-import RightFilters from '../components/RightFilters.tsx'; // Новый компонент
+import RightFilters from '../components/RightFilters.tsx';
 import ContentLayout from '../components/ContentLayout.tsx';
-import '../components/UserPostsFeed.css'; // Убедимся, что стили подключены
+import '../components/UserPostsFeed.css';
 
 const FeedPage: React.FC = () => {
+    // 1. Создаем общее состояние здесь
+    const [searchTerm, setSearchTerm] = useState('');
+    const [tagSearch, setTagSearch] = useState('');
+
     return (
         <ContentLayout>
             <div className="feed-page-layout">
-                {/* Левая часть контента: Лента постов */}
+                {/* 2. Передаем значения поиска в PostFeed, 
+                    чтобы он знал, что запрашивать у сервера 
+                */}
                 <div className="feed-content-area">
-                    <PostFeed />
+                    <PostFeed 
+                        searchQuery={searchTerm} 
+                        tagQuery={tagSearch} 
+                    />
                 </div>
 
-                {/* Правая часть контента: Фильтры */}
+                {/* 3. Передаем функции изменения состояния в RightFilters,
+                    чтобы инпуты могли обновлять эти значения
+                */}
                 <div className="feed-filters-area">
-                    <RightFilters />
+                    <RightFilters 
+                        searchTerm={searchTerm}
+                        setSearchTerm={setSearchTerm}
+                        tagSearch={tagSearch}
+                        setTagSearch={setTagSearch}
+                    />
                 </div>
             </div>
         </ContentLayout>

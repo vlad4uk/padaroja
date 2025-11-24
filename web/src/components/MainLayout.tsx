@@ -7,7 +7,7 @@ import ProfileEditForm from './ProfileEditForm.tsx';
 import MapView from './MapView.tsx'; 
 import PostFeed from '../components/PostFeed.tsx'; // ✅ ИМПОРТ
 import '../components/MainLayout.css'; 
-
+import UserPostsList from '../components/UserPostsList.tsx';
 
 type ActiveTab = 'Публикации' | 'Карта' | 'Изменить';
 
@@ -48,7 +48,7 @@ const MainLayout: React.FC = () => {
         return (
             <div className="main-feed">
                 {/* Вставляем наш новый компонент */}
-                <PostFeed />
+                <UserPostsList />
             </div>
         );
     };

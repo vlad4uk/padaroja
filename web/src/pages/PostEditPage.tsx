@@ -1,4 +1,4 @@
-// src/pages/PostEditPage.tsx (Адаптация разметки под новые стили с метками)
+// src/pages/PostEditPage.tsx (ФИНАЛЬНАЯ ВЕРСИЯ)
 
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
@@ -50,6 +50,7 @@ const PostEditPage: React.FC = () => {
                 const paragraphs = data.paragraphs || [];
                 const photos = data.photos || [];
 
+                // Определяем максимальный порядок (чтобы создать слайды в правильном порядке)
                 const maxOrderText = paragraphs.length > 0 ? Math.max(...paragraphs.map((p: any) => p.order)) : 0;
                 const maxOrderPhoto = photos.length > 0 ? Math.max(...photos.map((p: any) => p.order)) : 0;
                 const totalSlides = Math.max(maxOrderText, maxOrderPhoto);
@@ -140,7 +141,6 @@ const PostEditPage: React.FC = () => {
 
         const parsedTags = tags.split(/\s+/).map(t => t.replace('#', '')).filter(t => t.trim() !== "").map(t => t.toLowerCase()); 
         const paragraphs = slides.map((slide, index) => ({ content: slide.text, order: index + 1 })).filter(p => p.content.trim() !== "");
-        // Важно убедиться, что фото также используют order=index+1
         const photos = slides.map((slide, index) => slide.imageUrl ? ({ url: slide.imageUrl, order: index + 1, is_approved: true }) : null).filter((p): p is { url: string; order: number; is_approved: boolean } => p !== null);
 
         const postData = {
@@ -231,20 +231,23 @@ const PostEditPage: React.FC = () => {
                                 
                                 {/* Область Фото */}
                                 <div className="edit-photo-zone">
-                                    {currentSlide.imageUrl ? (
-                                        <div className="photo-container" onClick={triggerFileSelect}>
-                                            <img src={currentSlide.imageUrl} alt="preview" />
-                                            <button className="remove-img-btn" onClick={handleRemoveImage}><FaTimes size={12}/></button>
-                                        </div>
-                                    ) : (
-                                        <div className="photo-container" onClick={triggerFileSelect} style={{ border: '1px dashed #8c57ff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                            <span className="add-photo-label-inner">Фото</span>
-                                            <button className="plus-btn-photo" disabled={currentSlide.isLoadingImage}>
-                                                {currentSlide.isLoadingImage ? '...' : <FaPlus />}
-                                            </button>
-                                        </div>
-                                    )}
-                                    <input type="file" ref={fileInputRef} hidden accept="image/*" onChange={handleImageChange} />
+                                    {/* photo-container должен быть внутри input-wrapper для корректного отображения метки */}
+                                    <div className="input-wrapper" style={{ margin: 0, position: 'relative' }}>
+                                        {currentSlide.imageUrl ? (
+                                            <div className="photo-container" onClick={triggerFileSelect}>
+                                                <img src={currentSlide.imageUrl} alt="preview" />
+                                                <button className="remove-img-btn" onClick={handleRemoveImage}><FaTimes size={12}/></button>
+                                            </div>
+                                        ) : (
+                                            <div className="photo-container" onClick={triggerFileSelect} style={{ border: '1px dashed #8c57ff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                                <span className="add-photo-label-inner">Фото</span>
+                                                <button className="plus-btn-photo" disabled={currentSlide.isLoadingImage}>
+                                                    {currentSlide.isLoadingImage ? '...' : <FaPlus />}
+                                                </button>
+                                            </div>
+                                        )}
+                                        <input type="file" ref={fileInputRef} hidden accept="image/*" onChange={handleImageChange} />
+                                    </div>
                                 </div>
                                 
                                 {/* Кнопка удаления слайда */}
