@@ -191,7 +191,7 @@ func GetFavourites(c *gin.Context) {
 			"place_name":   fav.Post.Place.Name,
 			"tags":         tags,
 			"photos":       fav.Post.Photos,
-			"likes_count":  0,
+			"likes_count":  fav.Post.LikesCount, // Используем сохраненное значение из поста
 			"user_avatar":  userAvatar,
 			"user_name":    userName,
 			"is_favourite": true, // Помечаем как избранное

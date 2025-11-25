@@ -265,7 +265,7 @@ func GetUserPosts(c *gin.Context) {
 			PlaceName:  p.Place.Name,
 			Tags:       tags,
 			Photos:     p.Photos,
-			LikesCount: 0,
+			LikesCount: p.LikesCount,
 			UserAvatar: userAvatar, // Добавляем аватар
 			UserName:   userName,   // Добавляем имя пользователя
 		}
@@ -327,7 +327,7 @@ func GetPost(c *gin.Context) {
 		PreviewText: "",
 		Paragraphs:  post.Paragraphs,
 		Photos:      post.Photos,
-		LikesCount:  12,
+		LikesCount:  post.LikesCount,
 	}
 
 	c.JSON(http.StatusOK, response)
@@ -424,7 +424,7 @@ func GetPublicFeed(c *gin.Context) {
 			PlaceName:  p.Place.Name,
 			Tags:       tags,
 			Photos:     p.Photos,
-			LikesCount: 0,
+			LikesCount: p.LikesCount,
 			UserAvatar: userAvatar,
 			UserName:   userName,
 		}
@@ -722,7 +722,7 @@ func GetUserPostsByID(c *gin.Context) {
 			PlaceName:  p.Place.Name,
 			Tags:       tags,
 			Photos:     p.Photos,
-			LikesCount: 0,
+			LikesCount: p.LikesCount,
 			UserAvatar: userAvatar,
 			UserName:   userName,
 		}

@@ -10,7 +10,7 @@ type Post struct {
 	Title      string    `gorm:"size:200;not null" json:"title"`
 	IsApproved bool      `gorm:"default:false" json:"is_approved"`
 	CreatedAt  time.Time `gorm:"default:CURRENT_TIMESTAMP" json:"created_at"`
-
+	LikesCount int       `gorm:"default:0" json:"likes_count"` // Добавьте это поле
 	// Связи
 	Place      Place       `gorm:"foreignKey:PlaceID;references:ID" json:"place"`
 	Paragraphs []Paragraph `gorm:"foreignKey:PostID" json:"paragraphs"`

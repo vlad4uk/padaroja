@@ -55,7 +55,7 @@ func GetPost(c *gin.Context) {
 		PreviewText: "", // Для одиночного поста превью не обязательно, у нас есть Paragraphs
 		Paragraphs:  post.Paragraphs, // ✅ Отдаем все параграфы
 		Photos:      post.Photos,     // ✅ Отдаем все фото
-		LikesCount:  12,              // Заглушка по дизайну
+		LikesCount:  LikesCount,              
 	}
 
 	c.JSON(http.StatusOK, response)

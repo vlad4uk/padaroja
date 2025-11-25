@@ -1,15 +1,15 @@
-// src/pages/SinglePostPage.tsx (ФИНАЛЬНАЯ ВЕРСИЯ С ФУНКЦИОНАЛОМ ЖАЛОБЫ)
+// src/pages/SinglePostPage.tsx (ОБНОВЛЕННАЯ ВЕРСИЯ С ЛАЙКАМИ И ИЗБРАННЫМ)
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import Sidebar from '../components/Sidebar.tsx';
 import '../components/MainLayout.css';
 import './SinglePostPage.css';
 import PostActionsMenu from '../components/PostActionsMenu.tsx'; 
-import ReportModal from '../components/ReportModal.tsx'; // <-- ДОБАВЛЕНО
+import ReportModal from '../components/ReportModal.tsx';
 import { BsGlobeAmericas } from "react-icons/bs";
-import { FaRegBookmark, FaAngleDoubleLeft, FaAngleDoubleRight } from 'react-icons/fa';
+import { FaRegBookmark, FaBookmark, FaAngleDoubleLeft, FaAngleDoubleRight } from 'react-icons/fa';
 import { useAuth } from '../context/AuthContext.tsx'; 
 
 // --- ИНТЕРФЕЙСЫ ---
@@ -41,12 +41,19 @@ interface PostDetailData {
 const SinglePostPage: React.FC = () => {
     const { id } = useParams<{ id: string }>(); 
     const navigate = useNavigate();
-    const { user } = useAuth(); 
+    const { user, isLoggedIn } = useAuth(); 
 
     const [post, setPost] = useState<PostDetailData | null>(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
     const [currentSlide, setCurrentSlide] = useState(0);
+
+    // --- СТЕЙТЫ ДЛЯ ЛАЙКОВ И ИЗБРАННОГО ---
+    const [isLiked, setIsLiked] = useState(false);
+    const [isFavourite, setIsFavourite] = useState(false);
+    const [likesCount, setLikesCount] = useState(0);
+    const [clickedPostId, setClickedPostId] = useState<number | null>(null);
+    const [clickedLikePostId, setClickedLikePostId] = useState<number | null>(null);
 
     // --- СТЕЙТЫ ДЛЯ МОДАЛЬНОГО ОКНА ЖАЛОБЫ ---
     const [isReportModalOpen, setReportModalOpen] = useState(false);
@@ -65,6 +72,7 @@ const SinglePostPage: React.FC = () => {
     // Преобразуем строковый ID поста в число для PostActionsMenu
     const postIdNum = post ? parseInt(post.id) : 0;
     
+    // Загрузка поста и статусов лайков/избранного
     useEffect(() => {
         const fetchPost = async () => {
             try {
@@ -74,6 +82,11 @@ const SinglePostPage: React.FC = () => {
                 
                 if (response.data) {
                     setPost(response.data);
+                    setLikesCount(response.data.likes_count || 0);
+                    
+                    // Загружаем статусы лайков и избранного
+                    await loadLikeStatus(parseInt(response.data.id));
+                    await loadFavouriteStatus(parseInt(response.data.id));
                 } else {
                     setError('Пост не найден.');
                 }
@@ -90,9 +103,151 @@ const SinglePostPage: React.FC = () => {
             fetchPost();
         }
     }, [id]);
-    
-    // --- ОБРАБОТЧИКИ ДЛЯ PostActionsMenu ---
 
+    // Загрузка статуса лайка
+    const loadLikeStatus = async (postId: number) => {
+        if (!isLoggedIn) return;
+        
+        try {
+            const response = await axios.get<{is_liked: boolean}>(
+                `http://localhost:8080/api/likes/check/${postId}`,
+                { withCredentials: true }
+            );
+            setIsLiked(response.data.is_liked);
+        } catch (err) {
+            console.error("Ошибка при загрузке статуса лайка:", err);
+        }
+    };
+
+    // Загрузка статуса избранного
+    const loadFavouriteStatus = async (postId: number) => {
+        if (!isLoggedIn) return;
+        
+        try {
+            const response = await axios.get<{is_favourite: boolean}>(
+                `http://localhost:8080/api/favourites/check/${postId}`,
+                { withCredentials: true }
+            );
+            setIsFavourite(response.data.is_favourite);
+        } catch (err) {
+            console.error("Ошибка при загрузке статуса избранного:", err);
+        }
+    };
+
+    // Загрузка количества лайков
+    const loadLikesCount = async (postId: number) => {
+        try {
+            const response = await axios.get<{likes_count: number}>(
+                `http://localhost:8080/api/likes/count/${postId}`,
+                { withCredentials: true }
+            );
+            setLikesCount(response.data.likes_count);
+        } catch (err) {
+            console.error("Ошибка при загрузке количества лайков:", err);
+        }
+    };
+
+    // --- ОБРАБОТЧИКИ ЛАЙКОВ ---
+    const toggleLike = async () => {
+        if (!isLoggedIn) {
+            alert("Необходимо авторизоваться");
+            navigate('/login');
+            return;
+        }
+
+        if (!post || clickedLikePostId === postIdNum) return;
+        
+        setClickedLikePostId(postIdNum);
+        
+        // Оптимистичное обновление
+        const wasLiked = isLiked;
+        const newLikesCount = wasLiked ? likesCount - 1 : likesCount + 1;
+        
+        setIsLiked(!wasLiked);
+        setLikesCount(newLikesCount);
+        
+        try {
+            if (wasLiked) {
+                await axios.delete(`http://localhost:8080/api/likes/${postIdNum}`, {
+                    withCredentials: true
+                });
+            } else {
+                await axios.post(`http://localhost:8080/api/likes/${postIdNum}`, {}, {
+                    withCredentials: true
+                });
+            }
+            
+            // Обновляем актуальное количество лайков
+            setTimeout(() => {
+                loadLikesCount(postIdNum);
+                // Дополнительное обновление через секунду для синхронизации
+                setTimeout(() => {
+                    loadLikesCount(postIdNum);
+                }, 1000);
+            }, 100);
+            
+        } catch (err: any) {
+            console.error("Ошибка при обновлении лайка:", err);
+            
+            // Откатываем изменения при ошибке
+            setIsLiked(wasLiked);
+            setLikesCount(likesCount);
+            
+            if (err.response?.status === 401) {
+                alert("Необходимо авторизоваться");
+                navigate('/login');
+            } else {
+                alert("Не удалось обновить лайк");
+            }
+        } finally {
+            setTimeout(() => setClickedLikePostId(null), 300);
+        }
+    };
+
+    // --- ОБРАБОТЧИКИ ИЗБРАННОГО ---
+    const toggleFavourite = async () => {
+        if (!isLoggedIn) {
+            alert("Необходимо авторизоваться");
+            navigate('/login');
+            return;
+        }
+
+        if (!post || clickedPostId === postIdNum) return;
+        
+        setClickedPostId(postIdNum);
+        
+        // Оптимистичное обновление
+        const wasFavourite = isFavourite;
+        setIsFavourite(!wasFavourite);
+        
+        try {
+            if (wasFavourite) {
+                await axios.delete(`http://localhost:8080/api/favourites/${postIdNum}`, {
+                    withCredentials: true
+                });
+            } else {
+                await axios.post(`http://localhost:8080/api/favourites/${postIdNum}`, {}, {
+                    withCredentials: true
+                });
+            }
+        } catch (err: any) {
+            console.error("Ошибка при обновлении закладки:", err);
+            
+            // Откатываем изменения при ошибке
+            setIsFavourite(wasFavourite);
+            
+            if (err.response?.status === 401) {
+                alert("Необходимо авторизоваться");
+                navigate('/login');
+            } else {
+                alert("Не удалось обновить закладку");
+            }
+        } finally {
+            setTimeout(() => setClickedPostId(null), 300);
+        }
+    };
+
+    // --- ОБРАБОТЧИКИ ДЛЯ PostActionsMenu ---
     const handleEdit = (postId: number) => {
         navigate(`/post/edit/${postId}`);
     };
@@ -114,15 +269,12 @@ const SinglePostPage: React.FC = () => {
         }
     };
     
-    // --- ОБРАБОТЧИКИ ЖАЛОБЫ (СКОПИРОВАНЫ ИЗ PostFeed) ---
-
-    // Открывает модальное окно жалобы, сохраняя ID поста
+    // --- ОБРАБОТЧИКИ ЖАЛОБЫ ---
     const handleReport = (id: number) => {
         setReportPostId(id);
         setReportModalOpen(true);
     };
 
-    // Отправляет жалобу на бэкенд
     const handleSubmitReport = async (reason: string) => {
         if (!reportPostId) return;
         try {
@@ -137,7 +289,6 @@ const SinglePostPage: React.FC = () => {
     };
 
     // --- НАВИГАЦИЯ ПО СЛАЙДАМ ---
-
     const handleNext = () => {
         if (currentSlide < maxSlides - 1) {
             setCurrentSlide(currentSlide + 1);
@@ -150,10 +301,7 @@ const SinglePostPage: React.FC = () => {
         }
     };
 
-  
-    
     // --- РЕНДЕРИНГ СОСТОЯНИЙ ---
-
     if (loading) {
         return <div className="loading-state">Загрузка поста...</div>;
     }
@@ -161,7 +309,6 @@ const SinglePostPage: React.FC = () => {
     if (error || !post) {
         return <div className="error-state">Ошибка: {error || 'Пост не найден.'}</div>;
     }
-
 
     return (
         <div className="app-container">
@@ -176,8 +323,42 @@ const SinglePostPage: React.FC = () => {
                         <div className="sp-meta-info">
                             <span className="sp-date">Опубликовано: {new Date(post.created_at).toLocaleDateString()}</span>
                             <span className="sp-place-name"><BsGlobeAmericas size={14}/> {post.place_name}</span>
-                            <span className="sp-likes-count">Лайков: {post.likes_count}</span>
-                            <FaRegBookmark className="sp-icon-bookmark" />
+                            
+                            {/* Лайки с возможностью клика */}
+                            <span 
+                                className="sp-likes-count"
+                                onClick={toggleLike}
+                                style={{
+                                    cursor: isLoggedIn && clickedLikePostId !== postIdNum ? 'pointer' : 'default',
+                                    opacity: clickedLikePostId === postIdNum ? 0.6 : 1,
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '5px'
+                                }}
+                            >
+                                <BsGlobeAmericas 
+                                    size={14} 
+                                    style={{ 
+                                        color: isLiked ? '#e74c3c' : '#666' 
+                                    }} 
+                                />
+                                Лайков: {likesCount}
+                            </span>
+                            
+                            {/* Закладка с возможностью клика */}
+                            <div 
+                                onClick={toggleFavourite}
+                                style={{
+                                    cursor: isLoggedIn && clickedPostId !== postIdNum ? 'pointer' : 'default',
+                                    opacity: clickedPostId === postIdNum ? 0.6 : 1
+                                }}
+                            >
+                                {isFavourite ? (
+                                    <FaBookmark className="sp-icon-bookmark" style={{ color: '#ffd700' }} />
+                                ) : (
+                                    <FaRegBookmark className="sp-icon-bookmark" />
+                                )}
+                            </div>
                             
                             <span className="sp-tags">
                                 {(post.tags ?? []).length > 0 
@@ -194,7 +375,7 @@ const SinglePostPage: React.FC = () => {
                                     postAuthorID={post.user_id}
                                     onEdit={handleEdit}
                                     onDelete={handleDelete}
-                                    onReport={handleReport} // <-- ИСПОЛЬЗУЕТ ФУНКЦИОНАЛ ЖАЛОБЫ
+                                    onReport={handleReport}
                                 />
                             </div>
                         )}

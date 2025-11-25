@@ -136,21 +136,24 @@ const PostFeed: React.FC<PostFeedProps> = ({
             );
             
             const results = await Promise.all(countPromises);
-            const updatedPosts = [...posts];
             
+            // Создаем мапу для обновления постов
+            const likesCountMap = new Map<number, number>();
             results.forEach((result, index) => {
                 const postId = postIds[index];
-                const postIndex = updatedPosts.findIndex(p => p.id === postId);
-                if (postIndex !== -1) {
-                    updatedPosts[postIndex].likes_count = result.data.likes_count;
-                }
+                likesCountMap.set(postId, result.data.likes_count);
             });
             
-            setPosts(updatedPosts);
+            // Обновляем посты
+            setPosts(prev => prev.map(post => 
+                likesCountMap.has(post.id) 
+                    ? { ...post, likes_count: likesCountMap.get(post.id)! }
+                    : post
+            ));
         } catch (err) {
             console.error("Ошибка при загрузке количества лайков:", err);
         }
-    }, [posts]);
+    }, []);
 
     // Загрузка постов
     const loadPosts = useCallback(async () => {
@@ -295,25 +298,13 @@ const PostFeed: React.FC<PostFeedProps> = ({
         // Оптимистичное обновление UI
         const wasLiked = likes.has(postId);
         const newLikes = new Set<number>(likes);
-        const currentPosts = [...posts];
-        const postIndex = currentPosts.findIndex(p => p.id === postId);
         
         if (wasLiked) {
             newLikes.delete(postId);
-            // Уменьшаем счетчик лайков
-            if (postIndex !== -1) {
-                currentPosts[postIndex].likes_count = Math.max(0, currentPosts[postIndex].likes_count - 1);
-            }
         } else {
             newLikes.add(postId);
-            // Увеличиваем счетчик лайков
-            if (postIndex !== -1) {
-                currentPosts[postIndex].likes_count += 1;
-            }
         }
-        
         setLikes(newLikes);
-        setPosts(currentPosts);
         
         try {
             if (wasLiked) {
@@ -333,9 +324,12 @@ const PostFeed: React.FC<PostFeedProps> = ({
                 });
             }
             
-            // После успешного действия обновляем актуальное количество лайков
+            // После успешного действия обновляем актуальное количество лайков для ВСЕХ постов
             setTimeout(() => {
-                loadLikesCounts([postId]);
+                const allPostIds = posts.map(post => post.id);
+                if (allPostIds.length > 0) {
+                    loadLikesCounts(allPostIds);
+                }
             }, 100);
             
         } catch (err: any) {
@@ -343,23 +337,7 @@ const PostFeed: React.FC<PostFeedProps> = ({
             
             // Откатываем оптимистичное обновление при ошибке
             const revertedLikes = new Set<number>(likes);
-            const revertedPosts = [...posts];
-            const revertIndex = revertedPosts.findIndex(p => p.id === postId);
-            
-            if (wasLiked) {
-                revertedLikes.add(postId);
-                if (revertIndex !== -1) {
-                    revertedPosts[revertIndex].likes_count += 1;
-                }
-            } else {
-                revertedLikes.delete(postId);
-                if (revertIndex !== -1) {
-                    revertedPosts[revertIndex].likes_count = Math.max(0, revertedPosts[revertIndex].likes_count - 1);
-                }
-            }
-            
             setLikes(revertedLikes);
-            setPosts(revertedPosts);
             
             if (err.response?.status === 401) {
                 alert("Необходимо авторизоваться");
