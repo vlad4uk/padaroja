@@ -42,10 +42,11 @@ func ConnectDB() {
 		&models.Post{},
 		&models.Paragraph{},
 		&models.PostPhoto{},
-		// Важно: PlaceTags и Tags должны мигрироваться вместе с Place, если есть FK
 		&models.PlaceTags{},
 		&models.Tags{},
 		&models.Complaint{},
+		&models.Favourite{},
+		&models.Like{},
 	)
 	if err != nil {
 		// Убираем лишний .Error(), log.Fatal принимает ошибку напрямую

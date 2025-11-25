@@ -6,6 +6,8 @@ import (
 
 	// Добавил, если понадобится конвертация ID
 	auth "tourist-blog/internal/handlers/auth"
+	favourite "tourist-blog/internal/handlers/favourite"
+	like "tourist-blog/internal/handlers/like"
 	"tourist-blog/internal/handlers/moderation"
 	"tourist-blog/internal/handlers/post"
 	profile "tourist-blog/internal/handlers/profile"
@@ -122,6 +124,29 @@ func main() {
 		modRoutes.PUT("/complaints/:complaintID/status", moderation.UpdateComplaintStatus)
 		modRoutes.PUT("/posts/:postID/visibility", moderation.TogglePostVisibility) // ✅ НОВЫЙ ЭНДПОИНТ
 		modRoutes.GET("/posts/:postID/complaints", moderation.GetPostComplaints)
+	}
+
+	favouriteRoutes := api.Group("/favourites")
+	{
+		favouriteRoutes.Use(middleware.AuthMiddleware())
+
+		favouriteRoutes.POST("/:postID", favourite.AddToFavourites)
+		favouriteRoutes.DELETE("/:postID", favourite.RemoveFromFavourites)
+		favouriteRoutes.GET("", favourite.GetFavourites)
+		favouriteRoutes.GET("/check/:postID", favourite.CheckFavourite)
+
+		favouriteRoutes.GET("/check-multiple", favourite.CheckMultipleFavourites)
+	}
+
+	likeRoutes := api.Group("/likes")
+	{
+		likeRoutes.Use(middleware.AuthMiddleware())
+
+		likeRoutes.POST("/:postID", like.LikePost)
+		likeRoutes.DELETE("/:postID", like.UnlikePost)
+		likeRoutes.GET("", like.GetUserLikes)
+		likeRoutes.GET("/check/:postID", like.CheckLike)
+		likeRoutes.GET("/count/:postID", like.GetPostLikesCount) // публичный эндпоинт
 	}
 
 	// Запуск сервера

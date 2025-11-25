@@ -11,6 +11,8 @@ import { AuthProvider, useAuth } from './context/AuthContext.tsx';
 import SinglePostPage from './pages/SinglePostPage.tsx'; 
 import PostEditPage from './pages/PostEditPage.tsx';
 import ModeratorPage from './pages/ModeratorPage.tsx'; 
+import FavouritesPage from '../src/components/FavouritesPage.tsx';
+import LikesPage from '../src/components/LikesPage.tsx';
 
 // ==========================================================
 // КОМПОНЕНТ ЗАЩИТЫ МАРШРУТОВ (ProtectedRoute)
@@ -89,6 +91,24 @@ const App: React.FC = () => {
                </ModeratorRoute>
             } />  
          
+            <Route 
+                path="/bookmarks" 
+                element={
+                    <ProtectedRoute>
+                        <FavouritesPage />
+                    </ProtectedRoute>
+                } 
+            />
+
+            <Route 
+                path="/subscriptions" 
+                element={
+                    <ProtectedRoute>
+                        <LikesPage />
+                    </ProtectedRoute>
+                } 
+            />
+
            {/* МАРШРУТ 2: Главная страница */}
            <Route path="/" element={<FeedPage />} />
          </Routes>

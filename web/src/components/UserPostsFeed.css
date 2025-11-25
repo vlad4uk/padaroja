@@ -545,3 +545,27 @@
     text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
     transition: color 0.2s;
 }
+
+.icon-bookmark-new {
+    transition: all 0.2s ease;
+}
+
+.icon-bookmark-new:hover {
+    transform: scale(1.1);
+}
+
+.icon-like-new {
+    transition: all 0.2s ease;
+    display: flex;
+    align-items: center;
+}
+
+.icon-like-new:hover {
+    transform: scale(1.1);
+}
+
+.post-meta-right-new {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}

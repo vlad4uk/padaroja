@@ -17,7 +17,7 @@ interface NavItem {
 const navItemsList: NavItem[] = [
     { name: 'Профиль', icon: FaUser, link: '/profile', authRequired: true },
     { name: 'Поиск', icon: FaSearch, link: '/search', authRequired: false },
-    { name: 'Подписки', icon: FaListAlt, link: '/subscriptions', authRequired: true },
+    { name: 'Мне нравится', icon: FaListAlt, link: '/subscriptions', authRequired: true },
     { name: 'Закладки', icon: FaBookmark, link: '/bookmarks', authRequired: true },
     { name: 'Уведомления', icon: FaBell, link: '/notifications', authRequired: true },
     { name: 'Создать Пост', icon: FaPlusSquare, link: '/post/new', authRequired: true },
