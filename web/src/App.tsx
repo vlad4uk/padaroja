@@ -10,6 +10,7 @@ import FeedPage from './components/FeedPage.tsx';
 import { AuthProvider, useAuth } from './context/AuthContext.tsx'; 
 import SinglePostPage from './pages/SinglePostPage.tsx'; 
 import PostEditPage from './pages/PostEditPage.tsx';
+import ModeratorPage from './pages/ModeratorPage.tsx'; 
 
 // ==========================================================
 // КОМПОНЕНТ ЗАЩИТЫ МАРШРУТОВ (ProtectedRoute)
@@ -24,7 +25,21 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
   return <>{children}</>;
 };
 // ==========================================================
+// --- ModeratorRoute (ТОЛЬКО ДЛЯ АДМИНА) 🆕 ---
+const ModeratorRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+    const { isLoggedIn, user } = useAuth();
+    
+    if (!isLoggedIn) {
+        return <Navigate to="/login" replace />;
+    }
+    
+    // Если роль не 2 (не модератор), кидаем на главную (или страницу 403)
+    if (user?.role_id !== 2) {
+        return <Navigate to="/" replace />;
+    }
 
+    return <>{children}</>;
+};
 
 const App: React.FC = () => {
   return (
@@ -57,6 +72,13 @@ const App: React.FC = () => {
                </ProtectedRoute>
              } 
            />
+
+            <Route path="/admin" element={
+               <ModeratorRoute>
+                   <ModeratorPage />
+               </ModeratorRoute>
+            } />  
+
            
            <Route 
              path="/profile" 

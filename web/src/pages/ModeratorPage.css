@@ -1,0 +1,160 @@
+/* src/pages/ModeratorPage.css */
+
+.moderator-container {
+    width: 100%;
+    height: 100%;
+    background-color: #fff;
+    border-radius: 0; 
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+/* --- Верхняя панель (Фиолетовая) --- */
+.mod-header-tabs {
+    background-color: #696cff;
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    padding: 0;
+}
+
+.mod-tab {
+    flex: 1;
+    text-align: center;
+    padding: 20px 0;
+    color: white;
+    font-weight: 700;
+    font-size: 16px;
+    cursor: pointer;
+    border-bottom: 4px solid transparent;
+    transition: background 0.2s;
+}
+
+.mod-tab:hover {
+    background-color: #696cff;
+}
+
+.mod-tab.active {
+    border-bottom: 2px solid #000000;
+}
+
+/* --- Таблица --- */
+.mod-content {
+    padding: 20px;
+    flex: 1;
+    overflow-y: auto;
+}
+
+.mod-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.mod-table th {
+    text-align: left;
+    font-weight: 700;
+    padding: 15px 10px;
+    border-bottom: 2px solid #eee;
+    font-size: 14px;
+}
+
+.mod-table td {
+    padding: 15px 10px;
+    border-bottom: 1px solid #f0f0f0;
+    font-size: 14px;
+    vertical-align: middle;
+}
+
+/* Стили для строк с жалобами */
+.complaint-row {
+    transition: background-color 0.2s ease;
+    cursor: pointer;
+}
+
+.complaint-row:hover {
+    background-color: #f8f9fa;
+}
+
+.complaint-reason {
+    max-width: 200px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    cursor: help;
+}
+
+/* Стили для статусов постов */
+.post-status {
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+}
+
+.post-hidden {
+    background: #ff6b6b;
+    color: white;
+}
+
+.post-visible {
+    background: #51cf66;
+    color: white;
+}
+
+/* Стили для кнопок видимости */
+.visibility-btn {
+    padding: 6px 12px;
+    border: none;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+}
+
+.btn-visible {
+    background: #ff6b6b;
+    color: white;
+}
+
+.btn-visible:hover {
+    background: #ff5252;
+}
+
+.btn-hidden {
+    background: #51cf66;
+    color: white;
+}
+
+.btn-hidden:hover {
+    background: #40c057;
+}
+
+/* Стили для селекта статуса */
+.status-select {
+    padding: 6px 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    background: white;
+    cursor: pointer;
+    font-size: 14px;
+}
+
+.status-select:focus {
+    outline: none;
+    border-color: #696cff;
+}
+
+/* Состояния загрузки и ошибок */
+.loading-state, .error-state, .no-data {
+    text-align: center;
+    padding: 40px;
+    font-size: 16px;
+    color: #666;
+}
+
+.error-state {
+    color: #e74c3c;
+}

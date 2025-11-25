@@ -6,7 +6,7 @@ import '../components/MainLayout.css';
 
 const DEFAULT_AVATAR = 'https://i.pravatar.cc/150';
 
-type TabType = 'Публикации' | 'Карта' | 'Изменить';
+type TabType = 'Публикации' | 'Карта' | 'Изменить' | '0 подписчиков' | '0 подписок';
 
 // ✅ НОВЫЙ ИНТЕРФЕЙС ПРОПСОВ
 interface ProfileHeaderProps {
@@ -19,7 +19,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({ onTabChange }) => {
     const [activeTab, setActiveTab] = useState<TabType>('Публикации');
     const [lineStyle, setLineStyle] = useState({ left: 0, width: 0 });
     
-    const tabs: TabType[] = ['Публикации', 'Карта', 'Изменить'];
+    const tabs: TabType[] = ['Публикации', 'Карта', 'Изменить', '0 подписчиков', '0 подписок'];
     
     const tabRefs = useRef<(HTMLButtonElement | null)[]>([]); 
     const tabsContainerRef = useRef<HTMLDivElement>(null); 

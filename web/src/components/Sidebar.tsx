@@ -1,8 +1,7 @@
-// src/components/Sidebar.tsx (ОБНОВЛЕННЫЙ КОД)
+// src/components/Sidebar.tsx
 
-import React, { useState, useEffect } from 'react';
-// Оставляем react-icons, т.к. мы их стилизовали в CSS
-import { FaUser, FaSearch, FaListAlt, FaBookmark, FaBell, FaSignOutAlt, FaSignInAlt, FaUserPlus, FaCog, FaPlusSquare } from 'react-icons/fa';
+import React from 'react';
+import { FaUser, FaSearch, FaListAlt, FaBookmark, FaBell, FaSignOutAlt, FaSignInAlt, FaUserPlus, FaCog, FaPlusSquare, FaAdn } from 'react-icons/fa';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.tsx'; 
 import '../components/MainLayout.css'; 
@@ -12,6 +11,7 @@ interface NavItem {
     icon: React.ElementType;
     link: string;
     authRequired: boolean;
+    adminOnly?: boolean; // 👈 Добавили флаг для админа/модератора
 }
 
 const navItemsList: NavItem[] = [
@@ -20,23 +20,23 @@ const navItemsList: NavItem[] = [
     { name: 'Подписки', icon: FaListAlt, link: '/subscriptions', authRequired: true },
     { name: 'Закладки', icon: FaBookmark, link: '/bookmarks', authRequired: true },
     { name: 'Уведомления', icon: FaBell, link: '/notifications', authRequired: true },
-   // ✅ ДОБАВЛЕНИЕ НОВОГО ПУНКТА МЕНЮ
     { name: 'Создать Пост', icon: FaPlusSquare, link: '/post/new', authRequired: true },
+    // 👇 Этот пункт теперь помечен как adminOnly
+    { name: 'Админ Панель', icon: FaAdn, link: '/admin', authRequired: true, adminOnly: true },
 ];
 
 const Sidebar: React.FC = () => { 
-    const { isLoggedIn, logout, checkAuth } = useAuth();
+    const { isLoggedIn, logout, user } = useAuth(); // 👈 Достаем user чтобы проверить роль
     const navigate = useNavigate();
     const location = useLocation();
-    
-    useEffect(() => {
-        // checkAuth(); // 💡 Примечание: checkAuth уже вызывается в AuthProvider, возможно, здесь он не нужен
-    }, [checkAuth]);
     
     const handleLogout = async () => {
         await logout(); 
         navigate('/login'); 
     };
+
+    // Проверка: является ли юзер модератором (предположим role_id === 2)
+    const isModerator = user?.role_id === 2;
 
     return (
         <aside className="sidebar">
@@ -46,7 +46,14 @@ const Sidebar: React.FC = () => {
             
             <nav className="sidebar-nav-list">
                 {navItemsList
-                    .filter(item => !item.authRequired || isLoggedIn)
+                    .filter(item => {
+                        // 1. Если требуется авторизация и юзер не вошел -> скрываем
+                        if (item.authRequired && !isLoggedIn) return false;
+                        // 2. Если это пункт для админа, но юзер не админ -> скрываем
+                        if (item.adminOnly && !isModerator) return false;
+                        
+                        return true;
+                    })
                     .map((item) => (
                     <Link 
                         key={item.link}
@@ -59,23 +66,13 @@ const Sidebar: React.FC = () => {
                     </Link>
                 ))}
             </nav>
-
-            {/* 💡 НОВАЯ КНОПКА "Твитнуть" (стилизуется как save-button из вашего CSS) */}
-            <button 
-                className="save-button" 
-                style={{ width: '90%', padding: '16px', marginTop: '15px', borderRadius: '9999px', fontSize: '17px' }}
-            >
-                Написать
-            </button>
             
-            {/* Блок "Настройки" / "Выход" (теперь прижат к низу благодаря margin-top: auto в CSS) */}
             <div className="sidebar-nav-list bottom-nav"> 
                 {isLoggedIn ? (
                     <>
                         <Link 
                             to={'/settings'}
                             className={`sidebar-nav-item ${location.pathname === '/settings' ? 'active' : ''}`}
-                            title={'Настройки'}
                         >
                             <FaCog className="sidebar-icon" />
                             Настройки
@@ -83,8 +80,7 @@ const Sidebar: React.FC = () => {
                         <div 
                             className="sidebar-nav-item" 
                             onClick={handleLogout} 
-                            style={{ color: 'red', fontWeight: 600 }}
-                            title={'Выход'}
+                            style={{ color: 'red', fontWeight: 600, cursor: 'pointer' }}
                         >
                             <FaSignOutAlt className="sidebar-icon" />
                             Выход

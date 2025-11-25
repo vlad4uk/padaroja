@@ -22,6 +22,6 @@ type UserResponse struct {
 	ID        int    `json:"id"`
 	Username  string `json:"username"`
 	Email     string `json:"email"`
-	RoleID    int    `json:"roleID"`
+	RoleID    int    `json:"role_id"`
 	IsBlocked bool   `json:"is_blocked"`
 }

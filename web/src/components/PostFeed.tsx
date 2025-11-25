@@ -2,8 +2,8 @@
 
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-import './UserPostsFeed.css'; 
-import { FaRegBookmark, FaUserCircle } from 'react-icons/fa'; 
+import './UserPostsFeed.css'; // Используем CSS, общий для лент постов
+import { FaRegBookmark } from 'react-icons/fa'; // FaUserCircle удален
 import { BsGlobeAmericas } from "react-icons/bs";
 import { useNavigate } from 'react-router-dom';
 import PostActionsMenu from './PostActionsMenu.tsx'; 
@@ -19,10 +19,9 @@ interface PostData {
     photos: { url: string }[];
     likes_count: number;
     user_id: number; 
-    username?: string;
+    username?: string; // Остается, но не используется в дизайне
 }
 
-// 1. Принимаем пропсы поиска
 interface PostFeedProps {
     searchQuery?: string;
     tagQuery?: string;
@@ -38,14 +37,18 @@ const PostFeed: React.FC<PostFeedProps> = ({ searchQuery = '', tagQuery = '' }) 
     const [isReportModalOpen, setReportModalOpen] = useState(false);
     const [reportPostId, setReportPostId] = useState<number | null>(null);
 
+    // Функция форматирования даты (из "2025-11-18T12:00:00Z" в "18.11.2025")
+    const formatDate = (dateString: string) => {
+        if (!dateString) return '';
+        const date = new Date(dateString);
+        return date.toLocaleDateString('ru-RU');
+    };
+
     // 2. Обновленный useEffect с поддержкой поиска и Debounce
     useEffect(() => {
-        // Устанавливаем таймер (Debounce), чтобы не спамить API при каждом нажатии клавиши
         const delayDebounceFn = setTimeout(async () => {
             setLoading(true);
             try {
-                // Формируем URL с параметрами
-                // Backend ожидает: ?search=...&tags=...
                 const params = new URLSearchParams();
                 if (searchQuery) params.append('search', searchQuery);
                 if (tagQuery) params.append('tags', tagQuery);
@@ -62,14 +65,13 @@ const PostFeed: React.FC<PostFeedProps> = ({ searchQuery = '', tagQuery = '' }) 
             } finally {
                 setLoading(false);
             }
-        }, 500); // Задержка 500мс
+        }, 500); 
 
-        // Очистка таймера, если пользователь продолжает печатать
         return () => clearTimeout(delayDebounceFn);
         
-    }, [searchQuery, tagQuery]); // 👈 Перезапускаем эффект при изменении ввода
+    }, [searchQuery, tagQuery]);
 
-    // --- Обработчики (остаются без изменений) ---
+    // --- Обработчики ---
     const handlePostClick = (id: number) => navigate(`/post/${id}`);
     const handleEdit = (id: number) => navigate(`/post/edit/${id}`);
     
@@ -106,12 +108,16 @@ const PostFeed: React.FC<PostFeedProps> = ({ searchQuery = '', tagQuery = '' }) 
     return (
         <div className="posts-grid">
             {posts.map(post => (
-                <div key={post.id} className="post-card">
-                    <div className="post-header">
-                        <div className="post-user-info">
-                            <FaUserCircle className="user-avatar-placeholder" /> 
-                            <span className="post-username">{post.username || `User #${post.user_id}`}</span>
-                        </div>
+                <div 
+                    key={post.id} 
+                    className="post-card"
+                    // Обработчик клика на всю карточку для перехода
+                    onClick={() => handlePostClick(post.id)} 
+                    style={{ cursor: 'pointer' }}
+                >
+                    
+                    {/* КНОПКА ДЕЙСТВИЙ (ОСТАЕТСЯ, но стилизуется через CSS, чтобы не мешать общему потоку) */}
+                    <div className="post-actions-overlay" onClick={(e) => e.stopPropagation()}>
                         <PostActionsMenu 
                             postID={post.id} 
                             postAuthorID={post.user_id}
@@ -121,36 +127,63 @@ const PostFeed: React.FC<PostFeedProps> = ({ searchQuery = '', tagQuery = '' }) 
                         />
                     </div>
 
-                    <div className="post-photo-preview" onClick={() => handlePostClick(post.id)}>
-                        <img 
-                            src={post.photos && post.photos.length > 0 ? post.photos[0].url : 'https://via.placeholder.com/400x300?text=Нет+Фото'} 
-                            alt={post.title} 
-                        />
+                    {/* 1. Слайдер фото (Копируем из UserPostsList.tsx) */}
+                    <div className="post-photos-slider">
+                        {post.photos && post.photos.length > 0 ? (
+                            post.photos.map((photo, idx) => (
+                                <img 
+                                    key={idx} 
+                                    src={photo.url} 
+                                    alt="Post slide" 
+                                    className="post-photo-img" 
+                                />
+                            ))
+                        ) : (
+                            <div className="post-photo-placeholder">Нет фото</div>
+                        )}
                     </div>
 
-                    <div className="post-content">
-                        <h3 className="post-title" onClick={() => handlePostClick(post.id)}>{post.title}</h3>
-                        <p className="post-text">{post.preview_text}</p>
+                    {/* 2. Заголовок и дата (Копируем из UserPostsList.tsx) */}
+                    <div className="post-header-row">
+                        <span className="post-title">{post.title}</span>
+                        <span className="post-date">{formatDate(post.created_at)}</span>
                     </div>
 
+                    {/* 3. Текст публикации (Тизер) (Копируем из UserPostsList.tsx) */}
+                    <div className="post-text-content">
+                        {post.preview_text ? (
+                             post.preview_text.length > 150 
+                                ? post.preview_text.substring(0, 150) + '...' 
+                                : post.preview_text
+                        ) : (
+                            <span style={{color: '#ccc'}}>Нет описания...</span>
+                        )}
+                    </div>
+
+                    {/* 4. Футер (Место и иконки) (Копируем из UserPostsList.tsx) */}
                     <div className="post-footer">
                         <div className="post-meta-left">
                             <span className="post-place">{post.place_name}</span>
                             <span className="post-tags">
-                                {(post.tags ?? []).length > 0 ? ' #' + (post.tags ?? []).join(' #') : ''}
+                                {(post.tags ?? []).length > 0 
+                                    ? ' #' + (post.tags ?? []).join(' #') 
+                                    : ''}
                             </span>
                         </div>
+
                         <div className="post-meta-right">
-                             <div className="meta-icon-group" style={{ background: 'none', border: '1px solid #333', padding: '2px 4px', borderRadius: '4px' }}>
+                            <div className="meta-icon-group" style={{ background: 'none', border: '1px solid #333', padding: '2px 4px', borderRadius: '4px' }}>
                                 <BsGlobeAmericas style={{ color: '#2c8c98' }} /> 
                                 <span className="map-count">{post.likes_count}</span>
                             </div>
+                            
                             <FaRegBookmark className="icon-bookmark" /> 
                         </div>
                     </div>
                 </div>
             ))}
             
+            {/* Модальное окно жалобы (Остается) */}
             <ReportModal 
                 isOpen={isReportModalOpen}
                 onClose={() => setReportModalOpen(false)}

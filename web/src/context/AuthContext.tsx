@@ -12,6 +12,7 @@ interface User {
     // ✅ ДОБАВЛЕНЫ ПОЛЯ
     bio: string;
     image_url: string; 
+    role_id: number;
 }
 
 interface AuthContextType {
@@ -48,6 +49,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
             username: userData.username,
             bio: userData.bio || '',           // Установка дефолта, если нет
             image_url: userData.image_url || '', // Установка дефолта, если нет
+            role_id: userData.role_id || 1,
         });
     };
 
@@ -64,6 +66,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
                 username: userData.username,
                 bio: userData.bio || '',
                 image_url: userData.image_url || '',
+                role_id: userData.role_id || 1,
             });
 
         } catch (error) {

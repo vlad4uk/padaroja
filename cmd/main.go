@@ -6,6 +6,7 @@ import (
 
 	// Добавил, если понадобится конвертация ID
 	auth "tourist-blog/internal/handlers/auth"
+	"tourist-blog/internal/handlers/moderation"
 	"tourist-blog/internal/handlers/post"
 	profile "tourist-blog/internal/handlers/profile"
 	"tourist-blog/internal/middleware"
@@ -107,6 +108,16 @@ func main() {
 
 		// 5. Удаление (защищено) - DELETE /api/posts/:postID
 		postRoutes.DELETE("/:postID", middleware.AuthMiddleware(), post.DeletePost)
+	}
+
+	modRoutes := api.Group("/mod")
+	{
+		modRoutes.Use(middleware.AuthMiddleware())
+
+		modRoutes.GET("/complaints", moderation.GetComplaints)
+		modRoutes.PUT("/complaints/:complaintID/status", moderation.UpdateComplaintStatus)
+		modRoutes.PUT("/posts/:postID/visibility", moderation.TogglePostVisibility) // ✅ НОВЫЙ ЭНДПОИНТ
+		modRoutes.GET("/posts/:postID/complaints", moderation.GetPostComplaints)
 	}
 
 	// Запуск сервера

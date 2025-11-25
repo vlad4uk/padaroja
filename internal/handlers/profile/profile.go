@@ -45,8 +45,9 @@ func GetUserProfile(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"id":        user.ID,
 		"username":  user.Username,
-		"bio":       user.Bio,      // ✅ ДОБАВЛЕНО
-		"image_url": user.ImageUrl, // ✅ ИСПРАВЛЕНО: Теперь 'image_url' (согласно JSON-тегу)
+		"bio":       user.Bio, // ✅ ДОБАВЛЕНО
+		"image_url": user.ImageUrl,
+		"roleId":    user.RoleID, // ✅ ИСПРАВЛЕНО: Теперь 'image_url' (согласно JSON-тегу)
 	})
 }
 

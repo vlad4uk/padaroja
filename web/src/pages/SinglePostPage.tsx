@@ -1,4 +1,4 @@
-// src/pages/SinglePostPage.tsx (ФИНАЛЬНАЯ ВЕРСИЯ)
+// src/pages/SinglePostPage.tsx (ФИНАЛЬНАЯ ВЕРСИЯ С ФУНКЦИОНАЛОМ ЖАЛОБЫ)
 
 import React, { useEffect, useState } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
@@ -7,6 +7,7 @@ import Sidebar from '../components/Sidebar.tsx';
 import '../components/MainLayout.css';
 import './SinglePostPage.css';
 import PostActionsMenu from '../components/PostActionsMenu.tsx'; 
+import ReportModal from '../components/ReportModal.tsx'; // <-- ДОБАВЛЕНО
 import { BsGlobeAmericas } from "react-icons/bs";
 import { FaRegBookmark, FaAngleDoubleLeft, FaAngleDoubleRight } from 'react-icons/fa';
 import { useAuth } from '../context/AuthContext.tsx'; 
@@ -47,14 +48,21 @@ const SinglePostPage: React.FC = () => {
     const [error, setError] = useState('');
     const [currentSlide, setCurrentSlide] = useState(0);
 
+    // --- СТЕЙТЫ ДЛЯ МОДАЛЬНОГО ОКНА ЖАЛОБЫ ---
+    const [isReportModalOpen, setReportModalOpen] = useState(false);
+    const [reportPostId, setReportPostId] = useState<number | null>(null);
+
     const paragraphs = post?.paragraphs || [];
     const photos = post?.photos || [];
+    // Определяем максимальное количество слайдов
     const maxSlides = Math.max(paragraphs.length, photos.length); 
     
     const currentOrder = currentSlide + 1;
+    // Находим текст и фото, соответствующие текущему порядку (слайду)
     const currentText = paragraphs.find(p => p.order === currentOrder);
     const currentPhoto = photos.find(p => p.order === currentOrder);
     
+    // Преобразуем строковый ID поста в число для PostActionsMenu
     const postIdNum = post ? parseInt(post.id) : 0;
     
     useEffect(() => {
@@ -106,8 +114,26 @@ const SinglePostPage: React.FC = () => {
         }
     };
     
-    const handleReport = (postId: number) => {
-        alert(`Функционал жалобы на пост #${postId} пока не реализован.`);
+    // --- ОБРАБОТЧИКИ ЖАЛОБЫ (СКОПИРОВАНЫ ИЗ PostFeed) ---
+
+    // Открывает модальное окно жалобы, сохраняя ID поста
+    const handleReport = (id: number) => {
+        setReportPostId(id);
+        setReportModalOpen(true);
+    };
+
+    // Отправляет жалобу на бэкенд
+    const handleSubmitReport = async (reason: string) => {
+        if (!reportPostId) return;
+        try {
+            await axios.post(`http://localhost:8080/api/posts/${reportPostId}/report`, 
+                { reason: reason }, { withCredentials: true }
+            );
+            alert("Жалоба отправлена.");
+            setReportModalOpen(false);
+        } catch (err: any) {
+            alert(err.response?.status === 401 ? "Нужно авторизоваться." : "Ошибка отправки.");
+        }
     };
 
     // --- НАВИГАЦИЯ ПО СЛАЙДАМ ---
@@ -124,7 +150,7 @@ const SinglePostPage: React.FC = () => {
         }
     };
     
-    // --- РЕНДЕРИНГ ---
+    // --- РЕНДЕРИНГ СОСТОЯНИЙ ---
 
     if (loading) {
         return <div className="loading-state">Загрузка поста...</div>;
@@ -166,7 +192,7 @@ const SinglePostPage: React.FC = () => {
                                     postAuthorID={post.user_id}
                                     onEdit={handleEdit}
                                     onDelete={handleDelete}
-                                    onReport={handleReport}
+                                    onReport={handleReport} // <-- ИСПОЛЬЗУЕТ ФУНКЦИОНАЛ ЖАЛОБЫ
                                 />
                             </div>
                         )}
@@ -214,6 +240,13 @@ const SinglePostPage: React.FC = () => {
                         </button>
                     </div>
                 </div>
+                
+                {/* МОДАЛЬНОЕ ОКНО ЖАЛОБЫ */}
+                <ReportModal 
+                    isOpen={isReportModalOpen}
+                    onClose={() => setReportModalOpen(false)}
+                    onSubmit={handleSubmitReport}
+                />
             </main>
         </div>
     );

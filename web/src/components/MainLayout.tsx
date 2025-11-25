@@ -9,7 +9,7 @@ import PostFeed from '../components/PostFeed.tsx'; // ✅ ИМПОРТ
 import '../components/MainLayout.css'; 
 import UserPostsList from '../components/UserPostsList.tsx';
 
-type ActiveTab = 'Публикации' | 'Карта' | 'Изменить';
+type ActiveTab = 'Публикации' | 'Карта' | 'Изменить' | '0 подписчиков' | '0 подписок';
 
 const MainLayout: React.FC = () => {
     const [activeContent, setActiveContent] = useState<ActiveTab>('Публикации');

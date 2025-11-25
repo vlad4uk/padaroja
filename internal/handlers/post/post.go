@@ -70,18 +70,13 @@ type ReportRequest struct {
 }
 
 // Вспомогательная функция для безопасного извлечения userID
-// В post.go
-// Helper для безопасного извлечения userID из контекста
-// В post.go
-// Helper для безопасного извлечения userID из контекста
 func getUserIDFromContext(c *gin.Context) (uint, bool) {
 	val, exists := c.Get("userID")
 	if !exists {
-		return 0, false // Ключ "userID" не найден
+		return 0, false
 	}
 
 	var userID uint
-	// Проверяем все возможные типы, которые Gin или middleware могли сохранить (особенно int64 из JWT)
 	switch v := val.(type) {
 	case uint:
 		userID = v
@@ -89,7 +84,7 @@ func getUserIDFromContext(c *gin.Context) (uint, bool) {
 		if v > 0 {
 			userID = uint(v)
 		}
-	case int64: // Тип, наиболее часто используемый для claims в Go JWT
+	case int64:
 		if v > 0 {
 			userID = uint(v)
 		}
@@ -98,7 +93,6 @@ func getUserIDFromContext(c *gin.Context) (uint, bool) {
 			userID = uint(v)
 		}
 	default:
-		// ID найден, но имеет неверный тип
 		return 0, false
 	}
 
@@ -106,7 +100,7 @@ func getUserIDFromContext(c *gin.Context) (uint, bool) {
 		return 0, false
 	}
 
-	return userID, true // Успешно извлекли валидный ID
+	return userID, true
 }
 
 // =========================================================================
@@ -127,7 +121,6 @@ func CreatePost(c *gin.Context) {
 	}
 
 	err := database.DB.Transaction(func(tx *gorm.DB) error {
-
 		// A. Создание места (Place)
 		newPlace := models.Place{
 			Name:      input.PlaceData.Name,
@@ -139,12 +132,13 @@ func CreatePost(c *gin.Context) {
 			return result.Error
 		}
 
-		// B. Создание поста (Post)
+		// B. Создание поста (Post) - теперь IsApproved = true по умолчанию
 		newPost := models.Post{
 			UserID:     int(userID),
 			PlaceID:    newPlace.ID,
 			Title:      input.Title,
-			IsApproved: false,
+			IsApproved: true,
+			CreatedAt:  time.Now(),
 		}
 		if result := tx.Create(&newPost); result.Error != nil {
 			return result.Error
@@ -216,24 +210,19 @@ func CreatePost(c *gin.Context) {
 // =========================================================================
 
 func GetUserPosts(c *gin.Context) {
-	// 1. Извлекаем ID пользователя
 	userID, exists := getUserIDFromContext(c)
 
-	// 🛑 КРИТИЧЕСКИ ВАЖНАЯ ПРОВЕРКА и ЛОГИРОВАНИЕ
 	if !exists || userID == 0 {
 		fmt.Println("GetUserPosts DEBUG: UserID not found (exists:", exists, ", ID:", userID, "). Returning 401.")
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized: User ID not found or invalid in context"})
 		return
 	}
 
-	// 💡 КРИТИЧЕСКИЙ ЛОГ: ДОЛЖЕН БЫТЬ ВИДЕН В КОНСОЛИ
 	fmt.Printf("GetUserPosts DEBUG: Fetching posts for **UserID: %d**\n", userID)
 
 	var posts []models.Post
-	// 2. Фильтруем посты СТРОГО по ID текущего пользователя
-	// GORM: Where("поле_в_БД = ?", значение)
 	result := database.DB.
-		Where("user_id = ?", userID). // userID теперь гарантированно > 0 и типа uint
+		Where("user_id = ?", userID).
 		Preload("Photos").
 		Preload("Paragraphs").
 		Find(&posts)
@@ -341,16 +330,16 @@ func GetPost(c *gin.Context) {
 
 func GetPublicFeed(c *gin.Context) {
 	var posts []models.Post
-	// ✅ ИСПРАВЛЕНО: Начальный запрос: ВСЕ посты (для целей отладки)
-	db := database.DB.Model(&models.Post{}) // <--- Заменить на этот
+	// ✅ Показываем только approved посты
+	db := database.DB.Model(&models.Post{}).Where("is_approved = ?", true)
 
-	// 2. Логика исключения постов текущего пользователя остается
+	// Логика исключения постов текущего пользователя
 	userID, exists := getUserIDFromContext(c)
 	if exists && userID != 0 {
 		db = db.Where("user_id != ?", userID)
 	}
 
-	// 1. Обработка общего поиска
+	// Обработка общего поиска
 	searchQuery := c.Query("search")
 	if searchQuery != "" {
 		searchTerm := "%" + searchQuery + "%"
@@ -361,7 +350,7 @@ func GetPublicFeed(c *gin.Context) {
 			)
 	}
 
-	// 2. Обработка поиска по тегам
+	// Обработка поиска по тегам
 	tagsQuery := c.Query("tags")
 	if tagsQuery != "" {
 		tagSearchTerm := "%" + tagsQuery + "%"
@@ -504,7 +493,7 @@ func UpdatePost(c *gin.Context) {
 			}
 		}
 
-		// 6. Обновление тегов
+		// 6. Обновление теги
 		tx.Where("place_id = ?", post.PlaceID).Delete(&models.PlaceTags{})
 		if len(input.Tags) > 0 {
 			for _, tagName := range input.Tags {
@@ -597,18 +586,18 @@ func DeletePost(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "Post and associated data deleted successfully"})
 }
 
-// post.go (добавить в post package)
+// =========================================================================
+// REPORT POST
+// =========================================================================
 
-// ReportPost обрабатывает запрос на создание новой жалобы на пост
 func ReportPost(c *gin.Context) {
 	// 1. Проверка авторизации и получение UserID
 	userID, exists := c.Get("userID")
 	if !exists {
-		// Middleware должен был это обработать, но для надежности
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
 		return
 	}
-	// Преобразование userID в uint, если нужно (зависит от вашей реализации AuthMiddleware)
+
 	reporterID, ok := userID.(uint)
 	if !ok {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "User ID type error"})
@@ -630,22 +619,37 @@ func ReportPost(c *gin.Context) {
 		return
 	}
 
-	// 4. Создание новой жалобы
-	newComplaint := models.Complaint{
-		UserID: reporterID,
-		PostID: uint(postID),
-		Reason: req.Reason,
-		Status: models.StatusNew,
-	}
+	// Объявляем переменную вне транзакции
+	var newComplaint models.Complaint
 
-	// Генерируем новый UUID (если он не генерируется автоматически gorm'ом)
-	newComplaint.ID = uuid.New()
+	// 4. Создание новой жалобы (БЕЗ автоматического скрытия поста)
+	err = database.DB.Transaction(func(tx *gorm.DB) error {
+		// Инициализируем жалобу
+		newComplaint = models.Complaint{
+			ID:     uuid.New(),
+			UserID: reporterID,
+			PostID: uint(postID),
+			Reason: req.Reason,
+			Status: models.StatusNew,
+		}
 
-	// 5. Сохранение в базе данных
-	if err := database.DB.Create(&newComplaint).Error; err != nil {
+		if err := tx.Create(&newComplaint).Error; err != nil {
+			return err
+		}
+
+		// ❌ УБИРАЕМ автоматическое скрытие поста
+		// Пост остается видимым до решения модератора
+
+		return nil
+	})
+
+	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create complaint"})
 		return
 	}
 
-	c.JSON(http.StatusCreated, gin.H{"message": "Complaint successfully reported", "complaint_id": newComplaint.ID})
+	c.JSON(http.StatusCreated, gin.H{
+		"message":      "Complaint successfully reported",
+		"complaint_id": newComplaint.ID,
+	})
 }
