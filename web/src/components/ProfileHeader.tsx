@@ -1,5 +1,4 @@
-// src/components/ProfileHeader.tsx (ФИНАЛЬНАЯ ВЕРСИЯ С ФИКСОМ ПРОПСОВ)
-
+// src/components/ProfileHeader.tsx
 import React, { useState, useRef, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext.tsx'; 
 import '../components/MainLayout.css'; 
@@ -8,33 +7,63 @@ const DEFAULT_AVATAR = 'https://i.pravatar.cc/150';
 
 type TabType = 'Публикации' | 'Карта' | 'Изменить' | '0 подписчиков' | '0 подписок';
 
-// ✅ НОВЫЙ ИНТЕРФЕЙС ПРОПСОВ
 interface ProfileHeaderProps {
     onTabChange: (tab: TabType) => void;
+    isOwner: boolean;
+    profileUserId?: number;
 }
 
-const ProfileHeader: React.FC<ProfileHeaderProps> = ({ onTabChange }) => {
-    const { user, isLoggedIn } = useAuth(); 
+const ProfileHeader: React.FC<ProfileHeaderProps> = ({ onTabChange, isOwner, profileUserId }) => {
+    const { user: currentUser } = useAuth(); 
+    const [profileUser, setProfileUser] = useState(currentUser);
+    const [loading, setLoading] = useState(!isOwner);
 
     const [activeTab, setActiveTab] = useState<TabType>('Публикации');
     const [lineStyle, setLineStyle] = useState({ left: 0, width: 0 });
     
-    const tabs: TabType[] = ['Публикации', 'Карта', 'Изменить', '0 подписчиков', '0 подписок'];
+    // Определяем доступные табы в зависимости от того, владелец ли
+    const ownerTabs: TabType[] = ['Публикации', 'Карта', 'Изменить', '0 подписчиков', '0 подписок'];
+    const guestTabs: TabType[] = ['Публикации', 'Карта', '0 подписчиков', '0 подписок'];
+    
+    const tabs = isOwner ? ownerTabs : guestTabs;
     
     const tabRefs = useRef<(HTMLButtonElement | null)[]>([]); 
     const tabsContainerRef = useRef<HTMLDivElement>(null); 
 
-    const currentAvatarUrl = user?.image_url || DEFAULT_AVATAR;
-    const userName = user?.username || (isLoggedIn ? 'User' : 'Гость');
+    // Загружаем данные профиля, если это не текущий пользователь
+    useEffect(() => {
+        if (!isOwner && profileUserId) {
+            const fetchUserProfile = async () => {
+                try {
+                    const response = await fetch(`http://localhost:8080/api/user/${profileUserId}/profile`, {
+                        credentials: 'include',
+                    });
+                    if (response.ok) {
+                        const userData = await response.json();
+                        setProfileUser(userData);
+                    }
+                } catch (error) {
+                    console.error('Ошибка при загрузке профиля:', error);
+                } finally {
+                    setLoading(false);
+                }
+            };
+            fetchUserProfile();
+        } else {
+            setProfileUser(currentUser);
+            setLoading(false);
+        }
+    }, [isOwner, profileUserId, currentUser]);
 
+    const currentAvatarUrl = profileUser?.image_url || DEFAULT_AVATAR;
+    const userName = profileUser?.username || (loading ? 'Загрузка...' : 'Пользователь');
 
-    // ✅ ИЗМЕНЕННАЯ ЛОГИКА: Вызываем onTabChange, чтобы уведомить родителя
     const handleTabClick = (tab: TabType, index: number) => {
         setActiveTab(tab);
-        onTabChange(tab); // 👈 Уведомляем MainLayout о смене вкладки
+        onTabChange(tab);
     };
 
-    // Логика для смещения полоски под табами
+    // ИСПРАВЛЕННАЯ ЛОГИКА: Используем useCallback и правильные зависимости
     useEffect(() => {
         const calculateLineStyle = () => {
             const activeRef = tabRefs.current[tabs.indexOf(activeTab)];
@@ -49,11 +78,20 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({ onTabChange }) => {
             }
         };
 
-        calculateLineStyle();
+        // Добавляем небольшую задержку для корректного расчета позиций
+        const timer = setTimeout(calculateLineStyle, 10);
+        
         window.addEventListener('resize', calculateLineStyle);
-        return () => window.removeEventListener('resize', calculateLineStyle);
-    }, [activeTab]);
+        
+        return () => {
+            clearTimeout(timer);
+            window.removeEventListener('resize', calculateLineStyle);
+        };
+    }, [activeTab, tabs]); // ✅ Только эти зависимости
 
+    if (loading) {
+        return <div style={{ padding: '20px', textAlign: 'center' }}>Загрузка профиля...</div>;
+    }
 
     return (
         <div className="profile-section"> 
@@ -69,7 +107,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({ onTabChange }) => {
 
                 <div className="profile-info"> 
                     <h2 className="user-name">{userName}</h2>
-                    {user?.bio && <p className="user-bio">{user.bio}</p>}
+                    {profileUser?.bio && <p className="user-bio">{profileUser.bio}</p>}
                 </div>
             </div>
 

@@ -345,3 +345,203 @@
 .filter-button:hover {
     background-color: #5356e7;
 }
+
+/* Добавьте эти стили в конец UserPostsFeed.css */
+
+/* ========================================================================= */
+/* НОВЫЕ СТИЛИ ДЛЯ КАРТОЧЕК (как на скриншоте) */
+/* ========================================================================= */
+
+.posts-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 30px;
+    width: 100%;
+}
+
+@media (max-width: 1200px) {
+    .posts-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Новая карточка поста с фото как фоном */
+.post-card-new {
+    position: relative;
+    border-radius: 20px;
+    background: #fff;
+    padding: 15px;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    min-height: 300px;
+    background-size: cover;
+    background-position: center;
+    background-repeat: no-repeat;
+    overflow: hidden;
+    cursor: pointer;
+    transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.post-card-new:hover {
+    transform: translateY(-5px);
+    box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+}
+
+/* Затемняющий оверлей для лучшей читаемости */
+.post-card-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: linear-gradient(
+        to bottom,
+        rgba(0, 0, 0, 0.3) 0%,
+        rgba(0, 0, 0, 0.1) 30%,
+        rgba(0, 0, 0, 0.1) 70%,
+        rgba(0, 0, 0, 0.4) 100%
+    );
+    border-radius: 20px;
+    z-index: 1;
+}
+
+/* Информация о пользователе */
+.post-user-info {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: auto;
+}
+
+.post-user-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid rgba(255, 255, 255, 0.8);
+}
+
+.post-user-name {
+    color: white;
+    font-weight: 600;
+    font-size: 14px;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
+}
+
+/* Заголовок и дата */
+.post-header-row-new {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 10px;
+}
+
+.post-title-new {
+    font-weight: 700;
+    font-size: 18px;
+    color: white;
+    text-shadow: 0 2px 4px rgba(0, 0, 0, 0.8);
+    flex: 1;
+    margin-right: 10px;
+}
+
+.post-date-new {
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 12px;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+    white-space: nowrap;
+}
+
+/* Новый футер */
+.post-footer-new {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    font-size: 14px;
+}
+
+.post-meta-left-new {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.post-place-new {
+    color: white;
+    font-weight: 600;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
+}
+
+.post-tags-new {
+    color: rgba(255, 255, 255, 0.9);
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.8);
+    font-size: 12px;
+}
+
+.post-meta-right-new {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.meta-icon-group-new {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+    background: rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(10px);
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    padding: 4px 8px;
+    border-radius: 20px;
+}
+
+.map-count-new {
+    font-weight: 600;
+    font-size: 12px;
+    color: white;
+}
+
+.icon-bookmark-new {
+    color: rgba(255, 255, 255, 0.9);
+    font-size: 18px;
+    cursor: pointer;
+    filter: drop-shadow(0 1px 2px rgba(0, 0, 0, 0.5));
+}
+
+.icon-bookmark-new:hover {
+    color: #ffb02e;
+}
+
+/* Кнопка действий поверх карточки */
+.post-actions-overlay {
+    position: absolute;
+    top: 15px;
+    right: 15px;
+    z-index: 3;
+}
+
+/* Добавьте в UserPostsFeed.css */
+.post-user-info {
+    position: relative;
+    z-index: 2;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: auto;
+    transition: transform 0.2s;
+}
+
+.post-user-name {
+    color: white;
+    font-weight: 600;
+    font-size: 14px;
+    text-shadow: 0 1px 3px rgba(0, 0, 0, 0.8);
+    transition: color 0.2s;
+}

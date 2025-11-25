@@ -3,6 +3,7 @@ package profile
 import (
 	"fmt"
 	"net/http"
+	"strconv"
 	"tourist-blog/internal/domain/models"
 	database "tourist-blog/internal/storage/postgres"
 
@@ -10,9 +11,9 @@ import (
 	"gorm.io/gorm"
 )
 
-// GetUserProfile - Извлекает полную информацию о профиле авторизованного пользователя.
+// GetCurrentUserProfile - Извлекает полную информацию о профиле авторизованного пользователя.
 // Ответ содержит id, username, bio и image_url.
-func GetUserProfile(c *gin.Context) {
+func GetCurrentUserProfile(c *gin.Context) { // ✅ ПЕРЕИМЕНОВАНО
 	// 1. Получение UserID из контекста Gin
 	userIDValue, exists := c.Get("userID")
 	if !exists {
@@ -30,7 +31,7 @@ func GetUserProfile(c *gin.Context) {
 
 	// !!! ВАЖНО: Выбираем все поля, необходимые для AuthContext
 
-	err := database.DB.Select("id, username, bio, image_url").First(&user, userID).Error
+	err := database.DB.Select("id, username, bio, image_url, role_id").First(&user, userID).Error // ✅ ДОБАВЛЕН role_id
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
 			c.JSON(http.StatusNotFound, gin.H{"error": "User not found."})
@@ -45,9 +46,9 @@ func GetUserProfile(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{
 		"id":        user.ID,
 		"username":  user.Username,
-		"bio":       user.Bio, // ✅ ДОБАВЛЕНО
+		"bio":       user.Bio,
 		"image_url": user.ImageUrl,
-		"roleId":    user.RoleID, // ✅ ИСПРАВЛЕНО: Теперь 'image_url' (согласно JSON-тегу)
+		"role_id":   user.RoleID, // ✅ ИСПРАВЛЕНО: role_id вместо roleId
 	})
 }
 
@@ -134,7 +135,7 @@ func UpdateUserProfile(c *gin.Context) {
 
 	// 9. Возвращаем обновленные данные
 	var updatedUser models.User
-	database.DB.Select("id, username, bio, image_url").First(&updatedUser, userID)
+	database.DB.Select("id, username, bio, image_url, role_id").First(&updatedUser, userID) // ✅ ДОБАВЛЕН role_id
 
 	c.JSON(http.StatusOK, gin.H{
 		"message": "Profile updated successfully!",
@@ -144,6 +145,40 @@ func UpdateUserProfile(c *gin.Context) {
 			"username":  updatedUser.Username,
 			"bio":       updatedUser.Bio,
 			"image_url": updatedUser.ImageUrl,
+			"role_id":   updatedUser.RoleID, // ✅ ДОБАВЛЕНО
 		},
+	})
+}
+
+// GetUserProfileByID - Получает профиль любого пользователя по ID ✅ ПЕРЕИМЕНОВАНО
+func GetUserProfileByID(c *gin.Context) {
+	userIDStr := c.Param("userID")
+
+	userID, err := strconv.Atoi(userIDStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID"})
+		return
+	}
+
+	var user models.User
+	result := database.DB.Select("id", "username", "bio", "image_url", "role_id").
+		Where("id = ?", userID).
+		First(&user)
+
+	if result.Error != nil {
+		if result.Error == gorm.ErrRecordNotFound {
+			c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
+		} else {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Database error"})
+		}
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"id":        user.ID,
+		"username":  user.Username,
+		"bio":       user.Bio,
+		"image_url": user.ImageUrl,
+		"role_id":   user.RoleID,
 	})
 }

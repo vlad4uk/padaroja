@@ -32,15 +32,16 @@ type PostCreationRequest struct {
 
 // PostResponse - DTO для ответа (ID теперь uint)
 type PostResponse struct {
-	ID          uint               `json:"id"`
-	UserID      uint               `json:"user_id"`
-	Title       string             `json:"title"`
-	Date        time.Time          `json:"created_at"`
-	PlaceName   string             `json:"place_name"`
-	Tags        []string           `json:"tags"`
-	PreviewText string             `json:"preview_text"`
-	Photos      []models.PostPhoto `json:"photos"`
-	LikesCount  int                `json:"likes_count"`
+	ID         uint               `json:"id"`
+	UserID     uint               `json:"user_id"`
+	Title      string             `json:"title"`
+	Date       time.Time          `json:"created_at"`
+	PlaceName  string             `json:"place_name"`
+	Tags       []string           `json:"tags"`
+	Photos     []models.PostPhoto `json:"photos"`
+	LikesCount int                `json:"likes_count"`
+	UserAvatar string             `json:"user_avatar"` // Добавьте это поле
+	UserName   string             `json:"user_name"`   // Добавьте это поле
 }
 
 // DetailPostResponse - DTO для детального ответа (ID теперь uint)
@@ -209,6 +210,7 @@ func CreatePost(c *gin.Context) {
 // GET USER POSTS (Личный кабинет: только посты текущего пользователя)
 // =========================================================================
 
+// В функции GetUserPosts добавьте предзагрузку User и обновите формирование ответа
 func GetUserPosts(c *gin.Context) {
 	userID, exists := getUserIDFromContext(c)
 
@@ -223,8 +225,10 @@ func GetUserPosts(c *gin.Context) {
 	var posts []models.Post
 	result := database.DB.
 		Where("user_id = ?", userID).
+		Preload("User"). // Добавьте предзагрузку пользователя
 		Preload("Photos").
 		Preload("Paragraphs").
+		Preload("Place"). // Добавьте предзагрузку места
 		Find(&posts)
 
 	if result.Error != nil {
@@ -234,10 +238,6 @@ func GetUserPosts(c *gin.Context) {
 
 	response := make([]PostResponse, 0)
 	for _, p := range posts {
-		previewText := ""
-		if len(p.Paragraphs) > 0 {
-			previewText = p.Paragraphs[0].Content
-		}
 
 		var tags []string
 		database.DB.Table("tags").
@@ -249,16 +249,25 @@ func GetUserPosts(c *gin.Context) {
 			tags = []string{}
 		}
 
+		// Получаем данные пользователя
+		userAvatar := ""
+		userName := "Неизвестный пользователь"
+		if p.User.ID != 0 {
+			userAvatar = p.User.ImageUrl
+			userName = p.User.Username
+		}
+
 		respItem := PostResponse{
-			ID:          p.ID,
-			UserID:      uint(p.UserID),
-			Title:       p.Title,
-			Date:        p.CreatedAt,
-			PlaceName:   p.Place.Name,
-			Tags:        tags,
-			PreviewText: previewText,
-			Photos:      p.Photos,
-			LikesCount:  0,
+			ID:         p.ID,
+			UserID:     uint(p.UserID),
+			Title:      p.Title,
+			Date:       p.CreatedAt,
+			PlaceName:  p.Place.Name,
+			Tags:       tags,
+			Photos:     p.Photos,
+			LikesCount: 0,
+			UserAvatar: userAvatar, // Добавляем аватар
+			UserName:   userName,   // Добавляем имя пользователя
 		}
 		response = append(response, respItem)
 	}
@@ -330,9 +339,8 @@ func GetPost(c *gin.Context) {
 
 func GetPublicFeed(c *gin.Context) {
 	var posts []models.Post
-	// ✅ Показываем только approved посты
-	db := database.DB.Model(&models.Post{}).Where("is_approved = ?", true)
 
+	db := database.DB.Model(&models.Post{}).Where("is_approved = ?", true)
 	// Логика исключения постов текущего пользователя
 	userID, exists := getUserIDFromContext(c)
 	if exists && userID != 0 {
@@ -370,8 +378,8 @@ func GetPublicFeed(c *gin.Context) {
 		}
 	}
 
-	// Основной запрос
 	result := db.
+		Preload("User"). // Предзагружаем пользователя
 		Preload("Place").
 		Preload("Paragraphs", func(db *gorm.DB) *gorm.DB {
 			return db.Order("paragraphs.order ASC")
@@ -387,10 +395,6 @@ func GetPublicFeed(c *gin.Context) {
 
 	var response []PostResponse
 	for _, p := range posts {
-		previewText := ""
-		if len(p.Paragraphs) > 0 {
-			previewText = p.Paragraphs[0].Content
-		}
 
 		var tags []string
 		database.DB.Table("tags").
@@ -402,16 +406,27 @@ func GetPublicFeed(c *gin.Context) {
 			tags = []string{}
 		}
 
+		// Получаем данные пользователя - ИСПРАВЛЕННАЯ ПРОВЕРКА
+		userAvatar := ""
+		userName := "Неизвестный пользователь"
+
+		// Проверяем, что пользователь загружен (ID не равен 0)
+		if p.User.ID != 0 {
+			userAvatar = p.User.ImageUrl
+			userName = p.User.Username
+		}
+
 		respItem := PostResponse{
-			ID:          p.ID,
-			UserID:      uint(p.UserID),
-			Title:       p.Title,
-			Date:        p.CreatedAt,
-			PlaceName:   p.Place.Name,
-			Tags:        tags,
-			PreviewText: previewText,
-			Photos:      p.Photos,
-			LikesCount:  0,
+			ID:         p.ID,
+			UserID:     uint(p.UserID),
+			Title:      p.Title,
+			Date:       p.CreatedAt,
+			PlaceName:  p.Place.Name,
+			Tags:       tags,
+			Photos:     p.Photos,
+			LikesCount: 0,
+			UserAvatar: userAvatar,
+			UserName:   userName,
 		}
 		response = append(response, respItem)
 	}
@@ -652,4 +667,67 @@ func ReportPost(c *gin.Context) {
 		"message":      "Complaint successfully reported",
 		"complaint_id": newComplaint.ID,
 	})
+}
+
+func GetUserPostsByID(c *gin.Context) {
+	userIDStr := c.Param("userID")
+
+	userID, err := strconv.Atoi(userIDStr)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID format"})
+		return
+	}
+
+	fmt.Printf("GetUserPostsByID DEBUG: Fetching posts for user ID: %d\n", userID) // ✅ Добавьте этот лог
+
+	var posts []models.Post
+	result := database.DB.
+		Where("user_id = ?", userID). // ✅ Убедитесь, что используется переданный userID
+		Preload("User").
+		Preload("Photos").
+		Preload("Paragraphs").
+		Preload("Place").
+		Find(&posts)
+
+	if result.Error != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch user posts"})
+		return
+	}
+
+	response := make([]PostResponse, 0)
+	for _, p := range posts {
+		var tags []string
+		database.DB.Table("tags").
+			Joins("JOIN place_tags ON place_tags.tag_id = tags.id").
+			Where("place_tags.place_id = ?", p.PlaceID).
+			Pluck("tags.name", &tags)
+
+		if tags == nil {
+			tags = []string{}
+		}
+
+		// Получаем данные пользователя
+		userAvatar := ""
+		userName := "Неизвестный пользователь"
+		if p.User.ID != 0 {
+			userAvatar = p.User.ImageUrl
+			userName = p.User.Username
+		}
+
+		respItem := PostResponse{
+			ID:         p.ID,
+			UserID:     uint(p.UserID),
+			Title:      p.Title,
+			Date:       p.CreatedAt,
+			PlaceName:  p.Place.Name,
+			Tags:       tags,
+			Photos:     p.Photos,
+			LikesCount: 0,
+			UserAvatar: userAvatar,
+			UserName:   userName,
+		}
+		response = append(response, respItem)
+	}
+
+	c.JSON(http.StatusOK, response)
 }

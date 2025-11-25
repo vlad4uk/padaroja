@@ -5,7 +5,8 @@ import "time"
 type Post struct {
 	ID         uint      `gorm:"primaryKey" json:"id"` // ✅ ID поста теперь uint/int
 	UserID     int       `gorm:"not null" json:"user_id"`
-	PlaceID    uint      `gorm:"not null" json:"place_id"` // ✅ Ссылка на Place теперь uint/int
+	User       User      `gorm:"foreignKey:UserID" json:"user"` // Эта связь важна
+	PlaceID    uint      `gorm:"not null" json:"place_id"`      // ✅ Ссылка на Place теперь uint/int
 	Title      string    `gorm:"size:200;not null" json:"title"`
 	IsApproved bool      `gorm:"default:false" json:"is_approved"`
 	CreatedAt  time.Time `gorm:"default:CURRENT_TIMESTAMP" json:"created_at"`

@@ -80,11 +80,15 @@ func main() {
 	{
 		userRoutes.Use(middleware.AuthMiddleware())
 
-		userRoutes.GET("/profile", profile.GetUserProfile)
+		userRoutes.GET("/profile", profile.GetCurrentUserProfile)
 		userRoutes.PUT("/profile", profile.UpdateUserProfile)
 
 		// Получение постов текущего пользователя (GET /api/user/posts)
 		userRoutes.GET("/posts", post.GetUserPosts)
+
+		// ✅ НОВЫЙ ЭНДПОИНТ: Получение профиля любого пользователя
+		userRoutes.GET("/:userID/profile", profile.GetUserProfileByID)
+		userRoutes.GET("/:userID/posts", post.GetUserPostsByID) // ✅ НОВЫЙ: Посты любого пользова
 	}
 
 	// 3. Маршруты постов

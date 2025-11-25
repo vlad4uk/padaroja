@@ -2,12 +2,12 @@
 
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
-import './UserPostsFeed.css'; // Используем CSS, общий для лент постов
-import { FaRegBookmark } from 'react-icons/fa'; // FaUserCircle удален
+import './UserPostsFeed.css';
+import { FaRegBookmark } from 'react-icons/fa';
 import { BsGlobeAmericas } from "react-icons/bs";
 import { useNavigate } from 'react-router-dom';
 import PostActionsMenu from './PostActionsMenu.tsx'; 
-import ReportModal from './ReportModal.tsx'; 
+import ReportModal from './ReportModal.tsx';
 
 interface PostData {
     id: number;
@@ -15,11 +15,11 @@ interface PostData {
     created_at: string;
     place_name: string;
     tags: string[];
-    preview_text: string;
     photos: { url: string }[];
     likes_count: number;
-    user_id: number; 
-    username?: string; // Остается, но не используется в дизайне
+    user_id: number;
+    user_avatar: string; // Firebase путь к аватару
+    user_name: string;   // Username пользователя
 }
 
 interface PostFeedProps {
@@ -33,18 +33,15 @@ const PostFeed: React.FC<PostFeedProps> = ({ searchQuery = '', tagQuery = '' }) 
     const [error, setError] = useState('');
     const navigate = useNavigate();
 
-    // Модальное окно жалобы
     const [isReportModalOpen, setReportModalOpen] = useState(false);
     const [reportPostId, setReportPostId] = useState<number | null>(null);
 
-    // Функция форматирования даты (из "2025-11-18T12:00:00Z" в "18.11.2025")
     const formatDate = (dateString: string) => {
         if (!dateString) return '';
         const date = new Date(dateString);
         return date.toLocaleDateString('ru-RU');
     };
 
-    // 2. Обновленный useEffect с поддержкой поиска и Debounce
     useEffect(() => {
         const delayDebounceFn = setTimeout(async () => {
             setLoading(true);
@@ -65,13 +62,11 @@ const PostFeed: React.FC<PostFeedProps> = ({ searchQuery = '', tagQuery = '' }) 
             } finally {
                 setLoading(false);
             }
-        }, 500); 
+        }, 500);
 
         return () => clearTimeout(delayDebounceFn);
-        
     }, [searchQuery, tagQuery]);
 
-    // --- Обработчики ---
     const handlePostClick = (id: number) => navigate(`/post/${id}`);
     const handleEdit = (id: number) => navigate(`/post/edit/${id}`);
     
@@ -86,6 +81,12 @@ const PostFeed: React.FC<PostFeedProps> = ({ searchQuery = '', tagQuery = '' }) 
     const handleReport = (id: number) => {
         setReportPostId(id);
         setReportModalOpen(true);
+    };
+
+    // Обработчик клика на пользователя
+    const handleUserClick = (userId: number, event: React.MouseEvent) => {
+        event.stopPropagation();
+        navigate(`/user/${userId}`);
     };
 
     const handleSubmitReport = async (reason: string) => {
@@ -110,13 +111,18 @@ const PostFeed: React.FC<PostFeedProps> = ({ searchQuery = '', tagQuery = '' }) 
             {posts.map(post => (
                 <div 
                     key={post.id} 
-                    className="post-card"
-                    // Обработчик клика на всю карточку для перехода
+                    className="post-card-new"
                     onClick={() => handlePostClick(post.id)} 
-                    style={{ cursor: 'pointer' }}
+                    style={{ 
+                        backgroundImage: post.photos && post.photos.length > 0 
+                            ? `url(${post.photos[0].url})` 
+                            : 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)'
+                    }}
                 >
+                    {/* Затемняющий оверлей для лучшей читаемости текста */}
+                    <div className="post-card-overlay"></div>
                     
-                    {/* КНОПКА ДЕЙСТВИЙ (ОСТАЕТСЯ, но стилизуется через CSS, чтобы не мешать общему потоку) */}
+                    {/* Кнопка действий */}
                     <div className="post-actions-overlay" onClick={(e) => e.stopPropagation()}>
                         <PostActionsMenu 
                             postID={post.id} 
@@ -127,63 +133,52 @@ const PostFeed: React.FC<PostFeedProps> = ({ searchQuery = '', tagQuery = '' }) 
                         />
                     </div>
 
-                    {/* 1. Слайдер фото (Копируем из UserPostsList.tsx) */}
-                    <div className="post-photos-slider">
-                        {post.photos && post.photos.length > 0 ? (
-                            post.photos.map((photo, idx) => (
-                                <img 
-                                    key={idx} 
-                                    src={photo.url} 
-                                    alt="Post slide" 
-                                    className="post-photo-img" 
-                                />
-                            ))
-                        ) : (
-                            <div className="post-photo-placeholder">Нет фото</div>
-                        )}
+                    {/* Информация о пользователе */}
+                    <div 
+                        className="post-user-info"
+                        onClick={(e) => handleUserClick(post.user_id, e)}
+                        style={{ cursor: 'pointer' }}
+                    >
+                        <img 
+                            src={post.user_avatar || '/default-avatar.png'} 
+                            alt="Avatar" 
+                            className="post-user-avatar" 
+                            onError={(e) => {
+                                e.currentTarget.src = '/default-avatar.png';
+                            }}
+                        />
+                        <span className="post-user-name">{post.user_name}</span>
                     </div>
 
-                    {/* 2. Заголовок и дата (Копируем из UserPostsList.tsx) */}
-                    <div className="post-header-row">
-                        <span className="post-title">{post.title}</span>
-                        <span className="post-date">{formatDate(post.created_at)}</span>
+                    {/* Заголовок и дата */}
+                    <div className="post-header-row-new">
+                        <span className="post-title-new">{post.title}</span>
+                        <span className="post-date-new">{formatDate(post.created_at)}</span>
                     </div>
 
-                    {/* 3. Текст публикации (Тизер) (Копируем из UserPostsList.tsx) */}
-                    <div className="post-text-content">
-                        {post.preview_text ? (
-                             post.preview_text.length > 150 
-                                ? post.preview_text.substring(0, 150) + '...' 
-                                : post.preview_text
-                        ) : (
-                            <span style={{color: '#ccc'}}>Нет описания...</span>
-                        )}
-                    </div>
-
-                    {/* 4. Футер (Место и иконки) (Копируем из UserPostsList.tsx) */}
-                    <div className="post-footer">
-                        <div className="post-meta-left">
-                            <span className="post-place">{post.place_name}</span>
-                            <span className="post-tags">
+                    {/* Футер (Место и теги) */}
+                    <div className="post-footer-new">
+                        <div className="post-meta-left-new">
+                            <span className="post-place-new">{post.place_name}</span>
+                            <span className="post-tags-new">
                                 {(post.tags ?? []).length > 0 
                                     ? ' #' + (post.tags ?? []).join(' #') 
                                     : ''}
                             </span>
                         </div>
 
-                        <div className="post-meta-right">
-                            <div className="meta-icon-group" style={{ background: 'none', border: '1px solid #333', padding: '2px 4px', borderRadius: '4px' }}>
-                                <BsGlobeAmericas style={{ color: '#2c8c98' }} /> 
-                                <span className="map-count">{post.likes_count}</span>
+                        <div className="post-meta-right-new">
+                            <div className="meta-icon-group-new">
+                                <BsGlobeAmericas style={{ color: '#fff' }} /> 
+                                <span className="map-count-new">{post.likes_count}</span>
                             </div>
                             
-                            <FaRegBookmark className="icon-bookmark" /> 
+                            <FaRegBookmark className="icon-bookmark-new" /> 
                         </div>
                     </div>
                 </div>
             ))}
             
-            {/* Модальное окно жалобы (Остается) */}
             <ReportModal 
                 isOpen={isReportModalOpen}
                 onClose={() => setReportModalOpen(false)}

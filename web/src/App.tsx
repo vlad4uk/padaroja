@@ -47,14 +47,24 @@ const App: React.FC = () => {
        <Router>
          <Routes>
            <Route path="/login" element={<LoginPage />} />
-           <Route path="/register" element={<RegisterPage />} />         
+           <Route path="/register" element={<RegisterPage />} />         
            
            {/* МАРШРУТ 1: Общая лента/Поиск */}
            <Route path="/search" element={<FeedPage />} /> 
            <Route path="/post/:id" element={<SinglePostPage />} />
 
-           {/* ✅ ИСПРАВЛЕННЫЙ МАРШРУТ ДЛЯ РЕДАКТИРОВАНИЯ */}
-           {/* Теперь он соответствует navigate('/post/edit/123') */}
+           {/* ✅ ОБНОВЛЕННЫЕ МАРШРУТЫ ПРОФИЛЯ */}
+           <Route path="/user/:userId" element={<MainLayout />} />
+           <Route 
+             path="/profile" 
+             element={
+               <ProtectedRoute>
+                 <MainLayout />
+               </ProtectedRoute>
+             } 
+           /> 
+
+           {/* Остальные маршруты остаются без изменений */}
            <Route 
              path="/post/edit/:id" 
              element={
@@ -78,16 +88,6 @@ const App: React.FC = () => {
                    <ModeratorPage />
                </ModeratorRoute>
             } />  
-
-           
-           <Route 
-             path="/profile" 
-             element={
-               <ProtectedRoute>
-                 <MainLayout />
-               </ProtectedRoute>
-             } 
-           /> 
          
            {/* МАРШРУТ 2: Главная страница */}
            <Route path="/" element={<FeedPage />} />

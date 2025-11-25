@@ -149,6 +149,8 @@ const SinglePostPage: React.FC = () => {
             setCurrentSlide(currentSlide - 1);
         }
     };
+
+  
     
     // --- РЕНДЕРИНГ СОСТОЯНИЙ ---
 
