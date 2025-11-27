@@ -569,3 +569,73 @@
     align-items: center;
     gap: 8px;
 }
+
+/* ========================================================================= */
+/* 5. ФИКСИРОВАННАЯ ПРАВАЯ ПАНЕЛЬ (как Sidebar) */
+/* ========================================================================= */
+
+.feed-page-layout {
+    display: flex;
+    width: 100%;
+    height: 100%;
+    gap: 0;
+    position: relative;
+}
+
+.feed-content-area {
+    flex: 1;
+    padding: 20px 40px 20px 20px;
+    min-height: 100vh;
+}
+
+.feed-filters-area {
+    width: 300px;
+    flex-shrink: 0;
+    border-left: 2px solid #696cff;
+    padding: 30px 20px;
+    min-height: 100vh;
+    
+    /* 🔑 Ключевые изменения для фиксации */
+    position: sticky;
+    top: 0;
+    height: 100vh;
+    overflow-y: auto;
+    
+    /* Стили для скроллбара (опционально) */
+    scrollbar-width: thin;
+    scrollbar-color: #696cff #f0f0f0;
+}
+
+.feed-filters-area::-webkit-scrollbar {
+    width: 4px;
+}
+
+.feed-filters-area::-webkit-scrollbar-track {
+    background: #f0f0f0;
+    border-radius: 2px;
+}
+
+.feed-filters-area::-webkit-scrollbar-thumb {
+    background: #696cff;
+    border-radius: 2px;
+}
+
+.feed-filters-area::-webkit-scrollbar-thumb:hover {
+    background: #696cff;
+}
+
+/* Адаптивность для мобильных устройств */
+@media (max-width: 768px) {
+    .feed-page-layout {
+        flex-direction: column;
+    }
+    
+    .feed-filters-area {
+        position: relative;
+        height: auto;
+        min-height: auto;
+        width: 100%;
+        border-left: none;
+        border-top: 2px solid #696cff;
+    }
+}

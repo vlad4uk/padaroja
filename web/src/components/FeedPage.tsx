@@ -7,16 +7,13 @@ import ContentLayout from '../components/ContentLayout.tsx';
 import '../components/UserPostsFeed.css';
 
 const FeedPage: React.FC = () => {
-    // 1. Создаем общее состояние здесь
     const [searchTerm, setSearchTerm] = useState('');
     const [tagSearch, setTagSearch] = useState('');
 
     return (
         <ContentLayout>
             <div className="feed-page-layout">
-                {/* 2. Передаем значения поиска в PostFeed, 
-                    чтобы он знал, что запрашивать у сервера 
-                */}
+                {/* Основной контент - прокручивается */}
                 <div className="feed-content-area">
                     <PostFeed 
                         searchQuery={searchTerm} 
@@ -24,9 +21,7 @@ const FeedPage: React.FC = () => {
                     />
                 </div>
 
-                {/* 3. Передаем функции изменения состояния в RightFilters,
-                    чтобы инпуты могли обновлять эти значения
-                */}
+                {/* Правая панель - закреплена */}
                 <div className="feed-filters-area">
                     <RightFilters 
                         searchTerm={searchTerm}

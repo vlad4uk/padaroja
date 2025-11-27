@@ -1,4 +1,4 @@
-package favourites
+package favourite
 
 import (
 	"net/http"

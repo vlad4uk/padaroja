@@ -1,4 +1,4 @@
-// src/components/MainLayout.tsx
+// [file name]: MainLayout.tsx
 import React, { useState, useEffect } from 'react'; 
 import { useParams } from 'react-router-dom';
 import Sidebar from '../components/Sidebar.tsx';
@@ -9,7 +9,7 @@ import '../components/MainLayout.css';
 import UserPostsList from '../components/UserPostsList.tsx';
 import { useAuth } from '../context/AuthContext.tsx';
 
-type ActiveTab = 'Публикации' | 'Карта' | 'Изменить' | '0 подписчиков' | '0 подписок';
+type ActiveTab = 'Публикации' | 'Карта' | 'Изменить';
 
 const MainLayout: React.FC = () => {
     const { userId } = useParams<{ userId?: string }>();
@@ -23,11 +23,9 @@ const MainLayout: React.FC = () => {
             const profileUserId = parseInt(userId);
             setIsOwner(currentUser?.id === profileUserId);
             setTargetUserId(profileUserId);
-            console.log(`🔍 Profile: User ID from URL: ${userId}, Current User ID: ${currentUser?.id}, Is Owner: ${currentUser?.id === profileUserId}`);
         } else {
             setIsOwner(true);
             setTargetUserId(currentUser?.id);
-            console.log(`🔍 Profile: No user ID in URL, using current user ID: ${currentUser?.id}`);
         }
     }, [userId, currentUser]);
 
@@ -36,8 +34,6 @@ const MainLayout: React.FC = () => {
     };
 
     const renderContent = () => {
-        console.log(`🎯 Rendering content: isOwner=${isOwner}, activeContent=${activeContent}, targetUserId=${targetUserId}`);
-        
         if (!isOwner) {
             return (
                 <div className="main-feed">
@@ -46,41 +42,32 @@ const MainLayout: React.FC = () => {
             );
         }
 
-        if (activeContent === 'Изменить') {
-            return (
-                <div className="profile-edit-form-container">
-                    <ProfileEditForm /> 
-                </div>
-            );
+        switch (activeContent) {
+            case 'Изменить':
+                return (
+                    <div className="profile-edit-form-container">
+                        <ProfileEditForm /> 
+                    </div>
+                );
+            case 'Карта':
+                return (
+                    <div className="profile-edit-form-container" style={{ padding: 0, border: 'none', background: 'none', marginTop: 0 }}>
+                        <MapView />
+                    </div>
+                );
+            case 'Публикации':
+            default:
+                return (
+                    <div className="main-feed">
+                        <UserPostsList targetUserId={targetUserId} />
+                    </div>
+                );
         }
-        
-        if (activeContent === 'Карта') {
-            return (
-                <div 
-                    className="profile-edit-form-container" 
-                    style={{ 
-                        padding: 0, 
-                        border: 'none', 
-                        background: 'none',
-                        marginTop: 0, 
-                    }}
-                >
-                    <MapView />
-                </div>
-            );
-        }
-        
-        return (
-            <div className="main-feed">
-                <UserPostsList targetUserId={targetUserId} />
-            </div>
-        );
     };
 
     return (
         <div className="app-container">
             <Sidebar />
-
             <main className="main-content">
                 <div className="content-area">
                     <ProfileHeader 
@@ -88,7 +75,6 @@ const MainLayout: React.FC = () => {
                         isOwner={isOwner}
                         profileUserId={userId ? parseInt(userId) : currentUser?.id}
                     /> 
-                    
                     {renderContent()}
                 </div>
             </main>

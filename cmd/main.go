@@ -6,11 +6,12 @@ import (
 
 	// Добавил, если понадобится конвертация ID
 	auth "tourist-blog/internal/handlers/auth"
-	favourite "tourist-blog/internal/handlers/favourite"
-	like "tourist-blog/internal/handlers/like"
+	"tourist-blog/internal/handlers/favourite"
+	"tourist-blog/internal/handlers/follows"
+	"tourist-blog/internal/handlers/like"
 	"tourist-blog/internal/handlers/moderation"
 	"tourist-blog/internal/handlers/post"
-	profile "tourist-blog/internal/handlers/profile"
+	"tourist-blog/internal/handlers/profile"
 	"tourist-blog/internal/middleware"
 	database "tourist-blog/internal/storage/postgres"
 
@@ -91,6 +92,14 @@ func main() {
 		// ✅ НОВЫЙ ЭНДПОИНТ: Получение профиля любого пользователя
 		userRoutes.GET("/:userID/profile", profile.GetUserProfileByID)
 		userRoutes.GET("/:userID/posts", post.GetUserPostsByID) // ✅ НОВЫЙ: Посты любого пользова
+
+		userRoutes.POST("/:userID/follow", follows.FollowUser)
+		userRoutes.DELETE("/:userID/follow", follows.UnfollowUser)
+		userRoutes.GET("/:userID/follow/check", follows.CheckFollow)
+		userRoutes.GET("/:userID/followers/count", follows.GetFollowersCount)
+		userRoutes.GET("/:userID/following/count", follows.GetFollowingCount)
+		userRoutes.GET("/:userID/followers", follows.GetFollowersList)
+		userRoutes.GET("/:userID/following", follows.GetFollowingList)
 	}
 
 	// 3. Маршруты постов

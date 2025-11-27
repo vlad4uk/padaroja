@@ -9,10 +9,11 @@ const API_USER_PROFILE = 'http://localhost:8080/api/user/profile';
 interface User {
     id: number;
     username: string; 
-    // ✅ ДОБАВЛЕНЫ ПОЛЯ
     bio: string;
     image_url: string; 
     role_id: number;
+    followers_count?: number;
+    following_count?: number;
 }
 
 interface AuthContextType {

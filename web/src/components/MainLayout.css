@@ -1,7 +1,7 @@
-/* src/styles/MainLayout.css (ПОЛНОСТЬЮ ПЕРЕПИСАН) */
+/* src/styles/MainLayout.css */
 
 /* ========================================================================= */
-/* 0. ГЛОБАЛЬНЫЙ СБРОС (Без изменений) */
+/* 0. ГЛОБАЛЬНЫЙ СБРОС */
 /* ========================================================================= */
 * {
     box-sizing: border-box; 
@@ -16,10 +16,8 @@ body, #root {
 body {
     font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif,
     "Apple Color Emoji", "Segoe UI", "Segoe UI Symbol";
-    
-    /* 💡 ИЗМЕНЕНИЕ: Фон Twitter - белый, а не серый */
     background-color: #fff;
-    color: #0F1419; /* Стандартный черный цвет текста Twitter */
+    color: #0F1419;
 }
 
 /* ========================================================================= */
@@ -28,39 +26,33 @@ body {
 .app-container {
      display: flex;
      min-height: 100vh;
-     /* 💡 ИЗМЕНЕНИЕ: Убираем серый фон */
      background-color: #fff;
 }
 
 /* ========================================================================= */
-/* 2. Боковая панель (Sidebar) - СТИЛЬ TWITTER */
+/* 2. Боковая панель (Sidebar) */
 /* ========================================================================= */
 .sidebar {
-  /* 💡 ИЗМЕНЕНИЕ: Фиксированная ширина, как в Twitter, вместо 20% */
   width: 20%; 
-  flex-shrink: 0; /* Запрещаем сжиматься */
-
+  flex-shrink: 0;
   background-color: #fff;
-  border-right: 1px solid #eee; /* Линия, отделяющая сайдбар */
-
-  /* 💡 ИЗМЕНЕНИЕ: Управляем отступами внутри */
+  border-right: 1px solid #eee;
   padding: 0 12px; 
   display: flex;
   flex-direction: column;
-  height: 100vh; /* Растягиваем на всю высоту */
-  position: sticky; /* "Приклеиваем" сайдбар при прокрутке */
+  height: 100vh;
+  position: sticky;
   top: 0;
 }
 
 .sidebar-header {
-  /* 💡 ИЗМЕНЕНИЕ: Убираем фикс. высоту, даем отступ для лого */
   padding: 12px 12px; 
   font-size: 2rem;
   font-weight: 700;
-  color: #696cff; /* Оставляем ваш цвет */
+  color: #696cff;
   display: flex;
   align-items: center;
-  justify-content: flex-start; /* Лого слева */
+  justify-content: flex-start;
 }
 
 .sidebar-nav-list {
@@ -70,7 +62,6 @@ body {
   width: 100%;
 }
 
-/* Стили для ссылок, кнопок и т.д. в сайдбаре */
 .sidebar a.sidebar-nav-item,
 .sidebar div.sidebar-nav-item {
   text-decoration: none;
@@ -78,49 +69,41 @@ body {
   display: flex;
   align-items: center;
   transition: background-color 0.2s, color 0.2s;
-  
-  /* 💡 ИЗМЕНЕНИЕ: Стиль Twitter */
-  font-size: 19px;     /* Крупный шрифт */
-  font-weight: 700;  /* Жирный шрифт */
-  color: #0F1419;     /* Черный текст */
-  padding: 12px;     /* Равномерный отступ */
-  border-radius: 9999px; /* "Таблетка" */
-  margin-bottom: 4px; /* Отступ между элементами */
-  
-  /* 💡 ИЗМЕНЕНИЕ: "Таблетка" растягивается только по контенту */
+  font-size: 19px;
+  font-weight: 700;
+  color: #0F1419;
+  padding: 12px;
+  border-radius: 9999px;
+  margin-bottom: 4px;
   width: fit-content; 
 }
 
-/* 💡 ИЗМЕНЕНИЕ: Наведение мыши */
 .sidebar a.sidebar-nav-item:hover,
 .sidebar div.sidebar-nav-item:hover {
-  background-color: #E7E7E8; /* Светло-серый фон */
-  color: #0F1419; /* Цвет не меняется */
+  background-color: #E7E7E8;
+  color: #0F1419;
 }
 
-/* 💡 ИЗМЕНЕНИЕ: Активная ссылка */
 .sidebar a.sidebar-nav-item.active,
 .sidebar div.sidebar-nav-item.active {
-  color: #696cff; /* Ваш активный цвет */
+  color: #696cff;
   background-color: transparent;
   font-weight: 700;
-  border-left: none; /* Убираем старую синюю линию */
+  border-left: none;
 }
 
 .sidebar-icon {
-  /* 💡 ИЗМЕНЕНИЕ: Большие иконки, как в Twitter */
   font-size: 26px;
   width: 26px;
   height: 26px;
-  margin-right: 20px; /* Больший отступ от текста */
+  margin-right: 20px;
 }
 
-/* 💡 ИЗМЕНЕНИЕ: Прижимаем блок "Настройки/Выход" к низу */
 .bottom-nav {
-    margin-top: auto; /* ГЛАВНОЕ ИЗМЕНЕНИЕ */
-    border-top: none; /* Убираем разделитель */
+    margin-top: auto;
+    border-top: none;
     padding-top: 0;
-    padding-bottom: 10px; /* Небольшой отступ от низа */
+    padding-bottom: 10px;
 }
 
 /* ========================================================================= */
@@ -131,8 +114,6 @@ body {
   display: flex;
   justify-content: flex-start;
   padding: 0;
-
-  /* 💡 ИЗМЕНЕНИЕ: Линии по бокам, как в Twitter */
   border-right: 1px solid #eee;
 }
 
@@ -140,29 +121,25 @@ body {
   width: 100%;
   margin: 0;
   background-color: #fff;
-
-  /* 💡 ЗАДАЧА 2: Убираем все отступы сверху и снизу */
   padding: 0;
 }
 
 /* ========================================================================= */
-/* 4. Профиль и вкладки (ProfilePage) */
+/* 4. Профиль и вкладки */
 /* ========================================================================= */
 .profile-section {
   background-color: #fff;
-  padding: 0;
-  /* 💡 ИЗМЕНЕНИЕ: Добавляем отступы, которые убрали из .content-area */
   padding: 16px;
 }
 
-/* ... (остальные стили .profile-header, .user-avatar и т.д. остаются без изменений) ... */
-
 .profile-header {
   display: flex;
-  align-items: center;
+  align-items: center; /* Выравниваем по центру по вертикали */
   margin-bottom: 20px; 
   padding: 10px 0;
+  gap: 20px;
 }
+
 .user-avatar {
   width: 150px;
   height: 150px;
@@ -173,16 +150,129 @@ body {
   flex-shrink: 0;
   overflow: hidden; 
 }
+
 .user-avatar img {
     width: 100%;
     height: 100%;
     object-fit: cover;
 }
+
+.profile-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center; /* Выравниваем по вертикали по центру */
+  min-height: 150px; /* Минимальная высота как у аватара */
+}
+
+/* Верхняя строка профиля */
+.profile-top-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center; /* Выравниваем по центру по вертикали */
+  gap: 40px;
+}
+
+/* Левая часть: имя и био */
+.profile-left {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  justify-content: center; /* Выравниваем по центру по вертикали */
+}
+
+.user-name {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 700;
+  color: #0F1419;
+}
+
+.user-bio {
+  margin: 0;
+  color: #666;
+  font-size: 14px;
+  line-height: 1.4;
+  max-width: 400px;
+}
+
+/* Правая часть: статистика и кнопка */
+.profile-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 12px;
+  min-width: 200px;
+  justify-content: center; /* Выравниваем по центру по вертикали */
+}
+
+/* Статистика подписчиков/подписок В СТРОКУ */
+.follow-stats {
+  display: flex;
+  gap: 25px; /* Отступ между элементами статистики */
+  align-items: center;
+}
+
+.stat-item {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+  color: #666;
+  transition: color 0.2s;
+  padding: 8px 12px;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.stat-item:hover {
+  color: #696cff;
+}
+
+.stat-item strong {
+  color: #0F1419;
+  font-weight: 600;
+  font-size: 16px;
+  margin-right: 4px;
+}
+
+/* Кнопки подписки */
+.follow-button {
+  padding: 8px 20px;
+  border: 1px solid #696cff;
+  border-radius: 20px;
+  background: #696cff;
+  color: white;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 14px;
+  transition: all 0.2s;
+  white-space: nowrap;
+  min-width: 120px;
+}
+
+.follow-button.unfollow {
+  background: white;
+  color: #696cff;
+}
+
+.follow-button:hover:not(:disabled) {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
+.follow-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Навигационные табы */
 .profile-content {
   position: relative;
-  /* 💡 ИЗМЕНЕНИЕ: Twitter не имеет нижней границы на табах, но мы оставим для разделения */
   border-bottom: 1px solid #e0e0e0; 
 }
+
 .profile-tab-active-line {
   position: absolute;
   bottom: -1px;
@@ -192,12 +282,14 @@ body {
   transition: transform 0.3s, width 0.3s;
   z-index: 10;
 }
+
 .profile-tabs {
   display: flex;
   justify-content: flex-start;
   margin-top: 10px;
   padding-bottom: 0; 
 }
+
 .profile-tab {
   background: none;
   border: none; 
@@ -208,29 +300,69 @@ body {
   margin-right: 20px;
   transition: color 0.2s;
 }
+
 .profile-tab.active {
   color: #696cff;
   font-weight: 600;
 }
 
-
+/* Адаптивность для мобильных устройств */
+@media (max-width: 768px) {
+    .profile-header {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        gap: 15px;
+    }
+    
+    .profile-top-row {
+        flex-direction: column;
+        gap: 20px;
+        align-items: center;
+    }
+    
+    .user-avatar {
+        width: 120px;
+        height: 120px;
+        margin-right: 0;
+    }
+    
+    .profile-info {
+        min-height: auto;
+        align-items: center;
+    }
+    
+    .profile-right {
+        align-items: center;
+    }
+    
+    .follow-stats {
+        justify-content: center;
+    }
+    
+    .stat-item {
+        text-align: center;
+    }
+}
 /* ========================================================================= */
-/* 5. Лента (оставляем как есть) */
+/* 5. Лента */
 /* ========================================================================= */
 .main-feed {
-  margin-top: 0; /* Убрали отступ */
+  margin-top: 0;
 }
+
 .post-item {
   padding: 15px;
   border-bottom: 1px solid #eee;
   transition: background-color 0.1s;
 }
+
 .post-item:hover {
   background-color: #fafafa;
 }
 
 /* ========================================================================= */
-/* 6. Форма редактирования (оставляем как есть) */
+/* 6. Форма редактирования */
 /* ========================================================================= */
 .profile-edit-form-container {
     padding: 20px;
@@ -239,7 +371,7 @@ body {
     background-color: #f9f9f9;
     margin-top: 20px;
 }
-/* ... (все остальные стили .edit-avatar-section, .edit-input и т.д. остаются) ... */
+
 .edit-avatar-section{
   display:flex;
   align-items:center;
@@ -331,4 +463,38 @@ body {
   background-color:#f8f8f8;
   color:#5d5d5d;
   border:1px solid #dcdcdc
+}
+
+/* Адаптивность для мобильных устройств */
+@media (max-width: 768px) {
+    .profile-header {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        gap: 15px;
+    }
+    
+    .profile-top-row {
+        flex-direction: column;
+        gap: 20px;
+        align-items: center;
+    }
+    
+    .user-avatar {
+        width: 120px;
+        height: 120px;
+        margin-right: 0;
+    }
+    
+    .profile-right {
+        align-items: center;
+    }
+    
+    .follow-stats {
+        align-items: center;
+    }
+    
+    .stat-item {
+        text-align: center;
+    }
 }

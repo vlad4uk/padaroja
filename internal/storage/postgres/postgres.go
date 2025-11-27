@@ -47,6 +47,7 @@ func ConnectDB() {
 		&models.Complaint{},
 		&models.Favourite{},
 		&models.Like{},
+		&models.Followers{},
 	)
 	if err != nil {
 		// Убираем лишний .Error(), log.Fatal принимает ошибку напрямую

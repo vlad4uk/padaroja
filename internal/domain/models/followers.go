@@ -1,13 +1,10 @@
 package models
 
-type Followers struct {
-	ID         int `gorm:"primaryKey;autoIncrement" json:"id"`
-	FollowerID int `gorm:"unique;not null" json:"follower_id"`
-	FollowedID int `gorm:"unique;not null" json:"followed_id"`
-}
+import "time"
 
-type FollowerResponse struct {
-	ID         int `json:"id"`
-	FollowerID int `json:"follower_id"`
-	FollowedID int `json:"followed_id"`
+type Followers struct {
+	ID         int       `gorm:"primaryKey;autoIncrement" json:"id"`
+	FollowerID int       `gorm:"not null" json:"follower_id"`
+	FollowedID int       `gorm:"not null" json:"followed_id"`
+	CreatedAt  time.Time `gorm:"default:CURRENT_TIMESTAMP" json:"created_at"`
 }
