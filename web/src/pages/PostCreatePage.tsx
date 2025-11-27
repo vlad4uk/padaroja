@@ -1,11 +1,8 @@
-// src/pages/PostCreatePage.tsx
-
 import React, { useState, useRef } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import Sidebar from '../components/Sidebar.tsx';
-import '../components/MainLayout.css'; 
-import './PostCreatePage.css'; // Убедитесь, что используете последний CSS
+import ContentLayout from '../components/ContentLayout.tsx';
+import './PostCreatePage.css';
 import { uploadImage } from '../firebase/uploadImage'; 
 import { FaPlus, FaAngleDoubleLeft, FaAngleDoubleRight, FaTimes, FaTrashAlt } from 'react-icons/fa';
 import { useAuth } from '../context/AuthContext.tsx';
@@ -175,94 +172,90 @@ const PostCreatePage: React.FC = () => {
     const isOnlyOneSlide = slides.length === 1;
 
     return (
-        <div className="app-container">
-            <Sidebar />
+        <ContentLayout>
+            <div className="create-post-container">
+                
+                <div className="create-post-form">
+                    <h2 className="form-title">Создание публикации</h2>
 
-            <main className="main-content">
-                <div className="create-post-container">
-                    
-                    <div className="create-post-form">
-                        <h2 className="form-title">Создание публикации</h2>
+                    {/* Название и Место */}
+                    <input type="text" className="custom-input" placeholder="Название" value={title} onChange={(e) => setTitle(e.target.value)} />
+                    <input type="text" className="custom-input" placeholder="Место" value={place} onChange={(e) => setPlace(e.target.value)} />
 
-                        {/* Название и Место */}
-                        <input type="text" className="custom-input" placeholder="Название" value={title} onChange={(e) => setTitle(e.target.value)} />
-                        <input type="text" className="custom-input" placeholder="Место" value={place} onChange={(e) => setPlace(e.target.value)} />
+                    {/* Слайдер область */}
+                    <div className="slide-container">
+                        
+                        <button className="nav-arrow" onClick={handlePrevSlide} disabled={currentSlideIndex === 0}><FaAngleDoubleLeft /></button>
 
-                        {/* Слайдер область */}
-                        <div className="slide-container">
+                        {/* Карточка слайда */}
+                        <div className="slide-content-box">
                             
-                            <button className="nav-arrow" onClick={handlePrevSlide} disabled={currentSlideIndex === 0}><FaAngleDoubleLeft /></button>
-
-                            {/* Карточка слайда */}
-                            <div className="slide-content-box">
-                                
-                                <div className="slide-counter">{currentSlideIndex + 1} / {slides.length}</div>
-                                
-                                {/* Текстовая область */}
-                                <div className="text-area-wrapper">
-                                    <textarea 
-                                        className="slide-textarea" 
-                                        placeholder="Текст слайда"
-                                        value={currentSlide.text}
-                                        onChange={(e) => updateCurrentSlide('text', e.target.value)}
-                                    />
+                            <div className="slide-counter">{currentSlideIndex + 1} / {slides.length}</div>
+                            
+                            {/* Текстовая область */}
+                            <div className="text-area-wrapper">
+                                <textarea 
+                                    className="slide-textarea" 
+                                    placeholder="Текст слайда"
+                                    value={currentSlide.text}
+                                    onChange={(e) => updateCurrentSlide('text', e.target.value)}
+                                />
+                            </div>
+                            
+                            {/* Блок действий (Фото) */}
+                            <div className="slide-action-area">
+                                <div className="add-photo-btn-container">
+                                    <span className="photo-label">Фото</span>
+                                    <button className="add-photo-btn" onClick={triggerFileSelect} disabled={currentSlide.isLoadingImage}>
+                                        <FaPlus />
+                                    </button>
+                                    <input type="file" ref={fileInputRef} style={{ display: 'none' }} accept="image/*" onChange={handleImageChange} />
                                 </div>
-                                
-                                {/* Блок действий (Фото) */}
-                                <div className="slide-action-area">
-                                    <div className="add-photo-btn-container">
-                                        <span className="photo-label">Фото</span>
-                                        <button className="add-photo-btn" onClick={triggerFileSelect} disabled={currentSlide.isLoadingImage}>
-                                            <FaPlus />
-                                        </button>
-                                        <input type="file" ref={fileInputRef} style={{ display: 'none' }} accept="image/*" onChange={handleImageChange} />
+
+                                {currentSlide.imageUrl && (
+                                    <div className="image-preview-area">
+                                        <img src={currentSlide.imageUrl} alt="Slide preview" className="slide-image-preview" />
+                                        <button className="remove-image-btn" onClick={handleRemoveImage}><FaTimes /></button>
                                     </div>
-
-                                    {currentSlide.imageUrl && (
-                                        <div className="image-preview-area">
-                                            <img src={currentSlide.imageUrl} alt="Slide preview" className="slide-image-preview" />
-                                            <button className="remove-image-btn" onClick={handleRemoveImage}><FaTimes /></button>
-                                        </div>
-                                    )}
-                                    {currentSlide.isLoadingImage && !currentSlide.imageUrl && <p className="loading-message">Загрузка фото...</p>}
-                                </div>
+                                )}
+                                {currentSlide.isLoadingImage && !currentSlide.imageUrl && <p className="loading-message">Загрузка фото...</p>}
                             </div>
-
-                            <button className="nav-arrow" onClick={handleNextSlide} disabled={currentSlideIndex === slides.length - 1}><FaAngleDoubleRight /></button>
                         </div>
 
-                        {/* Кнопки "Добавить слайд" и "Удалить слайд" */}
-                        <div className="slide-actions-bottom">
-                            <div className={`add-slide-action ${isMaxSlidesReached ? 'disabled' : ''}`} onClick={isMaxSlidesReached ? undefined : handleAddSlide}>
-                                <div className="add-slide-icon-box"><FaPlus /></div>
-                                <span className="add-slide-text">Добавить слайд</span>
-                            </div>
-
-                            {!isOnlyOneSlide && (
-                                <div className="remove-slide-action" onClick={handleRemoveSlide}>
-                                    <div className="remove-slide-icon-box"><FaTrashAlt /></div>
-                                    <span className="remove-slide-text">Удалить слайд</span>
-                                </div>
-                            )}
-                        </div>
-                        {isMaxSlidesReached && <p className="limit-message">Лимит слайдов ({MAX_SLIDES}) достигнут.</p>}
-
-
-                        {/* Теги */}
-                        <input type="text" className="custom-input" placeholder="Теги (через пробел, например: #фуд #отдых)" value={tags} onChange={(e) => setTags(e.target.value)} style={{ marginTop: '10px' }} />
-
-                        {/* Опубликовать */}
-                        <button 
-                            className="publish-btn" 
-                            onClick={handlePublish} 
-                            disabled={isPublishing}
-                        >
-                            {isPublishing ? 'Публикация...' : 'Опубликовать'}
-                        </button>
+                        <button className="nav-arrow" onClick={handleNextSlide} disabled={currentSlideIndex === slides.length - 1}><FaAngleDoubleRight /></button>
                     </div>
+
+                    {/* Кнопки "Добавить слайд" и "Удалить слайд" */}
+                    <div className="slide-actions-bottom">
+                        <div className={`add-slide-action ${isMaxSlidesReached ? 'disabled' : ''}`} onClick={isMaxSlidesReached ? undefined : handleAddSlide}>
+                            <div className="add-slide-icon-box"><FaPlus /></div>
+                            <span className="add-slide-text">Добавить слайд</span>
+                        </div>
+
+                        {!isOnlyOneSlide && (
+                            <div className="remove-slide-action" onClick={handleRemoveSlide}>
+                                <div className="remove-slide-icon-box"><FaTrashAlt /></div>
+                                <span className="remove-slide-text">Удалить слайд</span>
+                            </div>
+                        )}
+                    </div>
+                    {isMaxSlidesReached && <p className="limit-message">Лимит слайдов ({MAX_SLIDES}) достигнут.</p>}
+
+
+                    {/* Теги */}
+                    <input type="text" className="custom-input" placeholder="Теги (через пробел, например: #фуд #отдых)" value={tags} onChange={(e) => setTags(e.target.value)} style={{ marginTop: '10px' }} />
+
+                    {/* Опубликовать */}
+                    <button 
+                        className="publish-btn" 
+                        onClick={handlePublish} 
+                        disabled={isPublishing}
+                    >
+                        {isPublishing ? 'Публикация...' : 'Опубликовать'}
+                    </button>
                 </div>
-            </main>
-        </div>
+            </div>
+        </ContentLayout>
     );
 };
 

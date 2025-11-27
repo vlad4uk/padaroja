@@ -6,6 +6,7 @@ import (
 
 	// Добавил, если понадобится конвертация ID
 	auth "tourist-blog/internal/handlers/auth"
+	"tourist-blog/internal/handlers/comment"
 	"tourist-blog/internal/handlers/favourite"
 	"tourist-blog/internal/handlers/follows"
 	"tourist-blog/internal/handlers/like"
@@ -156,6 +157,25 @@ func main() {
 		likeRoutes.GET("", like.GetUserLikes)
 		likeRoutes.GET("/check/:postID", like.CheckLike)
 		likeRoutes.GET("/count/:postID", like.GetPostLikesCount) // публичный эндпоинт
+	}
+
+	// main.go
+	commentRoutes := api.Group("/comments")
+	{
+		// Создание комментария (защищено) - POST /api/comments/post/:postID
+		commentRoutes.POST("/post/:postID", middleware.AuthMiddleware(), comment.CreateComment)
+
+		// Получение комментариев к посту (открыто) - GET /api/comments/post/:postID
+		commentRoutes.GET("/post/:postID", comment.GetComments)
+
+		// Получение ответов на комментарий (открыто) - GET /api/comments/:commentID/replies
+		commentRoutes.GET("/:commentID/replies", comment.GetCommentReplies)
+
+		// Обновление комментария (защищено) - PUT /api/comments/:commentID
+		commentRoutes.PUT("/:commentID", middleware.AuthMiddleware(), comment.UpdateComment)
+
+		// Удаление комментария (защищено) - DELETE /api/comments/:commentID
+		commentRoutes.DELETE("/:commentID", middleware.AuthMiddleware(), comment.DeleteComment)
 	}
 
 	// Запуск сервера

@@ -15,6 +15,7 @@ type Post struct {
 	Place      Place       `gorm:"foreignKey:PlaceID;references:ID" json:"place"`
 	Paragraphs []Paragraph `gorm:"foreignKey:PostID" json:"paragraphs"`
 	Photos     []PostPhoto `gorm:"foreignKey:PostID" json:"photos"`
+	Comments   []Comment   `gorm:"foreignKey:PostID" json:"comments,omitempty"`
 }
 
 type Paragraph struct {

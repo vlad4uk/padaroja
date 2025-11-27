@@ -1,0 +1,558 @@
+/* src/components/CommentsSection.css */
+.comments-section {
+    margin-top: 40px;
+    padding-top: 30px;
+    border-top: 2px solid #f0f0f0;
+}
+
+.comments-title {
+    font-size: 24px;
+    font-weight: 700;
+    color: #333;
+    margin-bottom: 25px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #e8e8e8;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.comments-count {
+    color: #8c57ff;
+    font-weight: 600;
+}
+
+/* Загрузка, ошибка, пустое состояние */
+.comments-loading,
+.comments-error,
+.comments-empty {
+    text-align: center;
+    padding: 40px 20px;
+    color: #666;
+    font-size: 16px;
+}
+
+.comments-error {
+    color: #e74c3c;
+    background: #ffeaea;
+    border-radius: 10px;
+    margin-bottom: 20px;
+}
+
+.comments-empty {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+}
+
+.empty-icon {
+    font-size: 48px;
+    margin-bottom: 10px;
+}
+
+.comments-empty p {
+    font-weight: 600;
+    color: #333;
+    margin: 0;
+}
+
+.comments-empty span {
+    color: #999;
+    font-size: 14px;
+}
+
+/* Форма комментария */
+.comment-form {
+    background: #f8f7ff;
+    border-radius: 15px;
+    padding: 20px;
+    margin-bottom: 30px;
+    border: 1px solid #e9e5ff;
+}
+
+.comment-form-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 15px;
+}
+
+.current-user-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid #8c57ff;
+}
+
+.current-user-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.current-username {
+    font-weight: 600;
+    color: #8c57ff;
+    font-size: 16px;
+}
+
+.current-user-badge {
+    font-size: 12px;
+    color: #666;
+    margin-top: 2px;
+}
+
+.comment-textarea {
+    width: 100%;
+    padding: 15px;
+    border: 1px solid #ddd;
+    border-radius: 10px;
+    resize: vertical;
+    font-family: inherit;
+    font-size: 14px;
+    line-height: 1.5;
+    margin-bottom: 15px;
+    transition: all 0.2s;
+    background: white;
+}
+
+.comment-textarea:focus {
+    outline: none;
+    border-color: #8c57ff;
+    box-shadow: 0 0 0 2px rgba(140, 87, 255, 0.1);
+}
+
+.comment-textarea:disabled {
+    background: #f5f5f5;
+    opacity: 0.7;
+}
+
+.comment-form-actions {
+    display: flex;
+    justify-content: flex-end;
+}
+
+.comment-submit-btn {
+    background: #8c57ff;
+    color: white;
+    border: none;
+    padding: 12px 30px;
+    border-radius: 25px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.comment-submit-btn:hover:not(:disabled) {
+    background: #7a46e6;
+    transform: translateY(-1px);
+}
+
+.comment-submit-btn:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.comments-login-prompt {
+    text-align: center;
+    padding: 25px;
+    background: #f8f9fa;
+    border-radius: 12px;
+    margin-bottom: 30px;
+    color: #666;
+    font-size: 15px;
+}
+
+.login-link {
+    color: #8c57ff;
+    text-decoration: none;
+    font-weight: 600;
+}
+
+.login-link:hover {
+    text-decoration: underline;
+}
+
+/* Список комментариев */
+.comments-list {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+}
+
+/* Элемент комментария */
+.comment-item {
+    background: white;
+    border: 1px solid #e8e8e8;
+    border-radius: 12px;
+    padding: 20px;
+    transition: all 0.2s;
+    position: relative;
+}
+
+.comment-item:hover {
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+    border-color: #e0e0e0;
+}
+
+/* Уровни вложенности */
+.comment-level-1 { margin-left: 20px; background: #fafafa; }
+.comment-level-2 { margin-left: 40px; background: #f5f5f5; }
+.comment-level-3 { margin-left: 60px; background: #f0f0f0; }
+.comment-level-4 { margin-left: 80px; background: #ebebeb; }
+
+/* Индикатор ответа */
+.reply-indicator {
+    font-size: 12px;
+    color: #999;
+    margin-bottom: 8px;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.reply-arrow {
+    color: #8c57ff;
+}
+
+.reply-to-user {
+    color: #8c57ff;
+    font-weight: 600;
+    cursor: pointer;
+    margin-left: 4px;
+}
+
+.reply-to-user:hover {
+    text-decoration: underline;
+}
+
+/* Заголовок комментария */
+.comment-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: 12px;
+    gap: 15px;
+}
+
+.comment-author {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    cursor: pointer;
+    transition: transform 0.2s;
+    flex: 1;
+}
+
+.comment-author:hover {
+    transform: translateX(3px);
+}
+
+.comment-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid #8c57ff;
+    flex-shrink: 0;
+}
+
+.comment-user-info {
+    display: flex;
+    flex-direction: column;
+}
+
+.comment-username {
+    font-weight: 700;
+    color: #8c57ff;
+    font-size: 14px;
+}
+
+.comment-user-badge {
+    font-size: 11px;
+    color: #666;
+    margin-top: 2px;
+}
+
+.comment-meta {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    flex-shrink: 0;
+}
+
+.comment-date {
+    font-size: 12px;
+    color: #999;
+    white-space: nowrap;
+}
+
+.comment-delete-btn {
+    background: none;
+    border: none;
+    color: #e74c3c;
+    cursor: pointer;
+    padding: 5px;
+    border-radius: 4px;
+    transition: background-color 0.2s;
+    font-size: 14px;
+}
+
+.comment-delete-btn:hover:not(:disabled) {
+    background: #ffeaea;
+}
+
+.comment-delete-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Содержимое комментария */
+.comment-content {
+    font-size: 14px;
+    line-height: 1.6;
+    color: #333;
+    margin-bottom: 15px;
+    white-space: pre-wrap;
+    word-break: break-word;
+}
+
+/* Действия с комментарием */
+.comment-actions {
+    display: flex;
+    gap: 15px;
+    flex-wrap: wrap;
+}
+
+.comment-action-btn {
+    background: none;
+    border: 1px solid #e0e0e0;
+    color: #666;
+    cursor: pointer;
+    font-size: 13px;
+    font-weight: 500;
+    padding: 6px 12px;
+    border-radius: 20px;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.comment-action-btn:hover:not(:disabled) {
+    background: #f5f5f5;
+    border-color: #ccc;
+    color: #333;
+}
+
+.comment-action-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.reply-btn:hover:not(:disabled) {
+    border-color: #8c57ff;
+    color: #8c57ff;
+}
+
+.toggle-replies-btn:hover:not(:disabled) {
+    border-color: #666;
+    color: #333;
+}
+
+.action-icon {
+    font-size: 12px;
+}
+
+.replies-count {
+    font-weight: 600;
+    color: #8c57ff;
+}
+
+/* Форма ответа */
+.reply-form {
+    margin-top: 15px;
+    padding: 15px;
+    background: #f8f7ff;
+    border-radius: 10px;
+    border: 1px solid #e9e5ff;
+}
+
+.reply-form-header {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    margin-bottom: 12px;
+}
+
+.reply-user-avatar {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 1px solid #8c57ff;
+}
+
+.reply-user-info {
+    font-size: 13px;
+    color: #666;
+}
+
+.reply-user-info strong {
+    color: #8c57ff;
+}
+
+.reply-textarea {
+    width: 100%;
+    padding: 12px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    resize: vertical;
+    font-family: inherit;
+    font-size: 14px;
+    margin-bottom: 12px;
+    transition: border-color 0.2s;
+    background: white;
+}
+
+.reply-textarea:focus {
+    outline: none;
+    border-color: #8c57ff;
+}
+
+.reply-textarea:disabled {
+    background: #f5f5f5;
+    opacity: 0.7;
+}
+
+.reply-actions {
+    display: flex;
+    gap: 10px;
+    justify-content: flex-end;
+}
+
+.primary-btn {
+    background: #8c57ff;
+    color: white;
+    border: none;
+    padding: 8px 20px;
+    border-radius: 20px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.primary-btn:hover:not(:disabled) {
+    background: #7a46e6;
+    transform: translateY(-1px);
+}
+
+.primary-btn:disabled {
+    background: #ccc;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.secondary-btn {
+    background: none;
+    border: 1px solid #ddd;
+    color: #666;
+    padding: 8px 20px;
+    border-radius: 20px;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.secondary-btn:hover:not(:disabled) {
+    background: #f5f5f5;
+    border-color: #999;
+    color: #333;
+}
+
+.secondary-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+/* Вложенные комментарии */
+.comment-replies {
+    margin-top: 20px;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+/* Спиннеры */
+.spinner {
+    width: 16px;
+    height: 16px;
+    border: 2px solid transparent;
+    border-top: 2px solid currentColor;
+    border-radius: 50%;
+    animation: spin 1s linear infinite;
+}
+
+.spinner.small {
+    width: 12px;
+    height: 12px;
+    border-width: 1px;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* Адаптивность */
+@media (max-width: 768px) {
+    .comments-section {
+        margin-top: 30px;
+        padding-top: 20px;
+    }
+
+    .comments-title {
+        font-size: 20px;
+    }
+
+    .comment-form {
+        padding: 15px;
+    }
+
+    .comment-item {
+        padding: 15px;
+    }
+
+    .comment-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 10px;
+    }
+
+    .comment-meta {
+        align-self: flex-end;
+    }
+
+    .comment-level-1 { margin-left: 15px; }
+    .comment-level-2 { margin-left: 30px; }
+    .comment-level-3 { margin-left: 45px; }
+    .comment-level-4 { margin-left: 60px; }
+
+    .comment-actions {
+        gap: 10px;
+    }
+
+    .comment-action-btn {
+        font-size: 12px;
+        padding: 5px 10px;
+    }
+}

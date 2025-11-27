@@ -1,10 +1,7 @@
-// src/pages/PostEditPage.tsx (ФИНАЛЬНАЯ ВЕРСИЯ)
-
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import axios from 'axios';
-import Sidebar from '../components/Sidebar.tsx';
-import '../components/MainLayout.css'; 
+import ContentLayout from '../components/ContentLayout.tsx';
 import './PostEditPage.css'; 
 import { uploadImage } from '../firebase/uploadImage'; 
 import { FaPlus, FaAngleDoubleLeft, FaAngleDoubleRight, FaTimes } from 'react-icons/fa';
@@ -176,124 +173,123 @@ const PostEditPage: React.FC = () => {
         }
     };
 
-    if (loading) return <div style={{padding: 50, textAlign: 'center'}}>Загрузка...</div>;
+    if (loading) return (
+        <ContentLayout>
+            <div style={{padding: 50, textAlign: 'center'}}>Загрузка...</div>
+        </ContentLayout>
+    );
 
     const currentSlide = slides[currentSlideIndex];
 
     return (
-        <div className="app-container">
-            <Sidebar />
+        <ContentLayout>
+            <div className="edit-post-container">
+                <div className="edit-form-wrapper">
+                    <h2 className="edit-page-title">Изменение публикации</h2>
 
-            <main className="main-content">
-                <div className="edit-post-container">
-                    <div className="edit-form-wrapper">
-                        <h2 className="edit-page-title">Изменение публикации</h2>
-
-                        {/* Поле Название */}
-                        <div className="input-wrapper">
-                            <span className="input-label">Название</span>
-                            <input 
-                                type="text" 
-                                className="edit-input" 
-                                value={title} 
-                                onChange={(e) => setTitle(e.target.value)} 
-                            />
-                        </div>
-
-                        {/* Поле Место */}
-                        <div className="input-wrapper">
-                            <span className="input-label">Место</span>
-                            <input 
-                                type="text" 
-                                className="edit-input" 
-                                value={place} 
-                                onChange={(e) => setPlace(e.target.value)} 
-                            />
-                        </div>
-
-                        {/* --- Слайдер / Редактор слайда --- */}
-                        <div className="edit-slider-area">
-                            <button className="edit-nav-btn left" onClick={handlePrevSlide} disabled={currentSlideIndex === 0}>
-                                <FaAngleDoubleLeft />
-                            </button>
-
-                            <div className="edit-slide-card">
-                                {/* Область Текста */}
-                                <div className="input-wrapper" style={{ flexGrow: 1, marginBottom: 0, position: 'relative' }}>
-                                    <span className="slide-text-label">Текст</span>
-                                    <textarea 
-                                        className="edit-textarea" 
-                                        value={currentSlide.text}
-                                        onChange={(e) => updateCurrentSlide('text', e.target.value)}
-                                        placeholder={slides.length > 1 ? "Введите текст слайда" : "Введите основной текст публикации"}
-                                    />
-                                </div>
-                                
-                                {/* Область Фото */}
-                                <div className="edit-photo-zone">
-                                    {/* photo-container должен быть внутри input-wrapper для корректного отображения метки */}
-                                    <div className="input-wrapper" style={{ margin: 0, position: 'relative' }}>
-                                        {currentSlide.imageUrl ? (
-                                            <div className="photo-container" onClick={triggerFileSelect}>
-                                                <img src={currentSlide.imageUrl} alt="preview" />
-                                                <button className="remove-img-btn" onClick={handleRemoveImage}><FaTimes size={12}/></button>
-                                            </div>
-                                        ) : (
-                                            <div className="photo-container" onClick={triggerFileSelect} style={{ border: '1px dashed #8c57ff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                                <span className="add-photo-label-inner">Фото</span>
-                                                <button className="plus-btn-photo" disabled={currentSlide.isLoadingImage}>
-                                                    {currentSlide.isLoadingImage ? '...' : <FaPlus />}
-                                                </button>
-                                            </div>
-                                        )}
-                                        <input type="file" ref={fileInputRef} hidden accept="image/*" onChange={handleImageChange} />
-                                    </div>
-                                </div>
-                                
-                                {/* Кнопка удаления слайда */}
-                                {slides.length > 1 && (
-                                    <div style={{textAlign: 'center', marginTop: '10px'}}>
-                                         <span className="delete-slide-link" onClick={handleRemoveSlide}>Удалить слайд</span>
-                                    </div>
-                                )}
-                            </div>
-
-                            <button className="edit-nav-btn right" onClick={handleNextSlide} disabled={currentSlideIndex === slides.length - 1}>
-                                <FaAngleDoubleRight />
-                            </button>
-                        </div>
-
-                        {/* Кнопка Добавить слайд */}
-                        <div className="add-slide-center">
-                             <span className="add-slide-label">Добавить слайд</span>
-                             <button className="plus-btn-large" onClick={handleAddSlide} disabled={slides.length >= MAX_SLIDES}>
-                                <FaPlus />
-                             </button>
-                        </div>
-
-                        {/* Поле Теги */}
-                        <div className="input-wrapper">
-                            <span className="input-label">Теги</span>
-                            <input 
-                                type="text" 
-                                className="edit-input" 
-                                value={tags} 
-                                onChange={(e) => setTags(e.target.value)} 
-                            />
-                        </div>
-
-                        {/* Нижние кнопки действий */}
-                        <div className="edit-actions-footer">
-                            <button className="btn-delete-post" onClick={handleDelete}>Удалить пост</button>
-                            <button className="btn-save-post" onClick={handleUpdate} disabled={isSaving}>
-                                {isSaving ? 'Применяется...' : 'Применить'}
-                            </button>
-                        </div>
-
+                    {/* Поле Название */}
+                    <div className="input-wrapper">
+                        <span className="input-label">Название</span>
+                        <input 
+                            type="text" 
+                            className="edit-input" 
+                            value={title} 
+                            onChange={(e) => setTitle(e.target.value)} 
+                        />
                     </div>
+
+                    {/* Поле Место */}
+                    <div className="input-wrapper">
+                        <span className="input-label">Место</span>
+                        <input 
+                            type="text" 
+                            className="edit-input" 
+                            value={place} 
+                            onChange={(e) => setPlace(e.target.value)} 
+                        />
+                    </div>
+
+                    {/* --- Слайдер / Редактор слайда --- */}
+                    <div className="edit-slider-area">
+                        <button className="edit-nav-btn left" onClick={handlePrevSlide} disabled={currentSlideIndex === 0}>
+                            <FaAngleDoubleLeft />
+                        </button>
+
+                        <div className="edit-slide-card">
+                            {/* Область Текста */}
+                            <div className="input-wrapper" style={{ flexGrow: 1, marginBottom: 0, position: 'relative' }}>
+                                <span className="slide-text-label">Текст</span>
+                                <textarea 
+                                    className="edit-textarea" 
+                                    value={currentSlide.text}
+                                    onChange={(e) => updateCurrentSlide('text', e.target.value)}
+                                    placeholder={slides.length > 1 ? "Введите текст слайда" : "Введите основной текст публикации"}
+                                />
+                            </div>
+                            
+                            {/* Область Фото */}
+                            <div className="edit-photo-zone">
+                                <div className="input-wrapper" style={{ margin: 0, position: 'relative' }}>
+                                    {currentSlide.imageUrl ? (
+                                        <div className="photo-container" onClick={triggerFileSelect}>
+                                            <img src={currentSlide.imageUrl} alt="preview" />
+                                            <button className="remove-img-btn" onClick={handleRemoveImage}><FaTimes size={12}/></button>
+                                        </div>
+                                    ) : (
+                                        <div className="photo-container" onClick={triggerFileSelect} style={{ border: '1px dashed #8c57ff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                                            <span className="add-photo-label-inner">Фото</span>
+                                            <button className="plus-btn-photo" disabled={currentSlide.isLoadingImage}>
+                                                {currentSlide.isLoadingImage ? '...' : <FaPlus />}
+                                            </button>
+                                        </div>
+                                    )}
+                                    <input type="file" ref={fileInputRef} hidden accept="image/*" onChange={handleImageChange} />
+                                </div>
+                            </div>
+                            
+                            {/* Кнопка удаления слайда */}
+                            {slides.length > 1 && (
+                                <div style={{textAlign: 'center', marginTop: '10px'}}>
+                                     <span className="delete-slide-link" onClick={handleRemoveSlide}>Удалить слайд</span>
+                                </div>
+                            )}
+                        </div>
+
+                        <button className="edit-nav-btn right" onClick={handleNextSlide} disabled={currentSlideIndex === slides.length - 1}>
+                            <FaAngleDoubleRight />
+                        </button>
+                    </div>
+
+                    {/* Кнопка Добавить слайд */}
+                    <div className="add-slide-center">
+                         <span className="add-slide-label">Добавить слайд</span>
+                         <button className="plus-btn-large" onClick={handleAddSlide} disabled={slides.length >= MAX_SLIDES}>
+                            <FaPlus />
+                         </button>
+                    </div>
+
+                    {/* Поле Теги */}
+                    <div className="input-wrapper">
+                        <span className="input-label">Теги</span>
+                        <input 
+                            type="text" 
+                            className="edit-input" 
+                            value={tags} 
+                            onChange={(e) => setTags(e.target.value)} 
+                        />
+                    </div>
+
+                    {/* Нижние кнопки действий */}
+                    <div className="edit-actions-footer">
+                        <button className="btn-delete-post" onClick={handleDelete}>Удалить пост</button>
+                        <button className="btn-save-post" onClick={handleUpdate} disabled={isSaving}>
+                            {isSaving ? 'Применяется...' : 'Применить'}
+                        </button>
+                    </div>
+
                 </div>
-            </main>
-        </div>
+            </div>
+        </ContentLayout>
     );
 };
 

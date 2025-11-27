@@ -1,16 +1,14 @@
-// src/pages/SinglePostPage.tsx (ОБНОВЛЕННАЯ ВЕРСИЯ С ЛАЙКАМИ И ИЗБРАННЫМ)
-
 import React, { useEffect, useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import Sidebar from '../components/Sidebar.tsx';
-import '../components/MainLayout.css';
+import ContentLayout from '../components/ContentLayout.tsx';
 import './SinglePostPage.css';
 import PostActionsMenu from '../components/PostActionsMenu.tsx'; 
 import ReportModal from '../components/ReportModal.tsx';
 import { BsGlobeAmericas } from "react-icons/bs";
 import { FaRegBookmark, FaBookmark, FaAngleDoubleLeft, FaAngleDoubleRight } from 'react-icons/fa';
 import { useAuth } from '../context/AuthContext.tsx'; 
+import CommentsSection from '../components/CommentsSection.tsx';
 
 // --- ИНТЕРФЕЙСЫ ---
 
@@ -303,135 +301,141 @@ const SinglePostPage: React.FC = () => {
 
     // --- РЕНДЕРИНГ СОСТОЯНИЙ ---
     if (loading) {
-        return <div className="loading-state">Загрузка поста...</div>;
+        return (
+            <ContentLayout>
+                <div className="loading-state">Загрузка поста...</div>
+            </ContentLayout>
+        );
     }
 
     if (error || !post) {
-        return <div className="error-state">Ошибка: {error || 'Пост не найден.'}</div>;
+        return (
+            <ContentLayout>
+                <div className="error-state">Ошибка: {error || 'Пост не найден.'}</div>
+            </ContentLayout>
+        );
     }
 
     return (
-        <div className="app-container">
-            <Sidebar />
-
-            <main className="main-content">
-                <div className="single-post-container">
+        <ContentLayout>
+            <div className="single-post-container">
+                
+                <div className="sp-top-meta-area">
+                    <h1 className="sp-post-title">{post.title}</h1>
                     
-                    <div className="sp-top-meta-area">
-                        <h1 className="sp-post-title">{post.title}</h1>
+                    <div className="sp-meta-info">
+                        <span className="sp-date">Опубликовано: {new Date(post.created_at).toLocaleDateString()}</span>
+                        <span className="sp-place-name"><BsGlobeAmericas size={14}/> {post.place_name}</span>
                         
-                        <div className="sp-meta-info">
-                            <span className="sp-date">Опубликовано: {new Date(post.created_at).toLocaleDateString()}</span>
-                            <span className="sp-place-name"><BsGlobeAmericas size={14}/> {post.place_name}</span>
-                            
-                            {/* Лайки с возможностью клика */}
-                            <span 
-                                className="sp-likes-count"
-                                onClick={toggleLike}
-                                style={{
-                                    cursor: isLoggedIn && clickedLikePostId !== postIdNum ? 'pointer' : 'default',
-                                    opacity: clickedLikePostId === postIdNum ? 0.6 : 1,
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    gap: '5px'
-                                }}
-                            >
-                                <BsGlobeAmericas 
-                                    size={14} 
-                                    style={{ 
-                                        color: isLiked ? '#e74c3c' : '#666' 
-                                    }} 
-                                />
-                                Лайков: {likesCount}
-                            </span>
-                            
-                            {/* Закладка с возможностью клика */}
-                            <div 
-                                onClick={toggleFavourite}
-                                style={{
-                                    cursor: isLoggedIn && clickedPostId !== postIdNum ? 'pointer' : 'default',
-                                    opacity: clickedPostId === postIdNum ? 0.6 : 1
-                                }}
-                            >
-                                {isFavourite ? (
-                                    <FaBookmark className="sp-icon-bookmark" style={{ color: '#ffd700' }} />
+                        {/* Лайки с возможностью клика */}
+                        <span 
+                            className="sp-likes-count"
+                            onClick={toggleLike}
+                            style={{
+                                cursor: isLoggedIn && clickedLikePostId !== postIdNum ? 'pointer' : 'default',
+                                opacity: clickedLikePostId === postIdNum ? 0.6 : 1,
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '5px'
+                            }}
+                        >
+                            <BsGlobeAmericas 
+                                size={14} 
+                                style={{ 
+                                    color: isLiked ? '#e74c3c' : '#666' 
+                                }} 
+                            />
+                            Лайков: {likesCount}
+                        </span>
+                        
+                        {/* Закладка с возможностью клика */}
+                        <div 
+                            onClick={toggleFavourite}
+                            style={{
+                                cursor: isLoggedIn && clickedPostId !== postIdNum ? 'pointer' : 'default',
+                                opacity: clickedPostId === postIdNum ? 0.6 : 1
+                            }}
+                        >
+                            {isFavourite ? (
+                                <FaBookmark className="sp-icon-bookmark" style={{ color: '#ffd700' }} />
+                            ) : (
+                                <FaRegBookmark className="sp-icon-bookmark" />
+                            )}
+                        </div>
+                        
+                        <span className="sp-tags">
+                            {(post.tags ?? []).length > 0 
+                                ? ' #' + (post.tags ?? []).join(' #') 
+                                : ''}
+                        </span>
+                    </div>
+                    
+                    {/* ИНТЕГРАЦИЯ PostActionsMenu */}
+                    {post.user_id && (
+                        <div className="sp-author-actions">
+                            <PostActionsMenu 
+                                postID={postIdNum}
+                                postAuthorID={post.user_id}
+                                onEdit={handleEdit}
+                                onDelete={handleDelete}
+                                onReport={handleReport}
+                            />
+                        </div>
+                    )}
+                </div>
+
+                {/* Слайдер с контентом */}
+                <div className="sp-content-slider">
+                    <button className="sp-nav-arrow" onClick={handlePrev} disabled={currentSlide === 0}>
+                        <FaAngleDoubleLeft />
+                    </button>
+
+                    <div className="sp-slide-view sp-slider-box">
+                        <div className="sp-slide-meta">
+                            <span className="sp-slide-info">Слайд {currentSlide + 1} из {maxSlides}</span>
+                        </div>
+
+                        <div className="sp-slide-body">
+                            <div className="sp-photo-area">
+                                {currentPhoto ? (
+                                    <img src={currentPhoto.url} alt="Slide" className="sp-photo-img" />
                                 ) : (
-                                    <FaRegBookmark className="sp-icon-bookmark" />
+                                    <span style={{color: '#999'}}>Нет фото</span>
                                 )}
                             </div>
-                            
-                            <span className="sp-tags">
-                                {(post.tags ?? []).length > 0 
-                                    ? ' #' + (post.tags ?? []).join(' #') 
-                                    : ''}
-                            </span>
+                            <div className="sp-text-area">
+                                {currentText ? currentText.content : ""}
+                            </div>
                         </div>
                         
-                        {/* ИНТЕГРАЦИЯ PostActionsMenu */}
-                        {post.user_id && (
-                            <div className="sp-author-actions">
-                                <PostActionsMenu 
-                                    postID={postIdNum}
-                                    postAuthorID={post.user_id}
-                                    onEdit={handleEdit}
-                                    onDelete={handleDelete}
-                                    onReport={handleReport}
-                                />
-                            </div>
-                        )}
-                    </div>
-
-                    {/* Слайдер с контентом */}
-                    <div className="sp-content-slider">
-                        <button className="sp-nav-arrow" onClick={handlePrev} disabled={currentSlide === 0}>
-                            <FaAngleDoubleLeft />
-                        </button>
-
-                        <div className="sp-slide-view sp-slider-box">
-                            <div className="sp-slide-meta">
-                                <span className="sp-slide-info">Слайд {currentSlide + 1} из {maxSlides}</span>
-                            </div>
-
-                            <div className="sp-slide-body">
-                                <div className="sp-photo-area">
-                                    {currentPhoto ? (
-                                        <img src={currentPhoto.url} alt="Slide" className="sp-photo-img" />
-                                    ) : (
-                                        <span style={{color: '#999'}}>Нет фото</span>
-                                    )}
-                                </div>
-                                <div className="sp-text-area">
-                                    {currentText ? currentText.content : ""}
-                                </div>
-                            </div>
-                            
-                            <div className="sp-user-info">
-                                <div className="sp-avatar" />
-                                <span className="sp-username">Автор ID: {post.user_id}</span>
-                            </div>
-                            <div className="sp-comments-placeholder">Комментарии</div>
+                        <div className="sp-user-info">
+                            <div className="sp-avatar" />
+                            <span className="sp-username">Автор ID: {post.user_id}</span>
                         </div>
-
-                        <button className="sp-nav-arrow" onClick={handleNext} disabled={currentSlide >= maxSlides - 1}>
-                            <FaAngleDoubleRight />
-                        </button>
+                        <div className="sp-comments-section">
+                            <CommentsSection postId={postIdNum} />
+                        </div>
                     </div>
 
-                    <div className="sp-back-btn-container">
-                        <button className="sp-back-btn" onClick={() => navigate(-1)}>
-                            Вернуться назад
-                        </button>
-                    </div>
+                    <button className="sp-nav-arrow" onClick={handleNext} disabled={currentSlide >= maxSlides - 1}>
+                        <FaAngleDoubleRight />
+                    </button>
                 </div>
-                
-                {/* МОДАЛЬНОЕ ОКНО ЖАЛОБЫ */}
-                <ReportModal 
-                    isOpen={isReportModalOpen}
-                    onClose={() => setReportModalOpen(false)}
-                    onSubmit={handleSubmitReport}
-                />
-            </main>
-        </div>
+
+                <div className="sp-back-btn-container">
+                    <button className="sp-back-btn" onClick={() => navigate(-1)}>
+                        Вернуться назад
+                    </button>
+                </div>
+            </div>
+            
+            {/* МОДАЛЬНОЕ ОКНО ЖАЛОБЫ */}
+            <ReportModal 
+                isOpen={isReportModalOpen}
+                onClose={() => setReportModalOpen(false)}
+                onSubmit={handleSubmitReport}
+            />
+        </ContentLayout>
     );
 };
 
