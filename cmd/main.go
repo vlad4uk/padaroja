@@ -4,7 +4,6 @@ import (
 	"log"
 	"time"
 
-	// Добавил, если понадобится конвертация ID
 	auth "tourist-blog/internal/handlers/auth"
 	"tourist-blog/internal/handlers/comment"
 	"tourist-blog/internal/handlers/favourite"
@@ -22,37 +21,6 @@ import (
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 )
-
-// =========================================================================
-// НОВЫЙ OptionalAuthMiddleware (не блокирует запрос, если токена нет)
-// =========================================================================
-func OptionalAuthMiddleware() gin.HandlerFunc {
-	return func(c *gin.Context) {
-		// 🚨 ВАЖНО: ЗАМЕНИТЕ ЭТОТ БЛОК НА ВАШУ ЛОГИКУ ВАЛИДАЦИИ ТОКЕНА
-		// (например, получение токена из Cookie, его валидация и извлечение userID)
-		//
-		// ********** ПРИМЕРНАЯ ЛОГИКА **********
-		/*
-			token, err := c.Cookie("token")
-			if err == nil {
-				// Предполагаем, что у вас есть функция для валидации и извлечения ID
-				// userID, err := utils.ValidateToken(token)
-
-				// Если валидация успешна:
-				// c.Set("userID", userID)
-			}
-		*/
-		// ****************************************
-
-		// Если вы используете JWT из заголовка Authorization, логика будет другой.
-		// Главное: если токен есть и он валиден, поместите ID в контекст:
-		// c.Set("userID", int(parsedUserID))
-
-		// Этот вызов пропускает запрос к следующему обработчику (GetPublicFeed),
-		// независимо от наличия токена.
-		c.Next()
-	}
-}
 
 func main() {
 	// 1. Подключение к БД
@@ -82,55 +50,99 @@ func main() {
 		authRoutes.POST("/logout", auth.Logout)
 	}
 
-	// 2. Маршруты пользователя (требуют авторизации)
+	// 2. Маршруты пользователя
 	userRoutes := api.Group("/user")
 	{
-		userRoutes.Use(middleware.AuthMiddleware())
+		// Публичные профили пользователей - доступны всем
+		userRoutes.GET("/:userID/profile", middleware.OptionalAuthMiddleware(), profile.GetUserProfileByID)
+		userRoutes.GET("/:userID/posts", middleware.OptionalAuthMiddleware(), post.GetUserPostsByID)
 
-		userRoutes.GET("/profile", profile.GetCurrentUserProfile)
-		userRoutes.PUT("/profile", profile.UpdateUserProfile)
+		// Защищенные маршруты (требуют авторизации)
+		protectedUserRoutes := userRoutes.Group("")
+		protectedUserRoutes.Use(middleware.AuthMiddleware())
+		{
+			protectedUserRoutes.GET("/profile", profile.GetCurrentUserProfile)
+			protectedUserRoutes.PUT("/profile", profile.UpdateUserProfile)
+			protectedUserRoutes.GET("/posts", post.GetUserPosts)
 
-		// Получение постов текущего пользователя (GET /api/user/posts)
-		userRoutes.GET("/posts", post.GetUserPosts)
-
-		// ✅ НОВЫЙ ЭНДПОИНТ: Получение профиля любого пользователя
-		userRoutes.GET("/:userID/profile", profile.GetUserProfileByID)
-		userRoutes.GET("/:userID/posts", post.GetUserPostsByID) // ✅ НОВЫЙ: Посты любого пользова
-
-		userRoutes.POST("/:userID/follow", follows.FollowUser)
-		userRoutes.DELETE("/:userID/follow", follows.UnfollowUser)
-		userRoutes.GET("/:userID/follow/check", follows.CheckFollow)
-		userRoutes.GET("/:userID/followers/count", follows.GetFollowersCount)
-		userRoutes.GET("/:userID/following/count", follows.GetFollowingCount)
-		userRoutes.GET("/:userID/followers", follows.GetFollowersList)
-		userRoutes.GET("/:userID/following", follows.GetFollowingList)
+			protectedUserRoutes.POST("/:userID/follow", follows.FollowUser)
+			protectedUserRoutes.DELETE("/:userID/follow", follows.UnfollowUser)
+			protectedUserRoutes.GET("/:userID/follow/check", follows.CheckFollow)
+			protectedUserRoutes.GET("/:userID/followers/count", follows.GetFollowersCount)
+			protectedUserRoutes.GET("/:userID/following/count", follows.GetFollowingCount)
+			protectedUserRoutes.GET("/:userID/followers", follows.GetFollowersList)
+			protectedUserRoutes.GET("/:userID/following", follows.GetFollowingList)
+		}
 	}
 
 	// 3. Маршруты постов
 	postRoutes := api.Group("/posts")
 	{
-		// 1. Создание поста (защищено) - POST /api/posts
+		// 1. Публичная лента - доступна всем (гости и авторизованные)
+		postRoutes.GET("", middleware.OptionalAuthMiddleware(), post.GetPublicFeed)
+
+		// 2. Получение одного поста - доступно всем
+		postRoutes.GET("/:postID", middleware.OptionalAuthMiddleware(), post.GetPost)
+
+		// 3. Защищенные операции
 		postRoutes.POST("", middleware.AuthMiddleware(), post.CreatePost)
-
-		// ✅ 2. Получение общей ленты (открыт для всех) - GET /api/posts
-		// ПРИМЕНЯЕМ OptionalAuthMiddleware!
-		postRoutes.GET("", OptionalAuthMiddleware(), post.GetPublicFeed)
-
-		// 3. Получение одного поста по ID (открыто) - GET /api/posts/:postID
-		postRoutes.GET("/:postID", post.GetPost)
-
-		// 4. Редактирование (защищено) - PUT /api/posts/:postID
 		postRoutes.PUT("/:postID", middleware.AuthMiddleware(), post.UpdatePost)
-
-		// 4. Оставить жалобу (защищено) - POST /api/posts/:postID/report
-		postRoutes.POST("/:postID/report", middleware.AuthMiddleware(), post.ReportPost)
-
-		// 5. Удаление (защищено) - DELETE /api/posts/:postID
 		postRoutes.DELETE("/:postID", middleware.AuthMiddleware(), post.DeletePost)
+		postRoutes.POST("/:postID/report", middleware.AuthMiddleware(), post.ReportPost)
 	}
 
-	// В main.go, в блоке modRoutes добавить:
+	// 4. Маршруты комментариев
+	commentRoutes := api.Group("/comments")
+	{
+		// Получение комментариев - доступно всем
+		commentRoutes.GET("/post/:postID", middleware.OptionalAuthMiddleware(), comment.GetComments)
 
+		// Защищенные операции
+		commentRoutes.POST("/post/:postID", middleware.AuthMiddleware(), comment.CreateComment)
+		commentRoutes.GET("/:commentID/replies", middleware.OptionalAuthMiddleware(), comment.GetCommentReplies)
+		commentRoutes.GET("/:commentID/latest-reply", middleware.OptionalAuthMiddleware(), comment.GetLatestReply)
+		commentRoutes.PUT("/:commentID", middleware.AuthMiddleware(), comment.UpdateComment)
+		commentRoutes.DELETE("/:commentID", middleware.AuthMiddleware(), comment.DeleteComment)
+	}
+
+	// 5. Маршруты для карты
+	mapRoutes := api.Group("/map")
+	{
+		// Публичная информация о местах
+		mapRoutes.GET("/place/:placeID", middleware.OptionalAuthMiddleware(), maps.GetPlaceDetails)
+
+		// Защищенный маршрут
+		mapRoutes.GET("/user-data", middleware.AuthMiddleware(), maps.GetUserMapData)
+	}
+
+	// 6. Маршруты мест
+	placeRoutes := api.Group("/places")
+	{
+		// Публичные данные мест
+		placeRoutes.GET("", middleware.OptionalAuthMiddleware(), places.GetPlaces)
+
+		// Защищенные операции
+		placeRoutes.POST("", middleware.AuthMiddleware(), places.CreatePlace)
+	}
+
+	// 7. Маршруты отзывов
+	reviewRoutes := api.Group("/reviews")
+	{
+		// Публичные отзывы мест
+		reviewRoutes.GET("/place/:placeID", middleware.OptionalAuthMiddleware(), reviews.GetPlaceReviews)
+
+		// Защищенные операции
+		protectedReviewRoutes := reviewRoutes.Group("")
+		protectedReviewRoutes.Use(middleware.AuthMiddleware())
+		{
+			protectedReviewRoutes.POST("", reviews.CreateReview)
+			protectedReviewRoutes.GET("/user", reviews.GetUserReviews)
+			protectedReviewRoutes.PUT("/:reviewID", reviews.UpdateReview)
+			protectedReviewRoutes.DELETE("/:reviewID", reviews.DeleteReview)
+		}
+	}
+
+	// 8. Маршруты модерации (только для авторизованных)
 	modRoutes := api.Group("/mod")
 	{
 		modRoutes.Use(middleware.AuthMiddleware())
@@ -151,6 +163,7 @@ func main() {
 		modRoutes.POST("/users/:userID/remove-moderator", moderation.RemoveModeratorRole)
 	}
 
+	// 9. Маршруты избранного (только для авторизованных)
 	favouriteRoutes := api.Group("/favourites")
 	{
 		favouriteRoutes.Use(middleware.AuthMiddleware())
@@ -159,74 +172,24 @@ func main() {
 		favouriteRoutes.DELETE("/:postID", favourite.RemoveFromFavourites)
 		favouriteRoutes.GET("", favourite.GetFavourites)
 		favouriteRoutes.GET("/check/:postID", favourite.CheckFavourite)
-
 		favouriteRoutes.GET("/check-multiple", favourite.CheckMultipleFavourites)
 	}
 
+	// 10. Маршруты лайков
 	likeRoutes := api.Group("/likes")
 	{
-		likeRoutes.Use(middleware.AuthMiddleware())
+		// Публичные: количество лайков
+		likeRoutes.GET("/count/:postID", middleware.OptionalAuthMiddleware(), like.GetPostLikesCount)
 
-		likeRoutes.POST("/:postID", like.LikePost)
-		likeRoutes.DELETE("/:postID", like.UnlikePost)
-		likeRoutes.GET("", like.GetUserLikes)
-		likeRoutes.GET("/check/:postID", like.CheckLike)
-		likeRoutes.GET("/count/:postID", like.GetPostLikesCount) // публичный эндпоинт
-	}
-
-	// main.go
-	commentRoutes := api.Group("/comments")
-	{
-		// Создание комментария (защищено) - POST /api/comments/post/:postID
-		commentRoutes.POST("/post/:postID", middleware.AuthMiddleware(), comment.CreateComment)
-
-		// Получение комментариев к посту (открыто) - GET /api/comments/post/:postID
-		commentRoutes.GET("/post/:postID", comment.GetComments)
-
-		// Старый маршрут (убираем или изменяем)
-		commentRoutes.GET("/:commentID/replies", comment.GetCommentReplies)
-
-		// Новый маршрут для получения только одного ответа
-		commentRoutes.GET("/:commentID/latest-reply", comment.GetLatestReply)
-
-		// Обновление комментария (защищено) - PUT /api/comments/:commentID
-		commentRoutes.PUT("/:commentID", middleware.AuthMiddleware(), comment.UpdateComment)
-
-		// Удаление комментария (защищено) - DELETE /api/comments/:commentID
-		commentRoutes.DELETE("/:commentID", middleware.AuthMiddleware(), comment.DeleteComment)
-	}
-
-	reviewRoutes := api.Group("/reviews")
-	{
-		reviewRoutes.Use(middleware.AuthMiddleware())
-
-		reviewRoutes.POST("", reviews.CreateReview)
-		reviewRoutes.GET("/user", reviews.GetUserReviews)
-		reviewRoutes.PUT("/:reviewID", reviews.UpdateReview)
-		reviewRoutes.DELETE("/:reviewID", reviews.DeleteReview)
-
-		// Публичный доступ к отзывам места
-		reviewRoutes.GET("/place/:placeID", reviews.GetPlaceReviews)
-	}
-
-	// 5. Маршруты для карты
-	mapRoutes := api.Group("/map")
-	{
-		mapRoutes.Use(middleware.AuthMiddleware())
-
-		// Получение всех данных пользователя для карты
-		mapRoutes.GET("/user-data", maps.GetUserMapData)
-
-		// Детальная информация о месте (открытый доступ)
-		mapRoutes.GET("/place/:placeID", maps.GetPlaceDetails)
-	}
-
-	placeRoutes := api.Group("/places")
-	{
-		placeRoutes.Use(middleware.AuthMiddleware())
-
-		placeRoutes.POST("", places.CreatePlace)
-		placeRoutes.GET("", places.GetPlaces) // публичный доступ к списку мест
+		// Защищенные операции
+		protectedLikeRoutes := likeRoutes.Group("")
+		protectedLikeRoutes.Use(middleware.AuthMiddleware())
+		{
+			protectedLikeRoutes.POST("/:postID", like.LikePost)
+			protectedLikeRoutes.DELETE("/:postID", like.UnlikePost)
+			protectedLikeRoutes.GET("", like.GetUserLikes)
+			protectedLikeRoutes.GET("/check/:postID", like.CheckLike)
+		}
 	}
 
 	// Запуск сервера

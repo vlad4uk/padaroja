@@ -1,4 +1,4 @@
-// src/context/AuthContext.tsx (Полностью переписано и исправлено)
+// src/context/AuthContext.tsx
 
 import React, { createContext, useContext, useState, ReactNode, useCallback, useEffect } from 'react';
 import axios from 'axios';
@@ -19,6 +19,7 @@ interface User {
 interface AuthContextType {
     user: User | null;
     isLoggedIn: boolean;
+    isLoading: boolean;
     login: (responseData: { user: User; message: string } | User) => void;
     logout: () => Promise<void>;
     checkAuth: () => Promise<void>;
@@ -40,26 +41,24 @@ interface AuthProviderProps {
 
 export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     const [user, setUser] = useState<User | null>(null);
+    const [isLoading, setIsLoading] = useState<boolean>(true);
 
     const login = (responseData: { user: User; message: string } | User) => {
         const userData = 'user' in responseData ? responseData.user : responseData;
         
-        // ✅ ФИКС: Убеждаемся, что все поля правильно деструктурируются
         setUser({ 
             id: userData.id, 
             username: userData.username,
-            bio: userData.bio || '',           // Установка дефолта, если нет
-            image_url: userData.image_url || '', // Установка дефолта, если нет
+            bio: userData.bio || '',           
+            image_url: userData.image_url || '',
             role_id: userData.role_id || 1,
         });
+        setIsLoading(false);
     };
 
     const checkAuth = useCallback(async () => {
         try {
             const response = await axios.get(API_USER_PROFILE, { withCredentials: true });
-            
-            // ✅ ФИКС: Проверяем, что ответ Go API содержит нужные поля
-            // Go-ответ содержит: { id:..., username:..., bio:..., image_url:... }
             const userData = response.data;
 
             setUser({ 
@@ -69,9 +68,11 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
                 image_url: userData.image_url || '',
                 role_id: userData.role_id || 1,
             });
-
         } catch (error) {
-            setUser(null); // Если 401 Unauthorized, пользователь - гость
+            // Пользователь - гость
+            setUser(null);
+        } finally {
+            setIsLoading(false);
         }
     }, []);
 
@@ -79,7 +80,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     const logout = async () => {
         try {
             await axios.post(`${API_BASE_URL}/logout`, {}, { withCredentials: true });
-            setUser(null); 
+            setUser(null);
         } catch (error) {
             console.error('Ошибка при выходе:', error);
         }
@@ -92,6 +93,7 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
     const contextValue = {
         user,
         isLoggedIn: !!user,
+        isLoading,
         login,
         logout,
         checkAuth,

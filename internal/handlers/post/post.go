@@ -337,14 +337,22 @@ func GetPost(c *gin.Context) {
 // GET PUBLIC FEED (Публичная лента: все одобренные посты, кроме постов текущего пользователя)
 // =========================================================================
 
+// post.go - только обновленная функция GetPublicFeed
 func GetPublicFeed(c *gin.Context) {
 	var posts []models.Post
 
+	// Базовый запрос для всех пользователей - показываем все одобренные посты
 	db := database.DB.Model(&models.Post{}).Where("is_approved = ?", true)
-	// Логика исключения постов текущего пользователя
-	userID, exists := getUserIDFromContext(c)
-	if exists && userID != 0 {
-		db = db.Where("user_id != ?", userID)
+
+	// Проверяем, авторизован ли пользователь через OptionalAuthMiddleware
+	userID, exists := c.Get("userID")
+	if exists && userID != nil {
+		// Если авторизован, показываем все одобренные посты (можно добавить фильтры по блокировке)
+		uid, ok := userID.(uint)
+		if ok && uid != 0 {
+			// Можно добавить логику исключения постов заблокированных пользователей
+			// db = db.Where("user_id NOT IN (SELECT blocked_user_id FROM blocked_users WHERE blocker_id = ?)", uid)
+		}
 	}
 
 	// Обработка общего поиска
@@ -379,7 +387,7 @@ func GetPublicFeed(c *gin.Context) {
 	}
 
 	result := db.
-		Preload("User"). // Предзагружаем пользователя
+		Preload("User").
 		Preload("Place").
 		Preload("Paragraphs", func(db *gorm.DB) *gorm.DB {
 			return db.Order("paragraphs.order ASC")
@@ -395,7 +403,6 @@ func GetPublicFeed(c *gin.Context) {
 
 	var response []PostResponse
 	for _, p := range posts {
-
 		var tags []string
 		database.DB.Table("tags").
 			Joins("JOIN place_tags ON place_tags.tag_id = tags.id").
@@ -406,7 +413,7 @@ func GetPublicFeed(c *gin.Context) {
 			tags = []string{}
 		}
 
-		// Получаем данные пользователя - ИСПРАВЛЕННАЯ ПРОВЕРКА
+		// Получаем данные пользователя
 		userAvatar := ""
 		userName := "Неизвестный пользователь"
 

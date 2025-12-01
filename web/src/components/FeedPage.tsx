@@ -1,14 +1,24 @@
 // src/pages/FeedPage.tsx
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import PostFeed from '../components/PostFeed.tsx';
 import RightFilters from '../components/RightFilters.tsx';
 import ContentLayout from '../components/ContentLayout.tsx';
+import { useAuth } from '../context/AuthContext.tsx';
 import '../components/UserPostsFeed.css';
 
 const FeedPage: React.FC = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [tagSearch, setTagSearch] = useState('');
+    const { isLoading } = useAuth();
+
+    if (isLoading) {
+        return (
+            <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
+                <div>Загрузка ленты...</div>
+            </div>
+        );
+    }
 
     return (
         <ContentLayout>
