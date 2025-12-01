@@ -63,7 +63,7 @@ func Login(c *gin.Context) {
 
 	// 1. Поиск пользователя (✅ ИСПРАВЛЕНО: Явно запрашиваем ВСЕ поля, включая PasswordHash)
 	if err := database.DB.Select("*").Where("email = ? OR username = ?", input.EmailOrUsername, input.EmailOrUsername).First(&user).Error; err != nil {
-		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid credentials: User not found."})
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Неверные учетные данные: пользователь не найден."})
 		return
 	}
 

@@ -94,51 +94,52 @@ const ProfileEditForm: React.FC = () => {
         }
     };
 
-    return (
-        // (Ваша JSX-разметка формы не меняется, 
-        // используем классы из MainLayout.css)
-        <div className="profile-edit-form-container">
-            <form onSubmit={handleSubmit}>
-                
-                {/* Секция Аватара */}
-                <div className="edit-avatar-section">
-                    <div className="edit-user-avatar">
-                        <img 
-                            src={avatarPreview} 
-                            alt="Preview" 
-                            style={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                        />
-                    </div>
-                    <span className="edit-username-placeholder">
-                        {user?.username || 'Ваш логин'}
-                    </span>
-                    <input 
-                        type="file" 
-                        id="avatar-upload" 
-                        accept="image/png, image/jpeg"
-                        onChange={handleFileChange}
-                        style={{ display: 'none' }}
-                    />
-                    <label htmlFor="avatar-upload" className="change-photo-button">
-                        Изменить Фото
-                    </label>
-                </div>
-
-                {/* Поле Username */}
-                <div className="edit-field-group">
-                    <label htmlFor="username" className="edit-label">Username</label>
-                    <input
-                        type="text"
-                        id="username"
-                        className="edit-input"
-                        value={username}
-                        onChange={(e) => setUsername(e.target.value)}
+  // В компоненте ProfileEditForm.tsx замените JSX на этот:
+return (
+    <div className="profile-edit-form-container">
+        <form onSubmit={handleSubmit}>
+            
+            {/* Секция Аватара */}
+            <div className="edit-avatar-section">
+                <div className="edit-user-avatar">
+                    <img 
+                        src={avatarPreview} 
+                        alt="Preview" 
+                        style={{ width: '100%', height: '100%', objectFit: 'cover' }}
                     />
                 </div>
+                <span className="edit-username-placeholder">
+                    {user?.username || 'Ваш логин'}
+                </span>
+                <input 
+                    type="file" 
+                    id="avatar-upload" 
+                    accept="image/png, image/jpeg"
+                    onChange={handleFileChange}
+                    style={{ display: 'none' }}
+                />
+                <label htmlFor="avatar-upload" className="change-photo-button">
+                    Изменить Фото
+                </label>
+            </div>
 
-                {/* Поле Bio (Input) */}
-                <div className="edit-field-group">
-                    <label htmlFor="bio" className="edit-label">Описание (до 150 симв.)</label>
+            {/* Поле Username */}
+            <div className="edit-field-group">
+                <label htmlFor="username" className="edit-label">Username</label>
+                <input
+                    type="text"
+                    id="username"
+                    className="edit-input"
+                    value={username}
+                    onChange={(e) => setUsername(e.target.value)}
+                    placeholder="Введите имя пользователя"
+                />
+            </div>
+
+            {/* Поле Bio */}
+            <div className="edit-field-group">
+                <label htmlFor="bio" className="edit-label">Описание</label>
+                <div style={{ flex: 1 }}>
                     <input
                         type="text"
                         id="bio"
@@ -146,21 +147,24 @@ const ProfileEditForm: React.FC = () => {
                         value={bio}
                         onChange={(e) => setBio(e.target.value)}
                         maxLength={150}
+                        placeholder="Расскажите о себе..."
                     />
+                    <p className="bio-counter">{bio.length} / 150</p>
                 </div>
-                
-                {/* ... (Сообщения и Кнопки) ... */}
-                {error && <p style={{ color: '#ff3e1d', textAlign: 'center', marginBottom: '15px' }}>{error}</p>}
-                {success && <p style={{ color: '#71dd37', textAlign: 'center', marginBottom: '15px' }}>{success}</p>}
+            </div>
+            
+            {/* Сообщения об ошибках и успехе */}
+            {error && <p className="error-message">{error}</p>}
+            {success && <p className="success-message">{success}</p>}
 
-                <div className="edit-actions">
-                    <button type="submit" className="save-button" disabled={loading}>
-                        {loading ? 'Сохранение...' : 'Сохранить'}
-                    </button>
-                </div>
-            </form>
-        </div>
-    );
+            <div className="edit-actions">
+                <button type="submit" className="save-button" disabled={loading}>
+                    {loading ? 'Сохранение...' : 'Сохранить'}
+                </button>
+            </div>
+        </form>
+    </div>
+);
 };
 
 export default ProfileEditForm;

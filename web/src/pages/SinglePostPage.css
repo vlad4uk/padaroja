@@ -214,3 +214,28 @@
     font-weight: 600;
 }
 .sp-back-btn:hover { background: #7a46e6; }
+
+/* Контейнер для комментариев под публикацией */
+.sp-comments-section-wrapper {
+    margin-top: 40px;
+    padding: 0 20px;
+}
+
+/* Уменьшим минимальную высоту слайдера, так как комментарии теперь отдельно */
+.sp-slider-box {
+    min-height: 450px; /* Уменьшаем с 550px */
+}
+
+/* Уберем нижний отступ, так как комментарии теперь отдельно */
+.sp-comments-placeholder {
+    display: none; /* Убираем заглушку */
+}
+
+/* Разделительная линия между постом и комментариями */
+.sp-comments-section-wrapper::before {
+    content: '';
+    display: block;
+    height: 2px;
+    background: linear-gradient(90deg, transparent, #8c57ff, transparent);
+    margin: 40px 0;
+}

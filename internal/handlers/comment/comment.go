@@ -87,6 +87,8 @@ func CreateComment(c *gin.Context) {
 // internal/handlers/comment/comment.go
 // Обновим GetComments чтобы возвращать parent информацию
 
+// Получаем только корневые комментарии
+// Получаем ВСЕ комментарии поста (и корневые, и ответы)
 func GetComments(c *gin.Context) {
 	postIDStr := c.Param("postID")
 	postID, err := strconv.ParseUint(postIDStr, 10, 32)
@@ -96,20 +98,13 @@ func GetComments(c *gin.Context) {
 	}
 
 	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
-	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "20"))
+	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "100")) // Увеличим лимит
 	offset := (page - 1) * limit
 
-	// Проверяем существование поста
-	var post models.Post
-	if err := database.DB.First(&post, postID).Error; err != nil {
-		c.JSON(http.StatusNotFound, gin.H{"error": "Post not found"})
-		return
-	}
-
-	var comments []models.Comment
+	var allComments []models.Comment
 	var total int64
 
-	// Загружаем ВСЕ комментарии к посту (и корневые и ответы)
+	// ✅ ИЗМЕНЕНИЕ: Получаем ВСЕ комментарии поста (не только корневые)
 	query := database.DB.
 		Where("post_id = ? AND is_approved = ?", postID, true)
 
@@ -119,13 +114,16 @@ func GetComments(c *gin.Context) {
 		Preload("User", func(db *gorm.DB) *gorm.DB {
 			return db.Select("id, username, image_url")
 		}).
-		Preload("Parent.User", func(db *gorm.DB) *gorm.DB {
-			return db.Select("id, username") // Загружаем автора родительского комментария
+		Preload("Parent", func(db *gorm.DB) *gorm.DB {
+			return db.Select("id, user_id, content")
 		}).
-		Order("created_at ASC"). // Важно: сортируем по времени для правильного отображения веток
+		Preload("Parent.User", func(db *gorm.DB) *gorm.DB {
+			return db.Select("id, username")
+		}).
+		Order("created_at DESC").
 		Limit(limit).
 		Offset(offset).
-		Find(&comments).Error
+		Find(&allComments).Error
 
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch comments"})
@@ -133,11 +131,11 @@ func GetComments(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"comments": comments,
+		"comments": allComments, // ✅ Теперь здесь все комментарии
 		"total":    total,
 		"page":     page,
 		"limit":    limit,
-		"has_more": int64(offset+len(comments)) < total,
+		"has_more": int64(offset+len(allComments)) < total,
 	})
 }
 
@@ -237,6 +235,37 @@ func DeleteComment(c *gin.Context) {
 // Добавляем новый хендлер для загрузки ответов
 
 // GetCommentReplies - получение ответов на конкретный комментарий
+// Получение только последнего ответа на комментарий
+func GetLatestReply(c *gin.Context) {
+	commentIDStr := c.Param("commentID")
+	commentID, err := strconv.ParseUint(commentIDStr, 10, 32)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid comment ID"})
+		return
+	}
+
+	var reply models.Comment
+
+	// Берем только последний (новейший) ответ
+	err = database.DB.
+		Where("parent_id = ? AND is_approved = ?", commentID, true).
+		Preload("User", func(db *gorm.DB) *gorm.DB {
+			return db.Select("id, username, image_url")
+		}).
+		Order("created_at DESC"). // Сначала самые новые
+		Limit(1).                 // Берем только один
+		First(&reply).Error
+
+	if err != nil {
+		// Если ответов нет, возвращаем пустой объект
+		c.JSON(http.StatusOK, gin.H{"reply": nil})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"reply": reply})
+}
+
+// GetCommentReplies - получение всех ответов на комментарий
 func GetCommentReplies(c *gin.Context) {
 	commentIDStr := c.Param("commentID")
 	commentID, err := strconv.ParseUint(commentIDStr, 10, 32)
@@ -245,27 +274,15 @@ func GetCommentReplies(c *gin.Context) {
 		return
 	}
 
-	// Параметры пагинации
-	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
-	limit, _ := strconv.Atoi(c.DefaultQuery("limit", "10"))
-	offset := (page - 1) * limit
-
 	var replies []models.Comment
-	var total int64
 
-	// Загружаем ответы на конкретный комментарий
-	query := database.DB.
-		Where("parent_id = ? AND is_approved = ?", commentID, true)
-
-	query.Model(&models.Comment{}).Count(&total)
-
-	err = query.
+	// Получаем ВСЕ ответы на комментарий
+	err = database.DB.
+		Where("parent_id = ? AND is_approved = ?", commentID, true).
 		Preload("User", func(db *gorm.DB) *gorm.DB {
 			return db.Select("id, username, image_url")
 		}).
-		Order("created_at ASC").
-		Limit(limit).
-		Offset(offset).
+		Order("created_at ASC"). // Сначала старые, как в YouTube
 		Find(&replies).Error
 
 	if err != nil {
@@ -274,7 +291,7 @@ func GetCommentReplies(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, gin.H{
-		"replies":  replies,
-		"has_more": int64(offset+len(replies)) < total,
+		"replies": replies,
+		"total":   len(replies),
 	})
 }

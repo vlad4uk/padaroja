@@ -30,3 +30,4 @@ export interface CommentsResponse {
   limit: number;
   has_more: boolean;
 }
+

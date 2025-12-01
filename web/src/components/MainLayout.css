@@ -360,141 +360,209 @@ body {
 .post-item:hover {
   background-color: #fafafa;
 }
-
 /* ========================================================================= */
-/* 6. Форма редактирования */
+/* 6. Форма редактирования (Instagram-like) */
 /* ========================================================================= */
 .profile-edit-form-container {
-    padding: 20px;
+    padding: 0;
+    border: none;
+    border-radius: 0;
+    background-color: transparent;
+    margin-top: 0;
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.edit-avatar-section {
+    display: flex;
+    align-items: center;
+    margin-bottom: 30px;
+    padding: 20px 0;
+    border-bottom: 1px solid #efefef;
+    gap: 15px;
+}
+
+.edit-user-avatar {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background-color: #f0f0f0;
+    margin-right: 0;
+    flex-shrink: 0;
+    overflow: hidden;
     border: 1px solid #e0e0e0;
-    border-radius: 8px;
-    background-color: #f9f9f9;
-    margin-top: 20px;
 }
 
-.edit-avatar-section{
-  display:flex;
-  align-items:center;
-  margin-bottom:30px;
-  padding-bottom:20px;
-  border-bottom:1px solid #e0e0e0
-}
-  
-.edit-user-avatar{
-  width:60px;
-  height:60px;
-  border-radius:50%;
-  background-color:#5d5d5d;
-  margin-right:15px;
-  flex-shrink:0;
-  overflow:hidden
+.edit-username-placeholder {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #262626;
+    margin-right: auto;
 }
 
-.edit-username-placeholder{
-  font-size:1.1rem;
-  font-weight:500;
-  color:#5d5d5d;
-  margin-right:auto
+.change-photo-button {
+    display: flex;
+    align-items: center;
+    background-color: transparent;
+    color: #0095f6;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 0.9rem;
+    transition: all 0.2s;
+    margin-left: auto;
 }
 
-.change-photo-button{
-  display:flex;
-  align-items:center;
-  background-color:#eef1ff;
-  color:#696cff;
-  border:none;
-  padding:8px 15px;
-  border-radius:6px;
-  cursor:pointer;
-  font-weight:500;
-  transition:background-color .2s
+.change-photo-button:hover {
+    background-color: rgba(0, 149, 246, 0.1);
 }
 
-.change-photo-button:hover{
-  background-color:#dbe0ff
+.edit-field-group {
+    margin-bottom: 16px;
+    display: flex;
+    align-items: flex-start;
+    padding: 10px 0;
 }
 
-.edit-field-group{
-  margin-bottom:20px
+.edit-label {
+    display: block;
+    font-weight: 600;
+    color: #262626;
+    margin-bottom: 0;
+    font-size: 0.9rem;
+    width: 120px;
+    flex-shrink: 0;
+    padding-top: 8px;
+    text-align: left;
 }
 
-.edit-label{
-  display:block;
-  font-weight:600;
-  color:#5d5d5d;
-  margin-bottom:8px;
-  font-size:.9rem
+.edit-input {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid #dbdbdb;
+    border-radius: 3px;
+    font-size: 0.95rem;
+    background-color: #fafafa;
+    transition: all 0.2s;
+    flex: 1;
 }
 
-.edit-input,.edit-textarea{
-  width:100%;
-  padding:10px;
-  border:1px solid #dcdcdc;
-  border-radius:4px;
-  font-size:1rem
+.edit-input:focus {
+    outline: none;
+    border-color: #a8a8a8;
+    background-color: #fff;
 }
 
-.edit-textarea{
-  resize:vertical;
-  min-height:100px
+.bio-counter {
+    font-size: 0.8rem;
+    color: #8e8e8e;
+    text-align: right;
+    margin-top: 4px;
+    margin-bottom: 0;
 }
 
-.edit-actions{
-  display:flex;
-  justify-content:flex-end;
-  gap:10px;
-  margin-top:30px
+.edit-actions {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    margin-top: 30px;
+    padding-top: 20px;
 }
 
-.save-button,.cancel-button{
-  padding:10px 20px;
-  border-radius:6px;
-  cursor:pointer;
-  font-weight:600
+.save-button {
+    background-color: #0095f6;
+    color: #fff;
+    border: none;
+    padding: 8px 24px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 0.9rem;
+    transition: background-color 0.2s;
+    min-width: 100px;
 }
 
-.save-button{
-  background-color:#696cff;
-  color:#fff;
-  border:none
+.save-button:hover:not(:disabled) {
+    background-color: #0081d6;
 }
 
-.cancel-button{
-  background-color:#f8f8f8;
-  color:#5d5d5d;
-  border:1px solid #dcdcdc
+.save-button:disabled {
+    background-color: #b2dffc;
+    cursor: not-allowed;
+}
+
+.cancel-button {
+    background-color: transparent;
+    color: #262626;
+    border: 1px solid #dbdbdb;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 0.9rem;
+    transition: background-color 0.2s;
+}
+
+.cancel-button:hover {
+    background-color: #fafafa;
+}
+
+/* Сообщения об ошибках и успехе */
+.error-message {
+    color: #ed4956;
+    text-align: center;
+    margin: 15px 0;
+    font-size: 0.9rem;
+    padding: 8px 12px;
+    background-color: rgba(237, 73, 86, 0.05);
+    border-radius: 4px;
+}
+
+.success-message {
+    color: #1a7c3b;
+    text-align: center;
+    margin: 15px 0;
+    font-size: 0.9rem;
+    padding: 8px 12px;
+    background-color: rgba(26, 124, 59, 0.05);
+    border-radius: 4px;
 }
 
 /* Адаптивность для мобильных устройств */
 @media (max-width: 768px) {
-    .profile-header {
+    .profile-edit-form-container {
+        padding: 0 16px;
+    }
+    
+    .edit-avatar-section {
         flex-direction: column;
-        align-items: center;
         text-align: center;
         gap: 15px;
     }
     
-    .profile-top-row {
-        flex-direction: column;
-        gap: 20px;
-        align-items: center;
-    }
-    
-    .user-avatar {
-        width: 120px;
-        height: 120px;
+    .edit-username-placeholder {
         margin-right: 0;
+        margin-bottom: 10px;
     }
     
-    .profile-right {
-        align-items: center;
+    .change-photo-button {
+        margin-left: 0;
     }
     
-    .follow-stats {
-        align-items: center;
+    .edit-field-group {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
     }
     
-    .stat-item {
-        text-align: center;
+    .edit-label {
+        width: 100%;
+        padding-top: 0;
+    }
+    
+    .edit-input {
+        width: 100%;
     }
 }

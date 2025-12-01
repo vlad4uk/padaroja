@@ -13,6 +13,7 @@ import PostEditPage from './pages/PostEditPage.tsx';
 import ModeratorPage from './pages/ModeratorPage.tsx'; 
 import FavouritesPage from '../src/components/FavouritesPage.tsx';
 import LikesPage from '../src/components/LikesPage.tsx';
+import PlaceDetailsPage from '../src/components/PlaceDetailsPage.tsx'
 
 // ==========================================================
 // КОМПОНЕНТ ЗАЩИТЫ МАРШРУТОВ (ProtectedRoute)
@@ -107,6 +108,15 @@ const App: React.FC = () => {
                         <LikesPage />
                     </ProtectedRoute>
                 } 
+            />
+
+            <Route 
+              path="/place/:placeId" 
+              element={
+                <ProtectedRoute>
+                  <PlaceDetailsPage />
+                </ProtectedRoute>
+              } 
             />
 
            {/* МАРШРУТ 2: Главная страница */}

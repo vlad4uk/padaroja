@@ -1,8 +1,6 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import AuthLayout from '../components/AuthLayout.tsx';
-import SocialButtons from '../components/SocialButtons.tsx';
-import FriendsFront from '../assets/FrontFriends.jpg';
 
 
 // Базовый URL Go-бэкенда
@@ -64,7 +62,6 @@ const RegisterPage: React.FC = () => {
 
   const RegisterIllustration = () => (
     <div style={{ textAlign: 'center' }}>
-       <img src={FriendsFront} alt="Register friends" style={{ maxWidth: '80%', height: 'auto' }} />
     </div>
   );
 
@@ -141,9 +138,6 @@ const RegisterPage: React.FC = () => {
       <p style={{ textAlign: 'center', fontSize: '0.9rem', marginTop: '20px' }}>
           У вас уже есть учетная запись? <a href="/login" style={{ color: '#696cff', textDecoration: 'none', fontWeight: 500 }}>Войдите в</a>
       </p>
-
-      <div className="separator">or</div>
-      <SocialButtons />
     </AuthLayout>
   );
 };

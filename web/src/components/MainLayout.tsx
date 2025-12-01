@@ -1,4 +1,4 @@
-// [file name]: MainLayout.tsx
+// src/components/MainLayout.tsx
 import React, { useState, useEffect } from 'react'; 
 import { useParams } from 'react-router-dom';
 import Sidebar from '../components/Sidebar.tsx';
@@ -9,12 +9,13 @@ import '../components/MainLayout.css';
 import UserPostsList from '../components/UserPostsList.tsx';
 import { useAuth } from '../context/AuthContext.tsx';
 
-type ActiveTab = 'Публикации' | 'Карта' | 'Изменить';
+// Общий тип для всех компонентов
+export type TabType = 'Публикации' | 'Карта' | 'Изменить';
 
 const MainLayout: React.FC = () => {
     const { userId } = useParams<{ userId?: string }>();
     const { user: currentUser } = useAuth();
-    const [activeContent, setActiveContent] = useState<ActiveTab>('Публикации');
+    const [activeContent, setActiveContent] = useState<TabType>('Карта');
     const [isOwner, setIsOwner] = useState(true);
     const [targetUserId, setTargetUserId] = useState<number | undefined>();
     
@@ -29,32 +30,28 @@ const MainLayout: React.FC = () => {
         }
     }, [userId, currentUser]);
 
-    const handleTabChange = (tab: ActiveTab) => {
+    const getAvailableTabs = (): TabType[] => {
+        if (isOwner) {
+            return ['Карта', 'Публикации', 'Изменить'];
+        }
+        return ['Карта', 'Публикации'];
+    };
+
+    const handleTabChange = (tab: TabType) => {
         setActiveContent(tab);
     };
 
     const renderContent = () => {
-        if (!isOwner) {
-            return (
-                <div className="main-feed">
-                    <UserPostsList targetUserId={targetUserId} />
-                </div>
-            );
-        }
-
         switch (activeContent) {
             case 'Изменить':
+                if (!isOwner) return null;
                 return (
                     <div className="profile-edit-form-container">
                         <ProfileEditForm /> 
                     </div>
                 );
             case 'Карта':
-                return (
-                    <div className="profile-edit-form-container" style={{ padding: 0, border: 'none', background: 'none', marginTop: 0 }}>
-                        <MapView />
-                    </div>
-                );
+                return <MapView />;
             case 'Публикации':
             default:
                 return (
@@ -74,6 +71,8 @@ const MainLayout: React.FC = () => {
                         onTabChange={handleTabChange}
                         isOwner={isOwner}
                         profileUserId={userId ? parseInt(userId) : currentUser?.id}
+                        availableTabs={getAvailableTabs()}
+                        activeTab={activeContent}
                     /> 
                     {renderContent()}
                 </div>

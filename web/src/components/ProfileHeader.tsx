@@ -1,4 +1,4 @@
-// [file name]: ProfileHeader.tsx
+// src/components/ProfileHeader.tsx
 import React, { useState, useRef, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext.tsx'; 
 import FollowersModal from './FollowersModal.tsx';
@@ -7,15 +7,24 @@ import '../components/FollowersModal.css';
 
 const DEFAULT_AVATAR = 'https://i.pravatar.cc/150';
 
-type TabType = 'Публикации' | 'Карта' | 'Изменить';
+// Импортируем тип из MainLayout
+export type TabType = 'Публикации' | 'Карта' | 'Изменить';
 
 interface ProfileHeaderProps {
     onTabChange: (tab: TabType) => void;
     isOwner: boolean;
     profileUserId?: number;
+    availableTabs: TabType[];
+    activeTab: TabType;
 }
 
-const ProfileHeader: React.FC<ProfileHeaderProps> = ({ onTabChange, isOwner, profileUserId }) => {
+const ProfileHeader: React.FC<ProfileHeaderProps> = ({ 
+    onTabChange, 
+    isOwner, 
+    profileUserId, 
+    availableTabs,
+    activeTab 
+}) => {
     const { user: currentUser } = useAuth(); 
     const [profileUser, setProfileUser] = useState(currentUser);
     const [loading, setLoading] = useState(!isOwner);
@@ -26,12 +35,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({ onTabChange, isOwner, pro
     const [modalType, setModalType] = useState<'followers' | 'following'>('followers');
     const [followLoading, setFollowLoading] = useState(false);
 
-    const [activeTab, setActiveTab] = useState<TabType>('Публикации');
     const [lineStyle, setLineStyle] = useState({ left: 0, width: 0 });
-    
-    const ownerTabs: TabType[] = ['Публикации', 'Карта', 'Изменить'];
-    const guestTabs: TabType[] = ['Публикации', 'Карта'];
-    const tabs = isOwner ? ownerTabs : guestTabs;
     
     const tabRefs = useRef<(HTMLButtonElement | null)[]>([]); 
     const tabsContainerRef = useRef<HTMLDivElement>(null); 
@@ -56,7 +60,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({ onTabChange, isOwner, pro
     // Расчет позиции активной линии табов
     useEffect(() => {
         const calculateLineStyle = () => {
-            const activeIndex = tabs.indexOf(activeTab);
+            const activeIndex = availableTabs.indexOf(activeTab);
             const activeRef = tabRefs.current[activeIndex];
             if (activeRef && tabsContainerRef.current) {
                 const tabsContainerLeft = tabsContainerRef.current.getBoundingClientRect().left;
@@ -76,7 +80,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({ onTabChange, isOwner, pro
             clearTimeout(timer);
             window.removeEventListener('resize', calculateLineStyle);
         };
-    }, [activeTab, tabs]);
+    }, [activeTab, availableTabs]);
 
     const fetchUserProfile = async () => {
         try {
@@ -164,7 +168,6 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({ onTabChange, isOwner, pro
     };
 
     const handleTabClick = (tab: TabType, index: number) => {
-        setActiveTab(tab);
         onTabChange(tab);
     };
 
@@ -264,7 +267,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({ onTabChange, isOwner, pro
                         }}
                     />
                     
-                    {tabs.map((tab, index) => (
+                    {availableTabs.map((tab, index) => (
                         <button
                             key={tab}
                             className={`profile-tab ${activeTab === tab ? 'active' : ''}`}

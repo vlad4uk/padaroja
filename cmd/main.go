@@ -10,9 +10,12 @@ import (
 	"tourist-blog/internal/handlers/favourite"
 	"tourist-blog/internal/handlers/follows"
 	"tourist-blog/internal/handlers/like"
+	maps "tourist-blog/internal/handlers/map"
 	"tourist-blog/internal/handlers/moderation"
+	"tourist-blog/internal/handlers/places"
 	"tourist-blog/internal/handlers/post"
 	"tourist-blog/internal/handlers/profile"
+	"tourist-blog/internal/handlers/reviews"
 	"tourist-blog/internal/middleware"
 	database "tourist-blog/internal/storage/postgres"
 
@@ -126,14 +129,26 @@ func main() {
 		postRoutes.DELETE("/:postID", middleware.AuthMiddleware(), post.DeletePost)
 	}
 
+	// В main.go, в блоке modRoutes добавить:
+
 	modRoutes := api.Group("/mod")
 	{
 		modRoutes.Use(middleware.AuthMiddleware())
 
 		modRoutes.GET("/complaints", moderation.GetComplaints)
 		modRoutes.PUT("/complaints/:complaintID/status", moderation.UpdateComplaintStatus)
-		modRoutes.PUT("/posts/:postID/visibility", moderation.TogglePostVisibility) // ✅ НОВЫЙ ЭНДПОИНТ
+		modRoutes.PUT("/posts/:postID/visibility", moderation.TogglePostVisibility)
 		modRoutes.GET("/posts/:postID/complaints", moderation.GetPostComplaints)
+
+		// Управление пользователями с жалобами
+		modRoutes.GET("/users-with-complaints", moderation.GetUsersWithComplaints)
+		modRoutes.POST("/users/:userID/block", moderation.BlockUser)
+		modRoutes.POST("/users/:userID/unblock", moderation.UnblockUser)
+
+		// Управление модераторами
+		modRoutes.GET("/users/search", moderation.SearchUsers)
+		modRoutes.POST("/users/:userID/assign-moderator", moderation.AssignModeratorRole)
+		modRoutes.POST("/users/:userID/remove-moderator", moderation.RemoveModeratorRole)
 	}
 
 	favouriteRoutes := api.Group("/favourites")
@@ -168,14 +183,50 @@ func main() {
 		// Получение комментариев к посту (открыто) - GET /api/comments/post/:postID
 		commentRoutes.GET("/post/:postID", comment.GetComments)
 
-		// Получение ответов на комментарий (открыто) - GET /api/comments/:commentID/replies
+		// Старый маршрут (убираем или изменяем)
 		commentRoutes.GET("/:commentID/replies", comment.GetCommentReplies)
+
+		// Новый маршрут для получения только одного ответа
+		commentRoutes.GET("/:commentID/latest-reply", comment.GetLatestReply)
 
 		// Обновление комментария (защищено) - PUT /api/comments/:commentID
 		commentRoutes.PUT("/:commentID", middleware.AuthMiddleware(), comment.UpdateComment)
 
 		// Удаление комментария (защищено) - DELETE /api/comments/:commentID
 		commentRoutes.DELETE("/:commentID", middleware.AuthMiddleware(), comment.DeleteComment)
+	}
+
+	reviewRoutes := api.Group("/reviews")
+	{
+		reviewRoutes.Use(middleware.AuthMiddleware())
+
+		reviewRoutes.POST("", reviews.CreateReview)
+		reviewRoutes.GET("/user", reviews.GetUserReviews)
+		reviewRoutes.PUT("/:reviewID", reviews.UpdateReview)
+		reviewRoutes.DELETE("/:reviewID", reviews.DeleteReview)
+
+		// Публичный доступ к отзывам места
+		reviewRoutes.GET("/place/:placeID", reviews.GetPlaceReviews)
+	}
+
+	// 5. Маршруты для карты
+	mapRoutes := api.Group("/map")
+	{
+		mapRoutes.Use(middleware.AuthMiddleware())
+
+		// Получение всех данных пользователя для карты
+		mapRoutes.GET("/user-data", maps.GetUserMapData)
+
+		// Детальная информация о месте (открытый доступ)
+		mapRoutes.GET("/place/:placeID", maps.GetPlaceDetails)
+	}
+
+	placeRoutes := api.Group("/places")
+	{
+		placeRoutes.Use(middleware.AuthMiddleware())
+
+		placeRoutes.POST("", places.CreatePlace)
+		placeRoutes.GET("", places.GetPlaces) // публичный доступ к списку мест
 	}
 
 	// Запуск сервера

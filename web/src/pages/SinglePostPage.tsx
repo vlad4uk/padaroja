@@ -385,6 +385,7 @@ const SinglePostPage: React.FC = () => {
                 </div>
 
                 {/* Слайдер с контентом */}
+                {/* Слайдер с контентом */}
                 <div className="sp-content-slider">
                     <button className="sp-nav-arrow" onClick={handlePrev} disabled={currentSlide === 0}>
                         <FaAngleDoubleLeft />
@@ -412,9 +413,8 @@ const SinglePostPage: React.FC = () => {
                             <div className="sp-avatar" />
                             <span className="sp-username">Автор ID: {post.user_id}</span>
                         </div>
-                        <div className="sp-comments-section">
-                            <CommentsSection postId={postIdNum} />
-                        </div>
+                        
+                        {/* ⬇️ УБИРАЕМ комментарии из слайдера */}
                     </div>
 
                     <button className="sp-nav-arrow" onClick={handleNext} disabled={currentSlide >= maxSlides - 1}>
@@ -422,6 +422,10 @@ const SinglePostPage: React.FC = () => {
                     </button>
                 </div>
 
+                {/* ⬇️ РАЗДЕЛ КОММЕНТАРИЕВ РАЗМЕЩАЕМ ОТДЕЛЬНО */}
+                <div className="sp-comments-section-wrapper">
+                    <CommentsSection postId={postIdNum} />
+                </div>
                 <div className="sp-back-btn-container">
                     <button className="sp-back-btn" onClick={() => navigate(-1)}>
                         Вернуться назад

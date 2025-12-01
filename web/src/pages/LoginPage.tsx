@@ -1,8 +1,6 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import AuthLayout from '../components/AuthLayout.tsx';
-import SocialButtons from '../components/SocialButtons.tsx';
-import FriendsFront from '../assets/FrontFriends.jpg';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.tsx'; // Импортируем useAuth
 
@@ -63,14 +61,8 @@ const LoginPage: React.FC = () => {
   };
 
   return (
-    <AuthLayout image={FriendsFront}>
+    <AuthLayout>
       <h1 style={{ textAlign: 'center', marginBottom: '30px', color: '#3f4254' }}>Вход</h1>
-
-      <SocialButtons />
-
-      <div className="divider" style={{ margin: '20px 0' }}>
-        <span style={{ fontSize: '0.9rem', color: '#a0a0a0' }}>ИЛИ</span>
-      </div>
       
       <form onSubmit={handleSubmit} style={{ width: '100%' }}>
         {/* Поле Email/Username */}
@@ -82,7 +74,7 @@ const LoginPage: React.FC = () => {
             type="text" 
             id="email" 
             className="form-input" 
-            placeholder="john.doe@example.com"
+            placeholder="poschta@mail.by"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
             required
