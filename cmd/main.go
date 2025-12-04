@@ -2,44 +2,90 @@ package main
 
 import (
 	"log"
+	"os"
 	"time"
-
-	auth "tourist-blog/internal/handlers/auth"
-	"tourist-blog/internal/handlers/comment"
-	"tourist-blog/internal/handlers/favourite"
-	"tourist-blog/internal/handlers/follows"
-	"tourist-blog/internal/handlers/like"
-	maps "tourist-blog/internal/handlers/map"
-	"tourist-blog/internal/handlers/moderation"
-	"tourist-blog/internal/handlers/places"
-	"tourist-blog/internal/handlers/post"
-	"tourist-blog/internal/handlers/profile"
-	"tourist-blog/internal/handlers/reviews"
-	"tourist-blog/internal/middleware"
-	database "tourist-blog/internal/storage/postgres"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
+	"github.com/joho/godotenv"
+
+	"padaroja/internal/handlers/auth"
+	"padaroja/internal/handlers/comment"
+	"padaroja/internal/handlers/favourite"
+	"padaroja/internal/handlers/follows"
+	"padaroja/internal/handlers/like"
+	maps "padaroja/internal/handlers/map"
+	"padaroja/internal/handlers/moderation"
+	"padaroja/internal/handlers/places"
+	"padaroja/internal/handlers/post"
+	"padaroja/internal/handlers/profile"
+	"padaroja/internal/handlers/reviews"
+	"padaroja/internal/middleware"
+	database "padaroja/internal/storage/postgres"
+	utils "padaroja/utils/auth"
 )
 
 func main() {
-	// 1. Подключение к БД
+	// 1. Загрузка переменных окружения
+	env := os.Getenv("APP_ENV")
+	if env == "" {
+		env = "development"
+	}
+
+	// В development режиме загружаем из .env файла
+	if env == "development" {
+		if err := godotenv.Load(); err != nil {
+			log.Printf("Warning: .env file not found: %v", err)
+		}
+	}
+
+	// 2. Инициализация JWT секрета
+	if err := utils.InitJWTSecret(); err != nil {
+		log.Fatalf("Failed to initialize JWT secret: %v", err)
+	}
+
+	// 3. Подключение к БД
 	database.ConnectDB()
 
-	// 2. Инициализация Gin
+	// 4. Инициализация Gin с режимом из .env
+	if env == "production" {
+		gin.SetMode(gin.ReleaseMode)
+	}
+
 	router := gin.Default()
 
-	// 3. Настройка CORS
-	router.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{"http://localhost:3000"},
-		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS"},
-		AllowHeaders:     []string{"Origin", "Content-Type", "Accept", "Authorization"},
-		ExposeHeaders:    []string{"Content-Length"},
+	// 5. Настройка CORS из переменных окружения
+	frontendURL := os.Getenv("FRONTEND_URL")
+	if frontendURL == "" {
+		frontendURL = "http://localhost:3000"
+	}
+
+	corsConfig := cors.Config{
+		AllowOrigins:     []string{frontendURL},
+		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"},
+		AllowHeaders:     []string{"Origin", "Content-Type", "Accept", "Authorization", "X-Requested-With"},
+		ExposeHeaders:    []string{"Content-Length", "Content-Type"},
 		AllowCredentials: true,
 		MaxAge:           12 * time.Hour,
-	}))
+	}
 
-	// 4. Роутинг
+	// Если в development, разрешаем все origins для удобства
+	if env == "development" {
+		corsConfig.AllowOriginFunc = func(origin string) bool {
+			return true
+		}
+		corsConfig.AllowOrigins = nil
+	}
+
+	router.Use(cors.New(corsConfig))
+
+	// 6. Порт сервера из .env
+	serverPort := os.Getenv("SERVER_PORT")
+	if serverPort == "" {
+		serverPort = "8080"
+	}
+
+	// 7. Роутинг
 	api := router.Group("/api")
 
 	// 1. Маршруты аутентификации (открыты)
@@ -193,7 +239,8 @@ func main() {
 	}
 
 	// Запуск сервера
-	if err := router.Run(":8080"); err != nil {
+	log.Printf("Сервер запущен на порту %s в режиме %s", serverPort, env)
+	if err := router.Run(":" + serverPort); err != nil {
 		log.Fatalf("Error running server: %v", err)
 	}
 }

@@ -3,8 +3,8 @@ package places
 import (
 	"fmt"
 	"net/http"
-	"tourist-blog/internal/domain/models"
-	database "tourist-blog/internal/storage/postgres"
+	"padaroja/internal/domain/models"
+	database "padaroja/internal/storage/postgres"
 
 	"github.com/gin-gonic/gin"
 )

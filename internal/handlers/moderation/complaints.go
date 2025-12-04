@@ -3,9 +3,9 @@ package moderation
 import (
 	"fmt"
 	"net/http"
+	"padaroja/internal/domain/models"
+	database "padaroja/internal/storage/postgres"
 	"time"
-	"tourist-blog/internal/domain/models"
-	database "tourist-blog/internal/storage/postgres"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"

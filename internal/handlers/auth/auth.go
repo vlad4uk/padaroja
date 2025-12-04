@@ -2,10 +2,10 @@ package auth
 
 import (
 	"net/http"
+	"padaroja/internal/domain/models"
+	database "padaroja/internal/storage/postgres"
+	utils "padaroja/utils/auth"
 	"time"
-	"tourist-blog/internal/domain/models"
-	database "tourist-blog/internal/storage/postgres"
-	utils "tourist-blog/utils/auth"
 
 	"github.com/gin-gonic/gin"
 	"golang.org/x/crypto/bcrypt"

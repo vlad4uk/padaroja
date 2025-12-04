@@ -3,7 +3,7 @@ package middleware
 import (
 	"fmt"
 	"net/http"
-	utils "tourist-blog/utils/auth"
+	utils "padaroja/utils/auth"
 
 	"github.com/gin-gonic/gin"
 )

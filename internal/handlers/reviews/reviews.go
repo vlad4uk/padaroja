@@ -3,10 +3,10 @@ package reviews
 import (
 	"fmt"
 	"net/http"
+	"padaroja/internal/domain/models"
+	dto "padaroja/internal/handlers/reviews/dto"
+	database "padaroja/internal/storage/postgres"
 	"strconv"
-	"tourist-blog/internal/domain/models"
-	dto "tourist-blog/internal/handlers/reviews/dto"
-	database "tourist-blog/internal/storage/postgres"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"

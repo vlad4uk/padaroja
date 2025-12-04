@@ -1,9 +1,11 @@
 package postgres
 
 import (
+	"fmt"
 	"log"
-	"time" // 👈 Не забудьте импортировать 'time'
-	"tourist-blog/internal/domain/models"
+	"os"
+	"padaroja/internal/domain/models"
+	"time"
 
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
@@ -12,11 +14,25 @@ import (
 var DB *gorm.DB
 
 func ConnectDB() {
-	dbconn := "host=localhost user=admintblog password=system dbname=tblog port=5432 sslmode=disable"
+	// Получаем значения из переменных окружения
+	host := os.Getenv("DB_HOST")
+	port := os.Getenv("DB_PORT")
+	user := os.Getenv("DB_USER")
+	password := os.Getenv("DB_PASSWORD")
+	dbname := os.Getenv("DB_NAME")
+	sslMode := os.Getenv("DB_SSL_MODE")
+
+	// Формируем строку подключения
+	dbconn := fmt.Sprintf(
+		"host=%s port=%s user=%s password=%s dbname=%s sslmode=%s",
+		host, port, user, password, dbname, sslMode,
+	)
+
+	log.Printf("Подключение к БД: %s@%s:%s/%s", user, host, port, dbname)
 
 	db, err := gorm.Open(postgres.Open(dbconn), &gorm.Config{})
 	if err != nil {
-		log.Fatalf("Ошибка подключения к базе данных!")
+		log.Fatalf("Ошибка подключения к базе данных: %v", err)
 	}
 
 	// 1. Получаем базовый объект *sql.DB из GORM
@@ -32,10 +48,10 @@ func ConnectDB() {
 	// Максимальное количество открытых соединений
 	sqlDB.SetMaxOpenConns(100)
 
-	// Максимальное время жизни соединения (важно для переподключения)
+	// Максимальное время жизни соединения
 	sqlDB.SetConnMaxLifetime(time.Hour)
 
-	// --- Миграции GORM (оставляем без изменений) ---
+	// --- Миграции GORM ---
 	err = db.AutoMigrate(
 		&models.User{},
 		&models.Place{},
@@ -52,12 +68,14 @@ func ConnectDB() {
 		&models.Review{},
 	)
 	if err != nil {
-		// Убираем лишний .Error(), log.Fatal принимает ошибку напрямую
 		log.Fatal("Failed to perform GORM AutoMigrate:", err)
 	}
 
-	// ...
-
 	DB = db
-	log.Println("Успех! Подключение к бд + миграция")
+	log.Println("✅ Успешное подключение к базе данных и миграция")
+}
+
+// GetDB возвращает подключение к базе данных
+func GetDB() *gorm.DB {
+	return DB
 }

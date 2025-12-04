@@ -2,11 +2,11 @@ package maps
 
 import (
 	"net/http"
+	"padaroja/internal/domain/models"
+	reviews "padaroja/internal/handlers/reviews"
+	dto "padaroja/internal/handlers/reviews/dto"
+	database "padaroja/internal/storage/postgres"
 	"strconv"
-	"tourist-blog/internal/domain/models"
-	reviews "tourist-blog/internal/handlers/reviews"
-	dto "tourist-blog/internal/handlers/reviews/dto"
-	database "tourist-blog/internal/storage/postgres"
 
 	"github.com/gin-gonic/gin"
 )

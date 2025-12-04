@@ -1,0 +1,18 @@
+Игнорируем лишнее при копировании в контекст сборки
+
+.git
+.gitignore
+node_modules
+web/node_modules
+dist
+build
+bin
+.idea
+.vscode
+docker-compose.yml
+README.md
+logs
+
+Если у вас есть локальные volume папки
+
+postgres_data

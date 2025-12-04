@@ -3,10 +3,10 @@ package post
 import (
 	"fmt"
 	"net/http"
+	"padaroja/internal/domain/models"
+	database "padaroja/internal/storage/postgres"
 	"strconv"
 	"time"
-	"tourist-blog/internal/domain/models"
-	database "tourist-blog/internal/storage/postgres"
 
 	"github.com/gin-gonic/gin"
 	"github.com/google/uuid"

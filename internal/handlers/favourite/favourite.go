@@ -2,10 +2,10 @@ package favourite
 
 import (
 	"net/http"
+	"padaroja/internal/domain/models"
+	database "padaroja/internal/storage/postgres"
 	"strconv"
 	"strings"
-	"tourist-blog/internal/domain/models"
-	database "tourist-blog/internal/storage/postgres"
 
 	"github.com/gin-gonic/gin"
 	"gorm.io/gorm"
