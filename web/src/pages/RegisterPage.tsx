@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import axios from 'axios';
 import AuthLayout from '../components/AuthLayout.tsx';
-
+import AuthIllustration from '../components/AuthIllustration.tsx';
+import loginImage from '../assets/bird04.png';
 
 // Базовый URL Go-бэкенда
 const API_BASE_URL = 'http://localhost:8080/api/auth'; 
@@ -62,11 +63,17 @@ const RegisterPage: React.FC = () => {
 
   const RegisterIllustration = () => (
     <div style={{ textAlign: 'center' }}>
+      
     </div>
   );
 
   return (
-    <AuthLayout illustration={<RegisterIllustration />}>
+     <AuthLayout illustration={
+        <AuthIllustration 
+          imageSrc={loginImage} 
+          altText="Login Illustration" 
+        />
+      }>
       <h1 className="auth-title">Начни приключения здесь!</h1>
 
       <form onSubmit={handleSubmit}>

@@ -8,7 +8,7 @@ import (
 // models/comment.go
 type Comment struct {
 	ID         uint      `gorm:"primaryKey" json:"id"`
-	PostID     uint      `gorm:"not null" json:"post_id"`
+	PostID     uint      `gorm:"not null;constraint:OnDelete:CASCADE;" json:"post_id"`
 	UserID     int       `gorm:"not null" json:"user_id"`
 	ParentID   *uint     `gorm:"default:null" json:"parent_id"`
 	Content    string    `gorm:"type:text;not null" json:"content"`

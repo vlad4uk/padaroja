@@ -21,7 +21,6 @@ const navItemsList: NavItem[] = [
     { name: 'Избранное', icon: FaBookmark, link: '/bookmarks', authRequired: true },
     { name: 'Уведомления', icon: FaBell, link: '/notifications', authRequired: true },
     { name: 'Создать Пост', icon: FaPlusSquare, link: '/post/new', authRequired: true },
-    // 👇 Этот пункт теперь помечен как adminOnly
     { name: 'Админ Панель', icon: FaAdn, link: '/admin', authRequired: true, adminOnly: true },
 ];
 
@@ -41,7 +40,7 @@ const Sidebar: React.FC = () => {
     return (
         <aside className="sidebar">
             <div className="sidebar-header">
-                <span style={{ fontWeight: 700, color: '#696cff' }}>Padaroja.</span>
+                <span style={{ fontWeight: 700 }}>Padaroja.</span>
             </div>
             
             <nav className="sidebar-nav-list">

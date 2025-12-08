@@ -6,7 +6,7 @@ import './SinglePostPage.css';
 import PostActionsMenu from '../components/PostActionsMenu.tsx'; 
 import ReportModal from '../components/ReportModal.tsx';
 import { BsGlobeAmericas } from "react-icons/bs";
-import { FaRegBookmark, FaBookmark, FaAngleDoubleLeft, FaAngleDoubleRight } from 'react-icons/fa';
+import { FaRegBookmark, FaBookmark, FaAngleDoubleLeft, FaAngleDoubleRight, FaTimes } from 'react-icons/fa';
 import { useAuth } from '../context/AuthContext.tsx'; 
 import CommentsSection from '../components/CommentsSection.tsx';
 
@@ -33,7 +33,11 @@ interface PostDetailData {
     likes_count: number;
     paragraphs: ParagraphData[] | null;
     photos: PhotoData[] | null;
-    user_id: number; 
+    user_id: number;
+    author_info?: {
+        username: string;
+        image_url: string;
+    };
 }
 
 const SinglePostPage: React.FC = () => {
@@ -53,9 +57,18 @@ const SinglePostPage: React.FC = () => {
     const [clickedPostId, setClickedPostId] = useState<number | null>(null);
     const [clickedLikePostId, setClickedLikePostId] = useState<number | null>(null);
 
+    // --- СТЕЙТЫ ДЛЯ АВТОРА ПОСТА ---
+    const [userAvatar, setUserAvatar] = useState<string>('');
+    const [postUserName, setPostUserName] = useState<string>('');
+
     // --- СТЕЙТЫ ДЛЯ МОДАЛЬНОГО ОКНА ЖАЛОБЫ ---
     const [isReportModalOpen, setReportModalOpen] = useState(false);
     const [reportPostId, setReportPostId] = useState<number | null>(null);
+
+    // --- СТЕЙТЫ ДЛЯ ПОЛНОЭКРАННОГО ПРОСМОТРА ФОТО ---
+    const [isImageModalOpen, setIsImageModalOpen] = useState(false);
+    const [fullscreenImage, setFullscreenImage] = useState<string | null>(null);
+    const [fullscreenImageAlt, setFullscreenImageAlt] = useState<string>('');
 
     const paragraphs = post?.paragraphs || [];
     const photos = post?.photos || [];
@@ -82,6 +95,15 @@ const SinglePostPage: React.FC = () => {
                     setPost(response.data);
                     setLikesCount(response.data.likes_count || 0);
                     
+                    // Загружаем информацию об авторе
+                    if (response.data.author_info) {
+                        setUserAvatar(response.data.author_info.image_url || '');
+                        setPostUserName(response.data.author_info.username || 'Автор');
+                    } else {
+                        // Если авторская информация не пришла, загружаем отдельно
+                        await fetchAuthorInfo(response.data.user_id);
+                    }
+                    
                     // Загружаем статусы лайков и избранного
                     await loadLikeStatus(parseInt(response.data.id));
                     await loadFavouriteStatus(parseInt(response.data.id));
@@ -101,6 +123,20 @@ const SinglePostPage: React.FC = () => {
             fetchPost();
         }
     }, [id]);
+
+    // Загрузка информации об авторе
+    const fetchAuthorInfo = useCallback(async (userId: number) => {
+        try {
+            const response = await axios.get(
+                `http://localhost:8080/api/user/${userId}/profile`,
+                { withCredentials: true }
+            );
+            setUserAvatar(response.data.image_url || '');
+            setPostUserName(response.data.username);
+        } catch (err) {
+            console.error('Ошибка загрузки информации об авторе:', err);
+        }
+    }, []);
 
     // Загрузка статуса лайка
     const loadLikeStatus = async (postId: number) => {
@@ -299,6 +335,38 @@ const SinglePostPage: React.FC = () => {
         }
     };
 
+    // Переход на страницу автора
+    const handleAuthorClick = () => {
+        if (post?.user_id) {
+            navigate(`/user/${post.user_id}`);
+        }
+    };
+
+    // --- ОБРАБОТЧИКИ ДЛЯ ПОЛНОЭКРАННОГО ПРОСМОТРА ФОТО ---
+    const handleImageClick = (imageUrl: string) => {
+        setFullscreenImage(imageUrl);
+        setFullscreenImageAlt(`Фото из поста "${post?.title}" - слайд ${currentSlide + 1}`);
+        setIsImageModalOpen(true);
+    };
+
+    const closeImageModal = () => {
+        setIsImageModalOpen(false);
+        setFullscreenImage(null);
+        setFullscreenImageAlt('');
+    };
+
+    // Закрытие по ESC
+    useEffect(() => {
+        const handleEscKey = (e: KeyboardEvent) => {
+            if (e.key === 'Escape' && isImageModalOpen) {
+                closeImageModal();
+            }
+        };
+
+        document.addEventListener('keydown', handleEscKey);
+        return () => document.removeEventListener('keydown', handleEscKey);
+    }, [isImageModalOpen]);
+
     // --- РЕНДЕРИНГ СОСТОЯНИЙ ---
     if (loading) {
         return (
@@ -324,6 +392,23 @@ const SinglePostPage: React.FC = () => {
                     <h1 className="sp-post-title">{post.title}</h1>
                     
                     <div className="sp-meta-info">
+                        {/* Аватар и имя автора */}
+                        <div 
+                            className="sp-author-info"
+                            onClick={handleAuthorClick}
+                            style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}
+                        >
+                            <img 
+                                src={userAvatar || '/default-avatar.png'} 
+                                alt={postUserName || 'Автор'}
+                                className="sp-author-avatar"
+                                onError={(e) => {
+                                    (e.target as HTMLImageElement).src = '/default-avatar.png';
+                                }}
+                            />
+                            <span className="sp-author-name">{postUserName || 'Автор'}</span>
+                        </div>
+                        
                         <span className="sp-date">Опубликовано: {new Date(post.created_at).toLocaleDateString()}</span>
                         <span className="sp-place-name"><BsGlobeAmericas size={14}/> {post.place_name}</span>
                         
@@ -345,7 +430,7 @@ const SinglePostPage: React.FC = () => {
                                     color: isLiked ? '#e74c3c' : '#666' 
                                 }} 
                             />
-                            Лайков: {likesCount}
+                            {likesCount}
                         </span>
                         
                         {/* Закладка с возможностью клика */}
@@ -385,7 +470,6 @@ const SinglePostPage: React.FC = () => {
                 </div>
 
                 {/* Слайдер с контентом */}
-                {/* Слайдер с контентом */}
                 <div className="sp-content-slider">
                     <button className="sp-nav-arrow" onClick={handlePrev} disabled={currentSlide === 0}>
                         <FaAngleDoubleLeft />
@@ -399,7 +483,13 @@ const SinglePostPage: React.FC = () => {
                         <div className="sp-slide-body">
                             <div className="sp-photo-area">
                                 {currentPhoto ? (
-                                    <img src={currentPhoto.url} alt="Slide" className="sp-photo-img" />
+                                    <img 
+                                        src={currentPhoto.url} 
+                                        alt={`Slide ${currentSlide + 1}`} 
+                                        className="sp-photo-img"
+                                        onClick={() => handleImageClick(currentPhoto.url)}
+                                        style={{ cursor: 'pointer' }}
+                                    />
                                 ) : (
                                     <span style={{color: '#999'}}>Нет фото</span>
                                 )}
@@ -408,13 +498,6 @@ const SinglePostPage: React.FC = () => {
                                 {currentText ? currentText.content : ""}
                             </div>
                         </div>
-                        
-                        <div className="sp-user-info">
-                            <div className="sp-avatar" />
-                            <span className="sp-username">Автор ID: {post.user_id}</span>
-                        </div>
-                        
-                        {/* ⬇️ УБИРАЕМ комментарии из слайдера */}
                     </div>
 
                     <button className="sp-nav-arrow" onClick={handleNext} disabled={currentSlide >= maxSlides - 1}>
@@ -422,10 +505,11 @@ const SinglePostPage: React.FC = () => {
                     </button>
                 </div>
 
-                {/* ⬇️ РАЗДЕЛ КОММЕНТАРИЕВ РАЗМЕЩАЕМ ОТДЕЛЬНО */}
+                {/* Раздел комментариев отдельно */}
                 <div className="sp-comments-section-wrapper">
                     <CommentsSection postId={postIdNum} />
                 </div>
+                
                 <div className="sp-back-btn-container">
                     <button className="sp-back-btn" onClick={() => navigate(-1)}>
                         Вернуться назад
@@ -439,6 +523,25 @@ const SinglePostPage: React.FC = () => {
                 onClose={() => setReportModalOpen(false)}
                 onSubmit={handleSubmitReport}
             />
+
+            {/* МОДАЛЬНОЕ ОКНО ДЛЯ ПОЛНОЭКРАННОГО ПРОСМОТРА ФОТО */}
+            {isImageModalOpen && fullscreenImage && (
+                <div className="image-modal-overlay" onClick={closeImageModal}>
+                    <div className="image-modal-content" onClick={(e) => e.stopPropagation()}>
+                        <button className="image-modal-close" onClick={closeImageModal}>
+                            <FaTimes size={24} />
+                        </button>
+                        <img 
+                            src={fullscreenImage} 
+                            alt={fullscreenImageAlt} 
+                            className="fullscreen-image"
+                        />
+                        <div className="image-modal-info">
+                            <span>{fullscreenImageAlt}</span>
+                        </div>
+                    </div>
+                </div>
+            )}
         </ContentLayout>
     );
 };

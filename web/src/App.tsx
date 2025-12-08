@@ -1,5 +1,3 @@
-// src/App.tsx
-
 import React, { Suspense } from 'react';
 import { 
   BrowserRouter as Router, 
@@ -20,9 +18,6 @@ import FavouritesPage from '../src/components/FavouritesPage.tsx';
 import LikesPage from '../src/components/LikesPage.tsx';
 import PlaceDetailsPage from '../src/components/PlaceDetailsPage.tsx';
 
-// ==========================================================
-// КОМПОНЕНТ ЗАЩИТЫ МАРШРУТОВ (ProtectedRoute)
-// ==========================================================
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { isLoggedIn, isLoading } = useAuth();
 
@@ -39,9 +34,6 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
   return <>{children}</>;
 };
 
-// ==========================================================
-// ModeratorRoute (ТОЛЬКО ДЛЯ АДМИНА)
-// ==========================================================
 const ModeratorRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const { isLoggedIn, user, isLoading } = useAuth();
     
@@ -62,25 +54,18 @@ const ModeratorRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
     return <>{children}</>;
 };
 
-// ==========================================================
-// КОМПОНЕНТ ЗАГРУЗКИ
-// ==========================================================
 const LoadingSpinner = () => (
   <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
     <div>Загрузка...</div>
   </div>
 );
 
-// ==========================================================
-// ОСНОВНОЙ КОМПОНЕНТ ПРИЛОЖЕНИЯ
-// ==========================================================
 const App: React.FC = () => {
   return (
     <AuthProvider> 
       <Suspense fallback={<LoadingSpinner />}>
         <Router>
           <Routes>
-            {/* Гостевые маршруты */}
             <Route path="/" element={<FeedPage />} />
             <Route path="/search" element={<FeedPage />} />
             <Route path="/post/:id" element={<SinglePostPage />} />
@@ -88,7 +73,6 @@ const App: React.FC = () => {
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
             
-            {/* Защищенные маршруты */}
             <Route 
               path="/profile" 
               element={

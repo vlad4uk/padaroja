@@ -98,7 +98,10 @@ func CreateReview(c *gin.Context) {
 
 	c.JSON(http.StatusCreated, gin.H{
 		"message": "Review created successfully",
-		"review":  review.ID,
+		"review": gin.H{
+			"id":       review.ID,
+			"place_id": review.PlaceID,
+		},
 	})
 }
 
@@ -256,4 +259,114 @@ func GetPlaceReviews(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, response)
+}
+
+func CreateReviewWithPlace(c *gin.Context) {
+	userID, exists := GetUserIDFromContext(c)
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
+
+	var input struct {
+		PlaceData struct {
+			Name      string  `json:"name" binding:"required"`
+			Desc      string  `json:"desc"`
+			Latitude  float64 `json:"latitude" binding:"required"`
+			Longitude float64 `json:"longitude" binding:"required"`
+		} `json:"place_data" binding:"required"`
+
+		ReviewData struct {
+			Rating   int    `json:"rating" binding:"required,min=1,max=5"`
+			Content  string `json:"content" binding:"max=1000"`
+			IsPublic bool   `json:"is_public"`
+		} `json:"review_data" binding:"required"`
+
+		PostID *uint `json:"post_id"` // ID существующего поста для прикрепления
+	}
+
+	if err := c.ShouldBindJSON(&input); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("Invalid input: %v", err.Error())})
+		return
+	}
+
+	// Начинаем транзакцию
+	tx := database.DB.Begin()
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+		}
+	}()
+
+	// 1. Создаем место
+	place := models.Place{
+		Name:      input.PlaceData.Name,
+		Desc:      input.PlaceData.Desc,
+		Latitude:  input.PlaceData.Latitude,
+		Longitude: input.PlaceData.Longitude,
+	}
+
+	if err := tx.Create(&place).Error; err != nil {
+		tx.Rollback()
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create place"})
+		return
+	}
+
+	// 2. Создаем отзыв
+	review := models.Review{
+		UserID:   int(userID),
+		PlaceID:  place.ID,
+		Rating:   input.ReviewData.Rating,
+		Content:  input.ReviewData.Content,
+		IsPublic: input.ReviewData.IsPublic,
+	}
+
+	if err := tx.Create(&review).Error; err != nil {
+		tx.Rollback()
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create review"})
+		return
+	}
+
+	// 3. Если указан PostID, прикрепляем пост к месту
+	if input.PostID != nil {
+		// Проверяем существование поста и принадлежность пользователю
+		var post models.Post
+		if err := tx.Where("id = ? AND user_id = ?", *input.PostID, userID).First(&post).Error; err != nil {
+			tx.Rollback()
+			if err == gorm.ErrRecordNotFound {
+				c.JSON(http.StatusNotFound, gin.H{"error": "Post not found or unauthorized"})
+			} else {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "Database error"})
+			}
+			return
+		}
+
+		// Обновляем пост с новым place_id
+		if err := tx.Model(&post).Update("place_id", place.ID).Error; err != nil {
+			tx.Rollback()
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to attach post to place"})
+			return
+		}
+	}
+
+	// Фиксируем транзакцию
+	if err := tx.Commit().Error; err != nil {
+		tx.Rollback()
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Transaction failed"})
+		return
+	}
+
+	c.JSON(http.StatusCreated, gin.H{
+		"message": "Place and review created successfully",
+		"data": gin.H{
+			"place": gin.H{
+				"id":   place.ID,
+				"name": place.Name,
+			},
+			"review": gin.H{
+				"id": review.ID,
+			},
+			"post_attached": input.PostID != nil,
+		},
+	})
 }

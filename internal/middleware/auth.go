@@ -35,12 +35,10 @@ func AuthMiddleware() gin.HandlerFunc {
 	}
 }
 
-// OptionalAuthMiddleware - для публичных маршрутов (гость или авторизованный)
 func OptionalAuthMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		tokenString, err := c.Cookie("jwt")
 
-		// Если токен есть и он валиден, устанавливаем userID
 		if err == nil && tokenString != "" {
 			userID, err := utils.ValidateJWT(tokenString)
 			if err == nil {
@@ -48,7 +46,6 @@ func OptionalAuthMiddleware() gin.HandlerFunc {
 			}
 		}
 
-		// Если токена нет или он невалиден - продолжаем как гость
 		c.Next()
 	}
 }

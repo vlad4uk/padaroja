@@ -1,0 +1,457 @@
+/* src/components/MapView.css */
+
+/* Основной контейнер */
+.map-view-container {
+  display: flex;
+  height: 70vh;
+  width: 100%;
+  min-height: 400px;
+  gap: 20px;
+  background: #f8f9fa;
+  border-radius: 8px;
+  overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+/* Карта */
+.map-container {
+  flex: 1;
+  height: 100%;
+  border-radius: 8px;
+  overflow: hidden;
+  background: white;
+}
+
+.leaflet-map {
+  height: 100%;
+  border-radius: 8px;
+}
+
+/* Панель управления */
+.map-controls {
+  width: 400px;
+  background: white;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  overflow-y: auto;
+}
+
+.controls-header {
+  border-bottom: 1px solid #eee;
+  padding-bottom: 15px;
+  margin-bottom: 10px;
+}
+
+.controls-header h3 {
+  margin: 0 0 15px 0;
+  color: #262626;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+/* Кнопки режимов */
+.mode-buttons {
+  display: flex;
+  gap: 8px;
+  background: #f8f9fa;
+  padding: 4px;
+  border-radius: 6px;
+}
+
+.mode-button {
+  flex: 1;
+  padding: 8px 12px;
+  border: none;
+  background: transparent;
+  color: #666;
+  cursor: pointer;
+  font-weight: 500;
+  font-size: 14px;
+  border-radius: 4px;
+  transition: all 0.2s;
+}
+
+.mode-button:hover {
+  background: #e9ecef;
+  color: #262626;
+}
+
+.mode-button.active {
+  background: #696cff;
+  color: white;
+}
+
+/* Формы */
+.create-form,
+.attach-form,
+.marker-details {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.selected-location {
+  background: #f8f9fa;
+  padding: 12px;
+  border-radius: 6px;
+  border: 1px solid #e9ecef;
+}
+
+.coordinates {
+  font-size: 14px;
+  color: #666;
+  margin-bottom: 4px;
+}
+
+.coordinates strong {
+  color: #262626;
+}
+
+.hint {
+  font-size: 12px;
+  color: #999;
+  font-style: italic;
+}
+
+/* Группы формы */
+.form-group {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.form-group label {
+  font-weight: 500;
+  color: #262626;
+  font-size: 14px;
+}
+
+.form-group input,
+.form-group select,
+.form-group textarea {
+  padding: 10px 12px;
+  border: 1px solid #dbdbdb;
+  border-radius: 6px;
+  font-size: 14px;
+  transition: all 0.2s;
+  background: #fafafa;
+}
+
+.form-group input:focus,
+.form-group select:focus,
+.form-group textarea:focus {
+  outline: none;
+  border-color: #696cff;
+  background: white;
+  box-shadow: 0 0 0 3px rgba(105, 108, 255, 0.1);
+}
+
+.form-group textarea {
+  resize: vertical;
+  min-height: 80px;
+}
+
+/* Кнопки действий */
+.action-buttons {
+  display: flex;
+  gap: 12px;
+  margin-top: 10px;
+}
+
+.primary-button,
+.secondary-button,
+.delete-button,
+.view-button {
+  flex: 1;
+  padding: 10px 16px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+  font-size: 14px;
+  transition: all 0.2s;
+  text-align: center;
+}
+
+.primary-button {
+  background: #696cff;
+  color: white;
+}
+
+.primary-button:hover:not(:disabled) {
+  background: #5a5fe3;
+  transform: translateY(-1px);
+  box-shadow: 0 4px 12px rgba(105, 108, 255, 0.3);
+}
+
+.primary-button:disabled {
+  background: #ccc;
+  cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
+}
+
+.secondary-button {
+  background: #f8f9fa;
+  color: #262626;
+  border: 1px solid #dee2e6;
+}
+
+.secondary-button:hover {
+  background: #e9ecef;
+  border-color: #ced4da;
+}
+
+.delete-button {
+  background: #dc3545;
+  color: white;
+}
+
+.delete-button:hover {
+  background: #c82333;
+}
+
+.view-button {
+  background: #28a745;
+  color: white;
+}
+
+.view-button:hover {
+  background: #218838;
+}
+
+/* Детали маркера */
+.marker-details {
+  background: white;
+  border: 1px solid #e9ecef;
+  border-radius: 8px;
+  padding: 16px;
+}
+
+.marker-details h4 {
+  margin: 0 0 12px 0;
+  color: #262626;
+  font-size: 16px;
+}
+
+.content-section {
+  background: #f8f9fa;
+  padding: 12px;
+  border-radius: 6px;
+  margin-bottom: 12px;
+}
+
+.content-section strong {
+  display: block;
+  margin-bottom: 6px;
+  color: #666;
+}
+
+.content-section p {
+  margin: 0;
+  color: #262626;
+  line-height: 1.5;
+}
+
+.stats {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: #666;
+  font-size: 13px;
+  margin-bottom: 16px;
+}
+
+/* Инструкции */
+.instructions {
+  background: #eef1ff;
+  border: 1px solid #696cff;
+  border-radius: 8px;
+  padding: 16px;
+  color: #696cff;
+}
+
+.instructions p {
+  margin: 0 0 10px 0;
+  font-weight: 600;
+}
+
+.instructions ul {
+  margin: 0;
+  padding-left: 18px;
+}
+
+.instructions li {
+  margin-bottom: 6px;
+  line-height: 1.4;
+}
+
+.instructions strong {
+  color: #5a5fe3;
+}
+
+/* Попап маркера */
+.marker-popup {
+  min-width: 200px;
+}
+
+.marker-popup h4 {
+  margin: 0 0 10px 0;
+  color: #262626;
+}
+
+.review-content,
+.post-content {
+  margin-bottom: 10px;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.post-photo-preview {
+  margin-bottom: 10px;
+}
+
+.post-photo-preview img {
+  width: 100%;
+  height: 100px;
+  object-fit: cover;
+  border-radius: 4px;
+}
+
+.popup-actions {
+  display: flex;
+  gap: 8px;
+}
+
+.popup-actions button {
+  flex: 1;
+  padding: 6px 12px;
+  font-size: 12px;
+}
+
+/* Загрузка */
+.map-loading {
+  height: 70vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #f8f9fa;
+  border-radius: 8px;
+  color: #666;
+  font-size: 16px;
+}
+
+/* Адаптивность */
+@media (max-width: 992px) {
+  .map-view-container {
+    flex-direction: column;
+    height: auto;
+    min-height: 80vh;
+  }
+  
+  .map-container {
+    height: 400px;
+  }
+  
+  .map-controls {
+    width: 100%;
+    height: auto;
+  }
+}
+
+@media (max-width: 576px) {
+  .action-buttons {
+    flex-direction: column;
+  }
+  
+  .mode-buttons {
+    flex-direction: column;
+  }
+  
+  .popup-actions {
+    flex-direction: column;
+  }
+}
+
+/* Индикатор прикрепленного поста */
+.has-post-indicator {
+  background: #e3f2fd;
+  color: #1976d2;
+  padding: 6px 10px;
+  border-radius: 4px;
+  font-size: 12px;
+  margin: 8px 0;
+  text-align: center;
+  border: 1px solid #bbdefb;
+}
+
+/* Сообщение об отсутствии постов */
+.no-posts-message {
+  text-align: center;
+  padding: 20px;
+  background: #f8f9fa;
+  border-radius: 6px;
+  border: 1px dashed #dee2e6;
+}
+
+.no-posts-message p {
+  margin-bottom: 15px;
+  color: #666;
+}
+
+/* Статус кнопок */
+.mode-button:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Индикаторы иконок */
+.icon-indicator {
+  display: inline-block;
+  margin-right: 8px;
+  font-size: 14px;
+}
+
+/* Кнопки внизу формы */
+.action-buttons-bottom {
+  display: flex;
+  gap: 12px;
+  margin-top: auto;
+  padding-top: 20px;
+  border-top: 1px solid #e9ecef;
+}
+
+.action-buttons-bottom .primary-button,
+.action-buttons-bottom .secondary-button,
+.action-buttons-bottom .delete-button {
+  flex: 1;
+  padding: 10px 16px;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  font-weight: 500;
+  font-size: 14px;
+  transition: all 0.2s;
+  text-align: center;
+}
+
+/* Форма создания отзыва */
+.create-form {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  height: 100%;
+}
+
+/* Адаптивные кнопки на мобильных */
+@media (max-width: 576px) {
+  .action-buttons-bottom {
+    flex-direction: column;
+  }
+  
+  .mode-buttons {
+    flex-direction: column;
+  }
+}

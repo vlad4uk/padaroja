@@ -135,6 +135,8 @@ func main() {
 		postRoutes.PUT("/:postID", middleware.AuthMiddleware(), post.UpdatePost)
 		postRoutes.DELETE("/:postID", middleware.AuthMiddleware(), post.DeletePost)
 		postRoutes.POST("/:postID/report", middleware.AuthMiddleware(), post.ReportPost)
+
+		postRoutes.PUT("/:postID/attach-to-place", middleware.AuthMiddleware(), post.AttachPostToPlace)
 	}
 
 	// 4. Маршруты комментариев
@@ -157,7 +159,10 @@ func main() {
 		// Публичная информация о местах
 		mapRoutes.GET("/place/:placeID", middleware.OptionalAuthMiddleware(), maps.GetPlaceDetails)
 
-		// Защищенный маршрут
+		// Данные карты по ID пользователя (доступны всем)
+		mapRoutes.GET("/user/:userID/data", maps.GetMapDataByUserID)
+
+		// Защищенный маршрут (личные данные текущего пользователя)
 		mapRoutes.GET("/user-data", middleware.AuthMiddleware(), maps.GetUserMapData)
 	}
 
@@ -182,6 +187,7 @@ func main() {
 		protectedReviewRoutes.Use(middleware.AuthMiddleware())
 		{
 			protectedReviewRoutes.POST("", reviews.CreateReview)
+			protectedReviewRoutes.POST("/with-place", reviews.CreateReviewWithPlace)
 			protectedReviewRoutes.GET("/user", reviews.GetUserReviews)
 			protectedReviewRoutes.PUT("/:reviewID", reviews.UpdateReview)
 			protectedReviewRoutes.DELETE("/:reviewID", reviews.DeleteReview)

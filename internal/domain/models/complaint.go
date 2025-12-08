@@ -26,7 +26,7 @@ type Complaint struct {
 	DeletedAt gorm.DeletedAt `gorm:"index" json:"-"`
 
 	UserID uint            `gorm:"not null" json:"user_id"`
-	PostID uint            `gorm:"not null" json:"post_id"`
+	PostID uint            `gorm:"not null;constraint:OnDelete:CASCADE;" json:"post_id"`
 	Reason string          `gorm:"type:text;not null" json:"reason"`
 	Status ComplaintStatus `gorm:"type:varchar(20);default:'NEW'" json:"status"`
 

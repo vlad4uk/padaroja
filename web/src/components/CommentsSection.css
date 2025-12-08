@@ -207,6 +207,7 @@
     line-height: 1.4;
 }
 
+/* Обновите .comment-text в CommentsSection.css */
 .comment-text {
     font-size: 14px;
     line-height: 1.6;
@@ -214,7 +215,9 @@
     margin-bottom: 10px;
     white-space: pre-wrap;
     word-break: break-word;
+    overflow-wrap: break-word;
     font-weight: 400;
+    max-width: 100%;
 }
 
 /* Кнопки действий */

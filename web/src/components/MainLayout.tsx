@@ -44,21 +44,21 @@ const MainLayout: React.FC = () => {
     const renderContent = () => {
         switch (activeContent) {
             case 'Изменить':
-                if (!isOwner) return null;
-                return (
-                    <div className="profile-edit-form-container">
-                        <ProfileEditForm /> 
-                    </div>
-                );
+            if (!isOwner) return null;
+            return (
+                <div className="profile-edit-form-container">
+                <ProfileEditForm /> 
+                </div>
+            );
             case 'Карта':
-                return <MapView />;
+            return <MapView targetUserId={targetUserId} />; // Передаем ID пользователя
             case 'Публикации':
             default:
-                return (
-                    <div className="main-feed">
-                        <UserPostsList targetUserId={targetUserId} />
-                    </div>
-                );
+            return (
+                <div className="main-feed">
+                <UserPostsList targetUserId={targetUserId} />
+                </div>
+            );
         }
     };
 

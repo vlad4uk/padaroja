@@ -2,7 +2,7 @@
 
 .single-post-container {
     width: 100%;
-    max-width: 950px; /* Увеличиваем max-width для лучшего масштаба */
+    max-width: 950px;
     margin: 0 auto; 
     padding: 30px 20px;
     position: relative;
@@ -18,11 +18,11 @@
 }
 
 .sp-post-title {
-    font-size: 34px; /* Крупный заголовок */
+    font-size: 34px;
     font-weight: 700;
     color: #333;
     margin: 0;
-    padding-right: 60px; /* Отступ для иконки меню */
+    padding-right: 60px;
 }
 
 /* Метаинформация (под заголовком) */
@@ -30,26 +30,73 @@
     display: flex;
     flex-wrap: wrap;
     align-items: center;
-    gap: 20px; 
-    font-size: 15px; /* Чуть крупнее */
+    gap: 20px;
+    font-size: 15px;
     color: #666;
     margin-top: 10px;
 }
-.sp-meta-info span {
+
+.sp-meta-info span, .sp-meta-info div {
     white-space: nowrap;
 }
-.sp-tags { color: #8c57ff; font-weight: 500; }
-.sp-place-name { display: flex; align-items: center; gap: 5px; color: #333; }
-.sp-icon-bookmark { color: #8c57ff; font-size: 18px; cursor: pointer; }
 
+.sp-tags { 
+    color: #8c57ff; 
+    font-weight: 500; 
+}
 
-/* --- Иконка меню действий (PostActionsMenu) --- */
+.sp-place-name { 
+    display: flex; 
+    align-items: center; 
+    gap: 5px; 
+    color: #333; 
+}
+
+.sp-icon-bookmark { 
+    color: #8c57ff; 
+    font-size: 18px; 
+    cursor: pointer; 
+}
+
+/* Информация об авторе в верхней части */
+.sp-author-info {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    cursor: pointer;
+    transition: transform 0.2s ease;
+}
+
+.sp-author-info:hover {
+    transform: scale(1.02);
+}
+
+.sp-author-avatar {
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid #8c57ff;
+}
+
+.sp-author-name {
+    color: #8c57ff;
+    font-weight: 600;
+    font-size: 15px;
+}
+
+.sp-author-name:hover {
+    text-decoration: underline;
+}
+
+/* Иконка меню действий (PostActionsMenu) */
 .sp-author-actions {
     position: absolute;
     top: 0;
     right: 0;
     z-index: 10;
 }
+
 .post-menu-button {
     background: none;
     border: none;
@@ -60,10 +107,12 @@
     border-radius: 50%;
     transition: background 0.2s;
 }
+
 .post-menu-button:hover {
     background: #f0ebff;
 }
-/* Стилизация выпадающего меню (добавлены к инлайн-стилям в PostActionsMenu.tsx) */
+
+/* Стилизация выпадающего меню */
 .menu-dropdown {
     position: absolute;
     top: 35px;
@@ -76,6 +125,7 @@
     min-width: 180px;
     overflow: hidden;
 }
+
 .menu-dropdown button {
     display: flex;
     align-items: center;
@@ -89,20 +139,21 @@
     color: #333;
     transition: background-color 0.1s;
 }
+
 .menu-dropdown button:hover {
     background-color: #f5f5f5;
 }
+
 .menu-dropdown .action-delete {
     color: #ff4d4f;
 }
 
-
 /* --- Слайдер с контентом --- */
 .sp-content-slider {
     display: flex;
-    align-items: center;
+    align-items: center; /* Выравнивание кнопок по центру */
     justify-content: center;
-    gap: 30px; /* Увеличиваем зазор */
+    gap: 30px;
     margin-top: 30px;
 }
 
@@ -111,7 +162,8 @@
     border: 2px solid #8c57ff; 
     border-radius: 25px; 
     padding: 30px;
-    min-height: 550px; /* Увеличиваем минимальную высоту */
+    min-height: 500px; /* УВЕЛИЧИЛИ с 450px до 500px */
+    height: auto;
     display: flex;
     flex-direction: column;
     background: #fff;
@@ -130,62 +182,92 @@
 .sp-slide-body {
     display: flex;
     gap: 30px;
-    align-items: flex-start;
+    align-items: stretch; /* Растягиваем дочерние элементы */
     flex-grow: 1;
+    animation: fadeIn 0.3s ease;
+    justify-content: space-between;
+    width: 100%;
+    height: 400px; /* ФИКСИРОВАННАЯ высота для тела слайда */
+}
+
+@keyframes fadeIn {
+    from { opacity: 0.7; }
+    to { opacity: 1; }
 }
 
 .sp-photo-area {
-    flex: 1.2; /* Фото занимает чуть больше половины */
-    min-width: 40%;
-    max-width: 55%; 
+    flex: 1.2;
+    min-width: 450px;
+    max-width: 450px;
     background-color: #f5f5f5; 
     border-radius: 15px;
     overflow: hidden;
-    aspect-ratio: 4/3;
     display: flex;
-    align-items: center;
+    align-items: stretch; /* Растягиваем содержимое */
     justify-content: center;
+    height: 100%; /* Занимает всю доступную высоту */
 }
 
-.sp-photo-img { width: 100%; height: 100%; object-fit: cover; }
+.sp-photo-img { 
+    width: 100%; 
+    height: 100%; 
+    object-fit: cover; 
+    object-position: center;
+}
 
 .sp-text-area {
-    flex: 1; 
-    font-size: 17px; /* Крупнее, как на макете */
+    flex: 1;
+    font-size: 17px;
     line-height: 1.7;
     white-space: pre-wrap;
+    word-wrap: break-word;
+    overflow-wrap: break-word;
+    text-align: justify; /* Только это свойство */
     max-height: 400px;
     overflow-y: auto;
     color: #333;
+    padding: 15px;
+    border-radius: 10px;
+    background: white;
+    border: 1px solid #e0e0e0;
+    width: 100%;
+    min-width: 400px;
+    height: 100%; /* Занимает всю доступную высоту */
+    min-height: 350px; /* Увеличили минимальную высоту */
 }
 
-.sp-user-info {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    margin-top: 20px;
-    justify-content: flex-end;
+/* Ограничение ширины текстовой области на больших экранах */
+@media (min-width: 1200px) {
+    .sp-text-area {
+        max-width: 500px;
+    }
 }
 
-.sp-avatar { width: 40px; height: 40px; border-radius: 50%; background: #a5a6f6; }
-.sp-username { color: #8c57ff; font-weight: 600; }
-
-
-.sp-comments-placeholder { 
-    margin-top: auto; 
-    text-align: right; 
-    font-weight: 700; 
-    padding-top: 20px; 
-    color: #8c57ff; 
-    border-top: 1px solid #f0f0f0;
+/* Стили для скроллбара */
+.sp-text-area::-webkit-scrollbar {
+    width: 6px;
 }
 
-/* Стрелки навигации */
+.sp-text-area::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 3px;
+}
+
+.sp-text-area::-webkit-scrollbar-thumb {
+    background: #8c57ff;
+    border-radius: 3px;
+}
+
+.sp-text-area::-webkit-scrollbar-thumb:hover {
+    background: #7a46e6;
+}
+
+/* Стрелки навигации - исправлено выравнивание */
 .sp-nav-arrow {
     background: none;
     border: 2px solid #8c57ff;
     border-radius: 50%;
-    width: 55px; /* Чуть крупнее стрелки */
+    width: 55px;
     height: 55px;
     display: flex;
     align-items: center;
@@ -193,7 +275,15 @@
     cursor: pointer;
     color: #8c57ff;
     font-size: 28px;
-    transition: background-color 0.2s, color 0.2s;
+    transition: all 0.3s ease;
+    flex-shrink: 0;
+    position: relative;
+    align-self: center; /* Ключевое свойство для центрирования */
+}
+
+.sp-nav-arrow svg {
+    display: block;
+    margin: 0 auto;
 }
 
 .sp-nav-arrow:hover:not(:disabled) { 
@@ -201,34 +291,37 @@
     color: white; 
     box-shadow: 0 4px 8px rgba(140, 87, 255, 0.3);
 }
+
 .sp-nav-arrow:disabled { 
     border-color: #e0e0e0; 
     color: #e0e0e0;
     cursor: not-allowed;
 }
 
-.sp-back-btn-container { display: flex; justify-content: center; margin-top: 40px; }
+.sp-back-btn-container { 
+    display: flex; 
+    justify-content: center; 
+    margin-top: 40px; 
+}
+
 .sp-back-btn {
-    background: #8c57ff; color: white; border: none;
-    padding: 12px 40px; border-radius: 30px; cursor: pointer;
+    background: #8c57ff; 
+    color: white; 
+    border: none;
+    padding: 12px 40px; 
+    border-radius: 30px; 
+    cursor: pointer;
     font-weight: 600;
 }
-.sp-back-btn:hover { background: #7a46e6; }
+
+.sp-back-btn:hover { 
+    background: #7a46e6; 
+}
 
 /* Контейнер для комментариев под публикацией */
 .sp-comments-section-wrapper {
     margin-top: 40px;
     padding: 0 20px;
-}
-
-/* Уменьшим минимальную высоту слайдера, так как комментарии теперь отдельно */
-.sp-slider-box {
-    min-height: 450px; /* Уменьшаем с 550px */
-}
-
-/* Уберем нижний отступ, так как комментарии теперь отдельно */
-.sp-comments-placeholder {
-    display: none; /* Убираем заглушку */
 }
 
 /* Разделительная линия между постом и комментариями */
@@ -238,4 +331,232 @@
     height: 2px;
     background: linear-gradient(90deg, transparent, #8c57ff, transparent);
     margin: 40px 0;
+}
+
+/* Состояния загрузки и ошибок */
+.loading-state, .error-state {
+    text-align: center;
+    padding: 60px 20px;
+    font-size: 18px;
+    color: #666;
+}
+
+.error-state {
+    color: #e74c3c;
+}
+
+/* Адаптивность для мобильных устройств */
+@media (max-width: 768px) {
+    .sp-slider-box {
+        min-height: 600px; /* На мобильных еще больше */
+    }
+    
+    .sp-slide-body {
+        flex-direction: column;
+        gap: 20px;
+        height: auto; /* На мобильных - авто высота */
+    }
+    
+    .sp-photo-area {
+        max-width: 100%;
+        min-width: 100%;
+        height: 250px; /* Фиксированная высота на мобильных */
+        aspect-ratio: 16/9;
+    }
+    
+    .sp-text-area {
+        width: 100%;
+        min-width: 100%;
+        max-height: 300px;
+        height: auto;
+    }
+}
+
+@media (max-width: 480px) {
+    .sp-post-title {
+        font-size: 24px;
+    }
+    
+    .sp-meta-info {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+    
+    .sp-content-slider {
+        gap: 10px;
+    }
+    
+    .sp-slider-box {
+        padding: 15px;
+    }
+}
+
+/* Добавьте в конец файла */
+
+/* Модальное окно для полноэкранного просмотра фото */
+.image-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.9);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 10000; /* Выше всех элементов */
+    animation: fadeIn 0.3s ease;
+}
+
+.image-modal-content {
+    position: relative;
+    max-width: 90%;
+    max-height: 90%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.fullscreen-image {
+    max-width: 100%;
+    max-height: 80vh;
+    object-fit: contain;
+    border-radius: 8px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+    animation: zoomIn 0.3s ease;
+}
+
+@keyframes zoomIn {
+    from {
+        opacity: 0;
+        transform: scale(0.8);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+.image-modal-close {
+    position: absolute;
+    top: -50px;
+    right: 0;
+    background: rgba(255, 255, 255, 0.1);
+    border: none;
+    color: white;
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    font-size: 24px;
+    z-index: 10001;
+}
+
+.image-modal-close:hover {
+    background: rgba(255, 255, 255, 0.2);
+    transform: rotate(90deg);
+}
+
+.image-modal-info {
+    margin-top: 20px;
+    padding: 10px 20px;
+    background: rgba(255, 255, 255, 0.1);
+    border-radius: 20px;
+    color: white;
+    font-size: 14px;
+    text-align: center;
+    max-width: 80%;
+    backdrop-filter: blur(10px);
+}
+
+/* Эффект наведения на фото в слайдере */
+.sp-photo-img {
+    transition: transform 0.3s ease;
+    cursor: pointer;
+}
+
+.sp-photo-img:hover {
+    transform: scale(1.02);
+}
+
+/* Индикатор, что фото кликабельно */
+.sp-photo-area::after {
+    content: '🔍 Нажмите для увеличения';
+    position: absolute;
+    bottom: 10px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0, 0, 0, 0.7);
+    color: white;
+    padding: 5px 10px;
+    border-radius: 15px;
+    font-size: 12px;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    pointer-events: none;
+}
+
+.sp-photo-area:hover::after {
+    opacity: 1;
+}
+
+/* Увеличиваем фото в слайдере для лучшего просмотра */
+.sp-photo-area {
+    position: relative;
+    overflow: hidden;
+}
+
+.sp-photo-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+}
+
+/* Адаптивность для модального окна */
+@media (max-width: 768px) {
+    .image-modal-content {
+        max-width: 95%;
+        max-height: 85%;
+    }
+    
+    .image-modal-close {
+        top: -40px;
+        right: -10px;
+        width: 35px;
+        height: 35px;
+    }
+    
+    .image-modal-info {
+        font-size: 12px;
+        padding: 8px 15px;
+    }
+    
+    .fullscreen-image {
+        max-height: 70vh;
+    }
+}
+
+/* Анимация закрытия модального окна */
+.image-modal-overlay.closing {
+    animation: fadeOut 0.3s ease forwards;
+}
+
+@keyframes fadeOut {
+    from {
+        opacity: 1;
+    }
+    to {
+        opacity: 0;
+    }
+}
+
+/* Предотвращение скролла страницы при открытом модальном окне */
+body.modal-open {
+    overflow: hidden;
 }

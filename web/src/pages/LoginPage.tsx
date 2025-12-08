@@ -3,6 +3,9 @@ import axios from 'axios';
 import AuthLayout from '../components/AuthLayout.tsx';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.tsx'; // Импортируем useAuth
+import AuthIllustration from '../components/AuthIllustration.tsx';
+import loginImage from '../assets/bird04.png';
+
 
 // Базовый URL Go-бэкенда
 const API_BASE_URL = 'http://localhost:8080/api/auth'; 
@@ -61,7 +64,12 @@ const LoginPage: React.FC = () => {
   };
 
   return (
-    <AuthLayout>
+    <AuthLayout illustration={
+        <AuthIllustration 
+          imageSrc={loginImage} 
+          altText="Login Illustration" 
+        />
+      }>
       <h1 style={{ textAlign: 'center', marginBottom: '30px', color: '#3f4254' }}>Вход</h1>
       
       <form onSubmit={handleSubmit} style={{ width: '100%' }}>

@@ -291,6 +291,7 @@ func GetPost(c *gin.Context) {
 	var post models.Post
 
 	result := database.DB.Where("id = ?", postID).
+		Preload("User"). // ← ДОБАВЬТЕ ЭТУ СТРОКУ
 		Preload("Place").
 		Preload("Paragraphs", func(db *gorm.DB) *gorm.DB {
 			return db.Order("paragraphs.order ASC")
@@ -565,38 +566,90 @@ func DeletePost(c *gin.Context) {
 		var post models.Post
 
 		// 1. Проверяем существование поста и права пользователя
-		if err := tx.Where("id = ? AND user_id = ?", postID, userID).First(&post).Error; err != nil {
+		// ✅ Используем прямую проверку с First
+		result := tx.Where("id = ? AND user_id = ?", postID, userID).First(&post)
+		if result.Error != nil {
+			if result.Error == gorm.ErrRecordNotFound {
+				return fmt.Errorf("post not found or unauthorized")
+			}
+			return result.Error
+		}
+
+		fmt.Printf("DEBUG: Found post ID: %d, PlaceID: %d\n", post.ID, post.PlaceID)
+
+		// 2. Удаляем все зависимости ПЕРЕД удалением поста
+
+		// A. Удаляем лайки (добавим отладочный вывод)
+		if err := tx.Debug().Where("post_id = ?", post.ID).Delete(&models.Like{}).Error; err != nil {
+			fmt.Printf("DEBUG: Error deleting likes: %v\n", err)
 			return err
 		}
 
-		// 2. Удаляем связанные сущности
+		// B. Удаляем комментарии
+		if err := tx.Where("post_id = ?", post.ID).Delete(&models.Comment{}).Error; err != nil {
+			return err
+		}
+
+		// C. Удаляем избранное
+		if err := tx.Where("post_id = ?", post.ID).Delete(&models.Favourite{}).Error; err != nil {
+			return err
+		}
+
+		// D. Удаляем жалобы на пост (ВАЖНО: перед удалением поста)
+		// ✅ Используем сырой SQL если GORM не работает
+		if err := tx.Exec("DELETE FROM complaints WHERE post_id = ?", post.ID).Error; err != nil {
+			fmt.Printf("DEBUG: Error deleting complaints with SQL: %v\n", err)
+			// Пробуем через GORM
+			if err := tx.Where("post_id = ?", post.ID).Delete(&models.Complaint{}).Error; err != nil {
+				fmt.Printf("DEBUG: Error deleting complaints with GORM: %v\n", err)
+				return err
+			}
+		}
+
+		// E. Удаляем параграфы
 		if err := tx.Where("post_id = ?", post.ID).Delete(&models.Paragraph{}).Error; err != nil {
 			return err
 		}
 
+		// F. Удаляем фотографии
 		if err := tx.Where("post_id = ?", post.ID).Delete(&models.PostPhoto{}).Error; err != nil {
 			return err
 		}
 
-		if err := tx.Where("place_id = ?", post.PlaceID).Delete(&models.PlaceTags{}).Error; err != nil {
-			return err
+		// G. Удаляем связь места с тегами (сначала проверяем существование места)
+		if post.PlaceID != 0 {
+			if err := tx.Where("place_id = ?", post.PlaceID).Delete(&models.PlaceTags{}).Error; err != nil {
+				return err
+			}
 		}
 
-		// 3. Удаляем сам Пост
+		// H. Удаляем сам Пост
+		fmt.Printf("DEBUG: Deleting post ID: %d\n", post.ID)
 		if err := tx.Delete(&post).Error; err != nil {
+			fmt.Printf("DEBUG: Error deleting post: %v\n", err)
 			return err
 		}
 
-		// 4. Удаляем Место
-		if err := tx.Where("id = ?", post.PlaceID).Delete(&models.Place{}).Error; err != nil {
-			return err
+		// I. Проверяем, используется ли место другими постами
+		var otherPostsCount int64
+		tx.Model(&models.Post{}).Where("place_id = ?", post.PlaceID).Count(&otherPostsCount)
+
+		fmt.Printf("DEBUG: Other posts using place ID %d: %d\n", post.PlaceID, otherPostsCount)
+
+		// J. Удаляем место только если оно не используется другими постами
+		if otherPostsCount == 0 && post.PlaceID != 0 {
+			fmt.Printf("DEBUG: Deleting place ID: %d\n", post.PlaceID)
+			if err := tx.Where("id = ?", post.PlaceID).Delete(&models.Place{}).Error; err != nil {
+				fmt.Printf("DEBUG: Error deleting place: %v\n", err)
+				return err
+			}
 		}
 
 		return nil
 	})
 
 	if err != nil {
-		if err == gorm.ErrRecordNotFound {
+		if err.Error() == "post not found or unauthorized" {
 			c.JSON(http.StatusNotFound, gin.H{"error": "Post not found or unauthorized"})
 		} else {
 			fmt.Printf("Delete Error: %v\n", err)
@@ -737,4 +790,81 @@ func GetUserPostsByID(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, response)
+}
+
+type AttachPostRequest struct {
+	PlaceID   uint    `json:"place_id" binding:"required"`
+	Latitude  float64 `json:"latitude"`
+	Longitude float64 `json:"longitude"`
+}
+
+func AttachPostToPlace(c *gin.Context) {
+	postIDStr := c.Param("postID")
+	postID, err := strconv.ParseUint(postIDStr, 10, 64)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid post ID format"})
+		return
+	}
+
+	userID, exists := getUserIDFromContext(c)
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
+
+	var input AttachPostRequest
+	if err := c.ShouldBindJSON(&input); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("Invalid request data: %v", err.Error())})
+		return
+	}
+
+	err = database.DB.Transaction(func(tx *gorm.DB) error {
+		// 1. Проверяем, существует ли пост и принадлежит ли пользователю
+		var post models.Post
+		if err := tx.First(&post, "id = ? AND user_id = ?", postID, userID).Error; err != nil {
+			if err == gorm.ErrRecordNotFound {
+				return fmt.Errorf("post not found or unauthorized")
+			}
+			return err
+		}
+
+		// 2. Проверяем, существует ли место
+		var place models.Place
+		if err := tx.First(&place, "id = ?", input.PlaceID).Error; err != nil {
+			if err == gorm.ErrRecordNotFound {
+				return fmt.Errorf("place not found")
+			}
+			return err
+		}
+
+		// 3. Обновляем пост - привязываем к новому месту
+		post.PlaceID = input.PlaceID
+		if err := tx.Save(&post).Error; err != nil {
+			return err
+		}
+
+		// 4. Обновляем координаты места (если переданы)
+		if input.Latitude != 0 && input.Longitude != 0 {
+			place.Latitude = input.Latitude
+			place.Longitude = input.Longitude
+			if err := tx.Save(&place).Error; err != nil {
+				return err
+			}
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		if err.Error() == "post not found or unauthorized" {
+			c.JSON(http.StatusNotFound, gin.H{"error": "Post not found or unauthorized"})
+		} else if err.Error() == "place not found" {
+			c.JSON(http.StatusNotFound, gin.H{"error": "Place not found"})
+		} else {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to attach post to place", "details": err.Error()})
+		}
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{"message": "Post successfully attached to place"})
 }
