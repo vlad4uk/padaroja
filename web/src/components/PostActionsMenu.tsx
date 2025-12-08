@@ -1,7 +1,7 @@
 // src/components/PostActionsMenu.tsx (ФИНАЛЬНАЯ ВЕРСИЯ С КЛАССАМИ)
 
 import React, { useState, useRef, useEffect } from 'react';
-import { FaEdit, FaTrash, FaFlag, FaEllipsisV } from 'react-icons/fa'; // Используем FaEllipsisV для "трех точек"
+import { FaEdit, FaTrash, FaFlag, FaEllipsisV, FaComment, FaCommentSlash } from 'react-icons/fa'; // Используем FaEllipsisV для "трех точек"
 import { useAuth } from '../context/AuthContext.tsx'; 
 
 interface PostActionsMenuProps {
@@ -10,6 +10,8 @@ interface PostActionsMenuProps {
     onEdit: (id: number) => void;
     onDelete: (id: number) => void;
     onReport: (id: number) => void;
+    onToggleComments?: () => void; // Изменяем сигнатуру
+    commentsDisabled?: boolean;
 }
 
 const PostActionsMenu: React.FC<PostActionsMenuProps> = ({ 
@@ -17,7 +19,9 @@ const PostActionsMenu: React.FC<PostActionsMenuProps> = ({
     postAuthorID, 
     onEdit, 
     onDelete, 
-    onReport 
+    onReport,
+    onToggleComments,
+    commentsDisabled = false
 }) => {
     const { user, isLoggedIn } = useAuth();
     const [isOpen, setIsOpen] = useState(false);
@@ -65,7 +69,28 @@ const PostActionsMenu: React.FC<PostActionsMenuProps> = ({
                             <button onClick={() => onEdit(postID)} className="action-item">
                                 <FaEdit style={{ marginRight: '8px' }} /> Изменить
                             </button>
-                            <button onClick={() => onDelete(postID)} className="action-item action-delete">
+                            
+                            {/* Кнопка для управления комментариями */}
+                            {onToggleComments && (
+                                <button 
+                                    onClick={() => onToggleComments()} // Без параметров
+                                    className="action-item action-comments"
+                                >
+                                    {commentsDisabled ? (
+                                        <>
+                                            <FaComment style={{ marginRight: '8px' }} /> Включить комментарии
+                                        </>
+                                    ) : (
+                                        <>
+                                            <FaCommentSlash style={{ marginRight: '8px' }} /> Отключить комментарии
+                                        </>
+                                    )}
+                                </button>
+                            )}
+                            <button 
+                                onClick={() => onDelete(postID)} 
+                                className="action-item action-delete"
+                            >
                                 <FaTrash style={{ marginRight: '8px' }} /> Удалить
                             </button>
                         </>

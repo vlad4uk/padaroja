@@ -868,3 +868,54 @@ func AttachPostToPlace(c *gin.Context) {
 
 	c.JSON(http.StatusOK, gin.H{"message": "Post successfully attached to place"})
 }
+
+// internal/handlers/post/post.go
+// ToggleComments - включение/выключение комментариев
+func ToggleComments(c *gin.Context) {
+	userIDValue, exists := c.Get("userID")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
+	userID := int(userIDValue.(uint))
+
+	postIDStr := c.Param("postID")
+	postID, err := strconv.ParseUint(postIDStr, 10, 32)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid post ID"})
+		return
+	}
+
+	var input struct {
+		Disabled bool `json:"disabled"`
+	}
+
+	if err := c.ShouldBindJSON(&input); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input"})
+		return
+	}
+
+	// Находим пост
+	var post models.Post
+	if err := database.DB.First(&post, postID).Error; err != nil {
+		c.JSON(http.StatusNotFound, gin.H{"error": "Post not found"})
+		return
+	}
+
+	// Проверяем, что пользователь - автор поста
+	if post.UserID != userID {
+		c.JSON(http.StatusForbidden, gin.H{"error": "Only post author can manage comments"})
+		return
+	}
+
+	// Обновляем статус комментариев
+	if err := database.DB.Model(&post).Update("comments_disabled", input.Disabled).Error; err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update comments status"})
+		return
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"message":           "Comments status updated",
+		"comments_disabled": input.Disabled,
+	})
+}

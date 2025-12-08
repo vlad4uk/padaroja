@@ -560,3 +560,39 @@
 body.modal-open {
     overflow: hidden;
 }
+
+/* Стили для отключенных комментариев */
+.comments-disabled-message {
+    text-align: center;
+    padding: 40px 20px;
+    background: #f9f9ff;
+    border-radius: 15px;
+    border: 2px solid #e9e1ff;
+    margin-top: 20px;
+}
+
+.comments-disabled-message h3 {
+    color: #8c57ff;
+    margin: 15px 0 10px;
+    font-size: 20px;
+}
+
+.comments-disabled-message p {
+    color: #666;
+    font-size: 15px;
+    max-width: 400px;
+    margin: 0 auto;
+}
+
+/* Индикатор статуса комментариев в верхней части */
+.sp-comments-status {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 14px;
+}
+
+/* Стили для кнопки управления комментариями в меню */
+.action-comments {
+    color: #8c57ff !important;
+}

@@ -3,10 +3,12 @@ import React, { useState, useEffect, useCallback, ReactElement } from 'react';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext.tsx';
 import { Comment, CommentsResponse, CreateCommentRequest } from '../types/comment';
+import { FaCommentSlash } from 'react-icons/fa';
 import './CommentsSection.css';
 
 interface CommentsSectionProps {
   postId: number;
+  commentsDisabled?: boolean; // Добавляем пропс для статуса комментариев
 }
 
 // Вспомогательный тип для управления ответами
@@ -16,7 +18,10 @@ interface ReplyState {
   expanded: boolean;
 }
 
-const CommentsSection: React.FC<CommentsSectionProps> = ({ postId }) => {
+const CommentsSection: React.FC<CommentsSectionProps> = ({ 
+  postId,
+  commentsDisabled = false 
+}) => {
   const { user, isLoggedIn } = useAuth();
   const [comments, setComments] = useState<Comment[]>([]);
   const [loading, setLoading] = useState(true);
@@ -30,6 +35,11 @@ const CommentsSection: React.FC<CommentsSectionProps> = ({ postId }) => {
 
   // Загрузка ВСЕХ комментариев (и корневых, и ответов)
   const fetchComments = useCallback(async () => {
+    if (commentsDisabled) {
+      setLoading(false);
+      return;
+    }
+
     try {
       setLoading(true);
       setError('');
@@ -93,7 +103,7 @@ const CommentsSection: React.FC<CommentsSectionProps> = ({ postId }) => {
     } finally {
       setLoading(false);
     }
-  }, [postId]);
+  }, [postId, commentsDisabled]);
 
   // Загрузка дополнительных ответов (если нужны)
   const fetchReplies = async (commentId: number) => {
@@ -153,7 +163,7 @@ const CommentsSection: React.FC<CommentsSectionProps> = ({ postId }) => {
   // Отправка нового комментария
   const handleSubmitComment = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!newComment.trim() || submittingComment) return;
+    if (!newComment.trim() || submittingComment || commentsDisabled) return;
 
     try {
       setSubmittingComment(true);
@@ -195,7 +205,7 @@ const CommentsSection: React.FC<CommentsSectionProps> = ({ postId }) => {
 
   // Отправка ответа на комментарий
   const handleSubmitReply = async (parentId: number, isReplyToReply = false) => {
-    if (!replyContent.trim() || submittingReply) return;
+    if (!replyContent.trim() || submittingReply || commentsDisabled) return;
 
     try {
       setSubmittingReply(true);
@@ -294,6 +304,8 @@ const CommentsSection: React.FC<CommentsSectionProps> = ({ postId }) => {
 
   // Переключение отображения ответов
   const toggleReplies = (commentId: number) => {
+    if (commentsDisabled) return;
+    
     setReplyStates(prev => {
       const currentState = prev[commentId];
       const shouldFetch = !currentState || !currentState.expanded;
@@ -378,7 +390,7 @@ const CommentsSection: React.FC<CommentsSectionProps> = ({ postId }) => {
           {/* Кнопки действий */}
           <div className="comment-actions">
             {/* Кнопка ответа */}
-            {isLoggedIn && (
+            {isLoggedIn && !commentsDisabled && (
               <button 
                 className="reply-btn"
                 onClick={() => {
@@ -391,7 +403,7 @@ const CommentsSection: React.FC<CommentsSectionProps> = ({ postId }) => {
             )}
             
             {/* Кнопка удаления - только для своих комментариев */}
-            {comment.user_id === user?.id && (
+            {comment.user_id === user?.id && !commentsDisabled && (
               <button 
                 className="delete-btn"
                 onClick={() => handleDelete(comment.id, isReply, actualRootCommentId)}
@@ -401,7 +413,7 @@ const CommentsSection: React.FC<CommentsSectionProps> = ({ postId }) => {
             )}
             
             {/* Кнопка показа ответов - только если есть ответы */}
-            {hasReplies && (
+            {hasReplies && !commentsDisabled && (
               <button 
                 className={`show-replies-btn ${isExpanded ? 'replies-expanded' : ''}`}
                 onClick={() => toggleReplies(comment.id)}
@@ -416,7 +428,7 @@ const CommentsSection: React.FC<CommentsSectionProps> = ({ postId }) => {
           </div>
           
           {/* Форма ответа */}
-          {replyingTo === comment.id && (
+          {replyingTo === comment.id && !commentsDisabled && (
             <div className="reply-form">
               <div className="reply-input-wrapper">
                 <input
@@ -459,7 +471,7 @@ const CommentsSection: React.FC<CommentsSectionProps> = ({ postId }) => {
           )}
           
           {/* Отображение ответов */}
-          {isExpanded && (
+          {isExpanded && !commentsDisabled && (
             <div className="replies-container">
               {isLoading ? (
                 <div className="replies-loading">
@@ -484,13 +496,13 @@ const CommentsSection: React.FC<CommentsSectionProps> = ({ postId }) => {
   const handleCommentInputKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
-      if (newComment.trim() && !submittingComment) {
+      if (newComment.trim() && !submittingComment && !commentsDisabled) {
         handleSubmitComment(e);
       }
     }
   };
 
-  if (loading && comments.length === 0) {
+  if (loading && comments.length === 0 && !commentsDisabled) {
     return (
       <div className="comments-loading">
         <div className="spinner"></div>
@@ -501,80 +513,90 @@ const CommentsSection: React.FC<CommentsSectionProps> = ({ postId }) => {
 
   return (
     <div className="comments-section">
-      <div className="comments-header">
-        <h3 className="comments-title">
-          Комментарии {comments.length > 0 && `(${comments.length})`}
-        </h3>
-      </div>
-
-      {/* Форма нового комментария */}
-      {isLoggedIn ? (
-        <div className="new-comment-form">
-          <div className="comment-form-header">
-            <img 
-              src={user?.image_url || '/default-avatar.png'} 
-              alt={user?.username}
-              className="current-user-avatar"
-              onError={(e) => {
-                (e.target as HTMLImageElement).src = '/default-avatar.png';
-              }}
-            />
-            <div className="comment-input-wrapper">
-              <input
-                type="text"
-                value={newComment}
-                onChange={(e) => setNewComment(e.target.value)}
-                onKeyDown={handleCommentInputKeyDown}
-                placeholder="Добавьте комментарий..."
-                className="comment-input-underlined"
-                disabled={submittingComment}
-                maxLength={1000}
-              />
-              <div className="input-underline"></div>
-            </div>
-          </div>
-          <div className="comment-form-footer">
-            <span className="char-count">
-              {newComment.length}/1000
-            </span>
-            <button 
-              onClick={handleSubmitComment}
-              disabled={!newComment.trim() || submittingComment}
-              className="submit-comment-btn"
-            >
-              {submittingComment ? 'Публикация...' : 'Опубликовать'}
-            </button>
-          </div>
+      {commentsDisabled ? (
+        <div className="comments-disabled-message">
+          <FaCommentSlash size={32} color="#8c57ff" />
+          <h3>Комментарии отключены автором</h3>
+          <p>Автор публикации решил отключить возможность комментирования</p>
         </div>
       ) : (
-        <div className="login-prompt">
-          <p>Войдите, чтобы оставлять комментарии</p>
-        </div>
-      )}
-
-      {/* Список комментариев */}
-      <div className="comments-list">
-        {comments.length === 0 && !loading ? (
-          <div className="no-comments">
-            <div className="no-comments-icon">💬</div>
-            <p>Пока нет комментариев. Будьте первым!</p>
+        <>
+          <div className="comments-header">
+            <h3 className="comments-title">
+              Комментарии {comments.length > 0 && `(${comments.length})`}
+            </h3>
           </div>
-        ) : (
-          comments.map(comment => renderComment(comment))
-        )}
-      </div>
 
-      {/* Ошибка загрузки */}
-      {error && (
-        <div className="comments-error">
-          <p>{error}</p>
-          <button 
-            onClick={() => fetchComments()} 
-            className="retry-btn"
-          >
-            Попробовать снова
-          </button>
-        </div>
+          {/* Форма нового комментария */}
+          {isLoggedIn ? (
+            <div className="new-comment-form">
+              <div className="comment-form-header">
+                <img 
+                  src={user?.image_url || '/default-avatar.png'} 
+                  alt={user?.username}
+                  className="current-user-avatar"
+                  onError={(e) => {
+                    (e.target as HTMLImageElement).src = '/default-avatar.png';
+                  }}
+                />
+                <div className="comment-input-wrapper">
+                  <input
+                    type="text"
+                    value={newComment}
+                    onChange={(e) => setNewComment(e.target.value)}
+                    onKeyDown={handleCommentInputKeyDown}
+                    placeholder="Добавьте комментарий..."
+                    className="comment-input-underlined"
+                    disabled={submittingComment}
+                    maxLength={1000}
+                  />
+                  <div className="input-underline"></div>
+                </div>
+              </div>
+              <div className="comment-form-footer">
+                <span className="char-count">
+                  {newComment.length}/1000
+                </span>
+                <button 
+                  onClick={handleSubmitComment}
+                  disabled={!newComment.trim() || submittingComment}
+                  className="submit-comment-btn"
+                >
+                  {submittingComment ? 'Публикация...' : 'Опубликовать'}
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className="login-prompt">
+              <p>Войдите, чтобы оставлять комментарии</p>
+            </div>
+          )}
+
+          {/* Список комментариев */}
+          <div className="comments-list">
+            {comments.length === 0 && !loading ? (
+              <div className="no-comments">
+                <div className="no-comments-icon">💬</div>
+                <p>Пока нет комментариев. Будьте первым!</p>
+              </div>
+            ) : (
+              comments.map(comment => renderComment(comment))
+            )}
+          </div>
+
+          {/* Ошибка загрузки */}
+          {error && (
+            <div className="comments-error">
+              <p>{error}</p>
+              <button 
+                onClick={() => fetchComments()} 
+                className="retry-btn"
+              >
+                Попробовать снова
+              </button>
+            </div>
+          )}
+        </>
       )}
     </div>
   );

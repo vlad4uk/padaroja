@@ -135,8 +135,10 @@ func main() {
 		postRoutes.PUT("/:postID", middleware.AuthMiddleware(), post.UpdatePost)
 		postRoutes.DELETE("/:postID", middleware.AuthMiddleware(), post.DeletePost)
 		postRoutes.POST("/:postID/report", middleware.AuthMiddleware(), post.ReportPost)
-
 		postRoutes.PUT("/:postID/attach-to-place", middleware.AuthMiddleware(), post.AttachPostToPlace)
+
+		// 4. Управление комментариями
+		postRoutes.PATCH("/:postID/comments", middleware.AuthMiddleware(), post.ToggleComments)
 	}
 
 	// 4. Маршруты комментариев

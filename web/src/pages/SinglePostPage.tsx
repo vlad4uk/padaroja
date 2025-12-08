@@ -6,7 +6,7 @@ import './SinglePostPage.css';
 import PostActionsMenu from '../components/PostActionsMenu.tsx'; 
 import ReportModal from '../components/ReportModal.tsx';
 import { BsGlobeAmericas } from "react-icons/bs";
-import { FaRegBookmark, FaBookmark, FaAngleDoubleLeft, FaAngleDoubleRight, FaTimes } from 'react-icons/fa';
+import { FaRegBookmark, FaBookmark, FaAngleDoubleLeft, FaAngleDoubleRight, FaTimes, FaComment, FaCommentSlash } from 'react-icons/fa';
 import { useAuth } from '../context/AuthContext.tsx'; 
 import CommentsSection from '../components/CommentsSection.tsx';
 
@@ -34,6 +34,7 @@ interface PostDetailData {
     paragraphs: ParagraphData[] | null;
     photos: PhotoData[] | null;
     user_id: number;
+    comments_disabled: boolean; // ✅ Обязательно добавляем
     author_info?: {
         username: string;
         image_url: string;
@@ -70,6 +71,9 @@ const SinglePostPage: React.FC = () => {
     const [fullscreenImage, setFullscreenImage] = useState<string | null>(null);
     const [fullscreenImageAlt, setFullscreenImageAlt] = useState<string>('');
 
+    // --- СТЕЙТ ДЛЯ КОММЕНТАРИЕВ ---
+    const [commentsDisabled, setCommentsDisabled] = useState(false);
+
     const paragraphs = post?.paragraphs || [];
     const photos = post?.photos || [];
     // Определяем максимальное количество слайдов
@@ -94,6 +98,7 @@ const SinglePostPage: React.FC = () => {
                 if (response.data) {
                     setPost(response.data);
                     setLikesCount(response.data.likes_count || 0);
+                    setCommentsDisabled(response.data.comments_disabled || false); // Загружаем статус комментариев
                     
                     // Загружаем информацию об авторе
                     if (response.data.author_info) {
@@ -322,6 +327,31 @@ const SinglePostPage: React.FC = () => {
         }
     };
 
+    // --- ОБРАБОТЧИКИ ДЛЯ КОММЕНТАРИЕВ ---
+    const toggleComments = async () => {
+    if (!post || !isLoggedIn) return;
+    
+    // Проверяем, что пользователь - автор поста
+    if (user?.id !== post.user_id) {
+        alert("Только автор может изменять настройки комментариев");
+        return;
+    }
+    
+    try {
+        const response = await axios.patch(
+            `http://localhost:8080/api/posts/${post.id}/comments`,
+            { disabled: !commentsDisabled },
+            { withCredentials: true }
+        );
+        
+        setCommentsDisabled(response.data.comments_disabled);
+        alert(`Комментарии ${response.data.comments_disabled ? 'отключены' : 'включены'}`);
+    } catch (err: any) {
+        console.error("Ошибка при изменении статуса комментариев:", err);
+        alert("Не удалось изменить настройки комментариев");
+    }
+};
+
     // --- НАВИГАЦИЯ ПО СЛАЙДАМ ---
     const handleNext = () => {
         if (currentSlide < maxSlides - 1) {
@@ -412,6 +442,8 @@ const SinglePostPage: React.FC = () => {
                         <span className="sp-date">Опубликовано: {new Date(post.created_at).toLocaleDateString()}</span>
                         <span className="sp-place-name"><BsGlobeAmericas size={14}/> {post.place_name}</span>
                         
+                       
+                        
                         {/* Лайки с возможностью клика */}
                         <span 
                             className="sp-likes-count"
@@ -453,6 +485,21 @@ const SinglePostPage: React.FC = () => {
                                 ? ' #' + (post.tags ?? []).join(' #') 
                                 : ''}
                         </span>
+
+                         {/* Индикатор статуса комментариев */}
+                        <span className="sp-comments-status">
+                            {commentsDisabled ? (
+                                <>
+                                    <FaCommentSlash size={14} color="#ff6b6b" />
+                                    <span style={{ color: '#ff6b6b' }}>Комментарии отключены</span>
+                                </>
+                            ) : (
+                                <>
+                                    <FaComment size={14} color="#666" />
+                                    <span>Комментарии включены</span>
+                                </>
+                            )}
+                        </span>
                     </div>
                     
                     {/* ИНТЕГРАЦИЯ PostActionsMenu */}
@@ -464,6 +511,8 @@ const SinglePostPage: React.FC = () => {
                                 onEdit={handleEdit}
                                 onDelete={handleDelete}
                                 onReport={handleReport}
+                                onToggleComments={toggleComments}
+                                commentsDisabled={commentsDisabled}
                             />
                         </div>
                     )}
@@ -507,7 +556,10 @@ const SinglePostPage: React.FC = () => {
 
                 {/* Раздел комментариев отдельно */}
                 <div className="sp-comments-section-wrapper">
-                    <CommentsSection postId={postIdNum} />
+                    <CommentsSection 
+                        postId={postIdNum} 
+                        commentsDisabled={commentsDisabled}
+                    />
                 </div>
                 
                 <div className="sp-back-btn-container">
