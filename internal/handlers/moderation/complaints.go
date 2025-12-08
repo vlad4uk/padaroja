@@ -432,6 +432,10 @@ func GetUsersWithComplaints(c *gin.Context) {
 		})
 	}
 
+	if usersWithComplaints == nil {
+		usersWithComplaints = []gin.H{} // Пустой массив вместо nil
+	}
+
 	c.JSON(http.StatusOK, usersWithComplaints)
 }
 

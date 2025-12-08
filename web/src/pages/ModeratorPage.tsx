@@ -453,15 +453,16 @@ const ModeratorPage: React.FC = () => {
 
     // Рендер таблицы с пользователями с жалобами
     const renderUsersWithComplaintsTable = () => {
-        if (usersLoading) {
+       if (usersLoading) {
             return <div className="loading-state">Загрузка пользователей...</div>;
         }
 
-        if (usersError) {
+      if (usersError) {
             return <div className="error-state">{usersError}</div>;
         }
 
-        if (usersWithComplaints.length === 0) {
+        // Проверка на null И на длину
+        if (!usersWithComplaints || usersWithComplaints.length === 0) {
             return <div className="no-data">Пользователей с жалобами не найдено</div>;
         }
 
