@@ -619,3 +619,142 @@
         padding: 5px 8px;
     }
 }
+
+/* Добавьте в конец файла ModeratorPage.css */
+
+/* Стили для отображения типа контента */
+.type-cell {
+    width: 100px;
+}
+
+.content-type-badge {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    padding: 6px;
+    border-radius: 6px;
+    background-color: #f8f9fa;
+    transition: background-color 0.2s;
+}
+
+.content-type-text {
+    font-size: 11px;
+    font-weight: 600;
+    color: #495057;
+    text-transform: uppercase;
+}
+
+/* Стили для превью контента */
+.content-cell {
+    min-width: 200px;
+    max-width: 300px;
+}
+
+.content-preview {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.content-title {
+    font-weight: 600;
+    color: #333;
+    font-size: 13px;
+}
+
+.comment-content-preview {
+    font-size: 12px;
+    color: #666;
+    line-height: 1.3;
+    font-style: italic;
+    padding: 4px 8px;
+    background-color: #f8f9fa;
+    border-radius: 4px;
+    border-left: 3px solid #696cff;
+}
+
+/* Обновленные стили статусов */
+.content-visible {
+    background: #51cf66;
+    color: white;
+}
+
+.content-hidden {
+    background: #ff6b6b;
+    color: white;
+}
+
+/* Обновленные стили для кнопок видимости */
+.visibility-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.visibility-btn {
+    padding: 6px 10px;
+    border: none;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    min-width: 80px;
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+}
+
+.btn-visible {
+    background: #ff6b6b;
+    color: white;
+}
+
+.btn-visible:hover:not(:disabled) {
+    background: #ff5252;
+}
+
+.btn-hidden {
+    background: #51cf66;
+    color: white;
+}
+
+.btn-hidden:hover:not(:disabled) {
+    background: #40c057;
+}
+
+.visibility-btn:disabled {
+    background-color: #e0e0e0;
+    color: #999;
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+
+/* Адаптивность для новой колонки */
+@media (max-width: 1200px) {
+    .type-cell {
+        width: 80px;
+    }
+    
+    .content-cell {
+        min-width: 150px;
+        max-width: 200px;
+    }
+    
+    .content-type-badge {
+        padding: 4px;
+    }
+    
+    .content-type-text {
+        font-size: 10px;
+    }
+}
+
+@media (max-width: 992px) {
+    .mod-table {
+        min-width: 1200px;
+    }
+}

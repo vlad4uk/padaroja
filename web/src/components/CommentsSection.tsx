@@ -1,9 +1,10 @@
-// components/CommentsSection.tsx
+// components/CommentsSection.tsx (частичное обновление)
 import React, { useState, useEffect, useCallback, ReactElement } from 'react';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext.tsx';
 import { Comment, CommentsResponse, CreateCommentRequest } from '../types/comment';
-import { FaCommentSlash } from 'react-icons/fa';
+import { FaCommentSlash, FaReply, FaChevronDown, FaSpinner, FaTrash } from 'react-icons/fa';
+import CommentReportButton from '../components/CommentReportButton.tsx'; // Импортируем новый компонент
 import './CommentsSection.css';
 
 interface CommentsSectionProps {
@@ -354,8 +355,8 @@ const CommentsSection: React.FC<CommentsSectionProps> = ({
     }
   };
 
-  // Рендер комментария (рекурсивный)
-  const renderComment = (comment: Comment, isReply = false, rootCommentId?: number): ReactElement => {
+  // components/CommentsSection.tsx (обновлённый renderComment)
+const renderComment = (comment: Comment, isReply = false, rootCommentId?: number): ReactElement => {
     const replyState = replyStates[comment.id];
     const replies = replyState?.replies || [];
     const hasReplies = replies.length > 0;
@@ -363,134 +364,190 @@ const CommentsSection: React.FC<CommentsSectionProps> = ({
     const isLoading = replyState?.loading || false;
     
     const actualRootCommentId = rootCommentId || (isReply ? findRootComment(comment.id)?.id : comment.id);
+    const isAuthor = comment.user_id === user?.id;
+    const canDelete = isAuthor || user?.role_id === 2; // Автор или модератор
 
     return (
-      <div key={comment.id} className={`comment-item ${isReply ? 'comment-reply' : ''}`}>
-        <div className="comment-avatar-container">
-          <img 
-            src={comment.user.image_url || '/default-avatar.png'} 
-            alt={comment.user.username}
-            className="comment-avatar"
-            onError={(e) => {
-              (e.target as HTMLImageElement).src = '/default-avatar.png';
-            }}
-          />
-        </div>
-        
-        <div className="comment-content-wrapper">
-          <div className="comment-header">
-            <span className="comment-username">{comment.user.username}</span>
-            <span className="comment-date">{formatDate(comment.created_at)}</span>
-          </div>
-          
-          <div className="comment-text">
-            {comment.content}
-          </div>
-          
-          {/* Кнопки действий */}
-          <div className="comment-actions">
-            {/* Кнопка ответа */}
-            {isLoggedIn && !commentsDisabled && (
-              <button 
-                className="reply-btn"
-                onClick={() => {
-                  setReplyingTo(comment.id);
-                  setReplyContent(`@${comment.user.username} `);
-                }}
-              >
-                Ответить
-              </button>
-            )}
-            
-            {/* Кнопка удаления - только для своих комментариев */}
-            {comment.user_id === user?.id && !commentsDisabled && (
-              <button 
-                className="delete-btn"
-                onClick={() => handleDelete(comment.id, isReply, actualRootCommentId)}
-              >
-                Удалить
-              </button>
-            )}
-            
-            {/* Кнопка показа ответов - только если есть ответы */}
-            {hasReplies && !commentsDisabled && (
-              <button 
-                className={`show-replies-btn ${isExpanded ? 'replies-expanded' : ''}`}
-                onClick={() => toggleReplies(comment.id)}
-                disabled={isLoading}
-              >
-                {isLoading ? 'Загрузка...' : 
-                  isExpanded ? 'Скрыть ответы' : 'Показать ответы'
-                }
-                {` (${replies.length})`}
-              </button>
-            )}
-          </div>
-          
-          {/* Форма ответа */}
-          {replyingTo === comment.id && !commentsDisabled && (
-            <div className="reply-form">
-              <div className="reply-input-wrapper">
-                <input
-                  type="text"
-                  value={replyContent}
-                  onChange={(e) => setReplyContent(e.target.value)}
-                  placeholder="Ваш ответ..."
-                  className="reply-input-underlined"
-                  autoFocus
-                  disabled={submittingReply}
-                  onKeyDown={(e) => {
-                    if (e.key === 'Enter' && !e.shiftKey) {
-                      e.preventDefault();
-                      handleSubmitReply(comment.id, isReply);
-                    }
-                  }}
+        <div key={comment.id} className={`comment-item ${isReply ? 'comment-reply' : ''}`}>
+            <div className="comment-avatar-container">
+                <img 
+                    src={comment.user.image_url || '/default-avatar.png'} 
+                    alt={comment.user.username}
+                    className="comment-avatar"
+                    onError={(e) => {
+                        (e.target as HTMLImageElement).src = '/default-avatar.png';
+                    }}
                 />
-                <div className="input-underline"></div>
-              </div>
-              <div className="reply-actions">
-                <button 
-                  onClick={() => handleSubmitReply(comment.id, isReply)}
-                  disabled={!replyContent.trim() || submittingReply}
-                  className="submit-reply-btn"
-                >
-                  {submittingReply ? 'Отправка...' : 'Ответить'}
-                </button>
-                <button 
-                  onClick={() => {
-                    setReplyingTo(null);
-                    setReplyContent('');
-                  }}
-                  className="cancel-reply-btn"
-                  disabled={submittingReply}
-                >
-                  Отмена
-                </button>
-              </div>
             </div>
-          )}
-          
-          {/* Отображение ответов */}
-          {isExpanded && !commentsDisabled && (
-            <div className="replies-container">
-              {isLoading ? (
-                <div className="replies-loading">
-                  <div className="small-spinner"></div>
-                  <span>Загрузка ответов...</span>
+            
+            <div className="comment-content-wrapper">
+                <div className="comment-header">
+                    <span className="comment-username">
+                        {comment.user.username}
+                        {user?.id === comment.user_id && (
+                            <span className="author-badge">Вы</span>
+                        )}
+                    </span>
+                    <span className="comment-date">{formatDate(comment.created_at)}</span>
+                    
+                    {!comment.is_approved && (
+                        <span className="comment-hidden-badge">[Скрыт модератором]</span>
+                    )}
                 </div>
-              ) : hasReplies ? (
-                replies.map(reply => renderComment(reply, true, actualRootCommentId))
-              ) : (
-                <div className="no-replies">
-                  <span>Пока нет ответов</span>
+                
+                <div className="comment-text">
+                    {comment.is_approved ? comment.content : (
+                        <em style={{ color: '#999', fontStyle: 'italic' }}>
+                            Комментарий скрыт по решению модерации
+                        </em>
+                    )}
                 </div>
-              )}
+                
+                {/* Кнопки действий */}
+                <div className="comment-actions">
+                    {/* Кнопка ответа (только если комментарий видим) */}
+                    {isLoggedIn && comment.is_approved && !commentsDisabled && (
+                        <button 
+                            className="reply-btn"
+                            onClick={() => {
+                                setReplyingTo(comment.id);
+                                setReplyContent(`@${comment.user.username} `);
+                            }}
+                        >
+                            <FaReply style={{ marginRight: '4px' }} />
+                            Ответить
+                        </button>
+                    )}
+                    
+                    {/* Кнопка удаления - только для своих комментариев или модераторов */}
+                    {canDelete && !commentsDisabled && (
+                        <button 
+                            className="delete-btn"
+                            onClick={() => handleDelete(comment.id, isReply, actualRootCommentId)}
+                        >
+                            <FaTrash style={{ marginRight: '4px' }} />
+                            Удалить
+                        </button>
+                    )}
+                    
+                    {/* Кнопка жалобы - для всех, кроме автора */}
+                    {isLoggedIn && !isAuthor && comment.is_approved && (
+                        <CommentReportButton
+                            commentID={comment.id}
+                            onReport={handleReportComment}
+                            disabled={submittingReply}
+                        />
+                    )}
+                    
+                    {/* Кнопка показа ответов - только если есть ответы */}
+                    {hasReplies && !commentsDisabled && (
+                        <button 
+                            className={`show-replies-btn ${isExpanded ? 'replies-expanded' : ''}`}
+                            onClick={() => toggleReplies(comment.id)}
+                            disabled={isLoading}
+                        >
+                            <FaChevronDown 
+                                style={{ 
+                                    marginRight: '4px',
+                                    transform: isExpanded ? 'rotate(180deg)' : 'none',
+                                    transition: 'transform 0.3s'
+                                }} 
+                            />
+                            {isLoading ? 'Загрузка...' : 
+                                isExpanded ? 'Скрыть ответы' : 'Показать ответы'
+                            }
+                            {` (${replies.length})`}
+                        </button>
+                    )}
+                </div>
+                
+                {/* Форма ответа */}
+                {replyingTo === comment.id && comment.is_approved && !commentsDisabled && (
+                    <div className="reply-form">
+                        <div className="reply-to-indicator">
+                            Ответ для <span className="reply-to-username">{comment.user.username}</span>
+                        </div>
+                        <div className="reply-input-wrapper">
+                            <input
+                                type="text"
+                                value={replyContent}
+                                onChange={(e) => setReplyContent(e.target.value)}
+                                placeholder="Ваш ответ..."
+                                className="reply-input-underlined"
+                                autoFocus
+                                disabled={submittingReply}
+                                onKeyDown={(e) => {
+                                    if (e.key === 'Enter' && !e.shiftKey) {
+                                        e.preventDefault();
+                                        handleSubmitReply(comment.id, isReply);
+                                    }
+                                }}
+                            />
+                            <div className="input-underline"></div>
+                        </div>
+                        <div className="reply-actions">
+                            <button 
+                                onClick={() => handleSubmitReply(comment.id, isReply)}
+                                disabled={!replyContent.trim() || submittingReply}
+                                className="submit-reply-btn"
+                            >
+                                {submittingReply ? (
+                                    <>
+                                        <FaSpinner className="spinner-icon" /> Отправка...
+                                    </>
+                                ) : 'Ответить'}
+                            </button>
+                            <button 
+                                onClick={() => {
+                                    setReplyingTo(null);
+                                    setReplyContent('');
+                                }}
+                                className="cancel-reply-btn"
+                                disabled={submittingReply}
+                            >
+                                Отмена
+                            </button>
+                        </div>
+                    </div>
+                )}
+                
+                {/* Отображение ответов */}
+                {isExpanded && !commentsDisabled && (
+                    <div className="replies-container">
+                        {isLoading ? (
+                            <div className="replies-loading">
+                                <div className="small-spinner"></div>
+                                <span>Загрузка ответов...</span>
+                            </div>
+                        ) : hasReplies ? (
+                            replies.map(reply => renderComment(reply, true, actualRootCommentId))
+                        ) : (
+                            <div className="no-replies">
+                                <FaCommentSlash style={{ marginRight: '8px' }} />
+                                <span>Пока нет ответов</span>
+                            </div>
+                        )}
+                    </div>
+                )}
             </div>
-          )}
         </div>
-      </div>
     );
-  };
+};
+
+// Функция для отправки жалобы на комментарий (в родительском компоненте)
+const handleReportComment = async (commentId: number, reason: string) => {
+    try {
+        await axios.post(
+            `http://localhost:8080/api/mod/comments/${commentId}/complaint`,
+            { reason },
+            { withCredentials: true }
+        );
+    } catch (err: any) {
+        console.error('Ошибка при отправке жалобы на комментарий:', err);
+        throw err;
+    }
+};
+
 
   // Обработка нажатия Enter в основном поле комментария
   const handleCommentInputKeyDown = (e: React.KeyboardEvent) => {

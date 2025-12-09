@@ -309,9 +309,28 @@ const SinglePostPage: React.FC = () => {
     };
     
     // --- ОБРАБОТЧИКИ ЖАЛОБЫ ---
-    const handleReport = (id: number) => {
-        setReportPostId(id);
-        setReportModalOpen(true);
+   const handleReport = async (postId: number, reason: string) => {
+        try {
+            await axios.post(`http://localhost:8080/api/posts/${postId}/report`, 
+                { reason }, 
+                { withCredentials: true }
+            );
+            alert("Жалоба на пост отправлена.");
+            return Promise.resolve();
+        } catch (err: any) {
+            console.error('Ошибка при отправке жалобы:', err);
+            
+            if (err.response?.status === 401) {
+                alert("Необходимо авторизоваться для отправки жалобы");
+                navigate('/login');
+            } else if (err.response?.status === 400) {
+                alert(err.response.data.error || "Некорректный запрос");
+            } else {
+                alert("Ошибка при отправке жалобы. Попробуйте позже.");
+            }
+            
+            return Promise.reject(err);
+        }
     };
 
     const handleSubmitReport = async (reason: string) => {
@@ -510,9 +529,10 @@ const SinglePostPage: React.FC = () => {
                                 postAuthorID={post.user_id}
                                 onEdit={handleEdit}
                                 onDelete={handleDelete}
-                                onReport={handleReport}
+                                onReport={handleReport} // Теперь передаем правильную функцию
                                 onToggleComments={toggleComments}
                                 commentsDisabled={commentsDisabled}
+                                userRole={user?.role_id}
                             />
                         </div>
                     )}

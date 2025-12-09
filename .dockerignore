@@ -1,18 +1,19 @@
-Игнорируем лишнее при копировании в контекст сборки
-
 .git
 .gitignore
 node_modules
 web/node_modules
+npm-debug.log
+yarn-debug.log
+yarn-error.log
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+.DS_Store
 dist
 build
-bin
-.idea
-.vscode
-docker-compose.yml
+coverage
+*.log
+docker-compose.override.yml
 README.md
-logs
-
-Если у вас есть локальные volume папки
-
-postgres_data
+LICENSE

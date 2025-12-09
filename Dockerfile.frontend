@@ -1,0 +1,32 @@
+# ====================
+# Этап сборки
+# ====================
+FROM node:18-alpine AS builder
+
+WORKDIR /app
+
+# Копируем package.json и package-lock.json
+COPY web/package*.json ./
+
+# Устанавливаем зависимости
+RUN npm ci
+
+# Копируем исходный код фронтенда
+COPY web/ .
+
+# Собираем приложение
+# Если у вас нет скрипта build, создайте его или используйте другую команду
+RUN npm run build
+
+# ====================
+# Этап запуска
+# ====================
+FROM nginx:alpine
+
+# Копируем собранное приложение
+COPY --from=builder /app/build /usr/share/nginx/html
+
+# Открываем порт
+EXPOSE 80
+
+CMD ["nginx", "-g", "daemon off;"]

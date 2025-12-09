@@ -1,16 +1,19 @@
 // src/pages/ModeratorPage.tsx
-
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import ContentLayout from '../components/ContentLayout.tsx';
 import './ModeratorPage.css';
+import { FaFileAlt, FaComment, FaEye, FaEyeSlash } from 'react-icons/fa';
 
 // --- ИНТЕРФЕЙСЫ ---
 interface Complaint {
     id: string;
-    post_id: number;
+    type: 'POST' | 'COMMENT'; // Добавляем тип жалобы
+    post_id?: number; // Может быть null для комментариев
+    comment_id?: number; // Может быть null для постов
     post_title: string;
+    comment_content?: string; // Контент комментария
     author: string;
     reason: string;
     status: 'NEW' | 'PROCESSING' | 'RESOLVED' | 'REJECTED';
@@ -62,6 +65,9 @@ const ModeratorPage: React.FC = () => {
     const [blockLoading, setBlockLoading] = useState<number | null>(null);
     const [unblockLoading, setUnblockLoading] = useState<number | null>(null);
     const [assignSuccess, setAssignSuccess] = useState('');
+
+    // Состояния для управления видимостью
+    const [visibilityLoading, setVisibilityLoading] = useState<{ [key: string]: boolean }>({});
 
     // Загрузка жалоб
     const fetchComplaints = async () => {
@@ -152,6 +158,34 @@ const ModeratorPage: React.FC = () => {
         }
     };
 
+    // Обработчик переключения видимости комментария
+    const toggleCommentVisibility = async (commentId: number, currentStatus: boolean) => {
+        const newStatus = !currentStatus;
+        const action = newStatus ? 'показан' : 'скрыт';
+        
+        try {
+            setVisibilityLoading(prev => ({ ...prev, [`comment_${commentId}`]: true }));
+            
+            await axios.put(
+                `http://localhost:8080/api/mod/comments/${commentId}/visibility`,
+                { is_approved: newStatus },
+                { withCredentials: true }
+            );
+            
+            // Обновляем локальное состояние
+            await fetchComplaints();
+            
+            // Показываем уведомление
+            alert(`Комментарий успешно ${action}`);
+        } catch (err: any) {
+            console.error('Ошибка изменения видимости комментария:', err);
+            const errorMessage = err.response?.data?.error || 'Не удалось изменить видимость комментария';
+            alert(errorMessage);
+        } finally {
+            setVisibilityLoading(prev => ({ ...prev, [`comment_${commentId}`]: false }));
+        }
+    };
+
     // Блокировка пользователя
     const blockUser = async (userId: number, username: string) => {
         if (!window.confirm(`Вы уверены, что хотите заблокировать пользователя "${username}"?`)) {
@@ -208,9 +242,14 @@ const ModeratorPage: React.FC = () => {
         }
     };
 
-    // Обработчик клика по жалобе - переход на страницу поста
-    const handleComplaintClick = (postId: number) => {
-        navigate(`/post/${postId}`);
+    // Обработчик клика по жалобе - переход на страницу поста или комментария
+    const handleComplaintClick = (complaint: Complaint) => {
+        if (complaint.type === 'POST' && complaint.post_id) {
+            navigate(`/post/${complaint.post_id}`);
+        } else if (complaint.type === 'COMMENT' && complaint.comment_id && complaint.post_id) {
+            // Переходим на пост и скроллим к комментарию
+            navigate(`/post/${complaint.post_id}#comment-${complaint.comment_id}`);
+        }
     };
 
     // Обработчик клика по пользователю - переход на профиль пользователя
@@ -319,14 +358,14 @@ const ModeratorPage: React.FC = () => {
         return `${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')} ${date.getDate().toString().padStart(2, '0')}.${(date.getMonth() + 1).toString().padStart(2, '0')}`;
     };
 
-    // Получение текста для статуса поста
-    const getPostStatusText = (isApproved: boolean) => {
+    // Получение текста для статуса поста/комментария
+    const getContentStatusText = (isApproved: boolean) => {
         return isApproved ? 'ВИДИМ' : 'СКРЫТ';
     };
 
-    // Получение класса для статуса поста
-    const getPostStatusClass = (isApproved: boolean) => {
-        return isApproved ? 'post-visible' : 'post-hidden';
+    // Получение класса для статуса поста/комментария
+    const getContentStatusClass = (isApproved: boolean) => {
+        return isApproved ? 'content-visible' : 'content-hidden';
     };
 
     // Получение текста для кнопки видимости
@@ -341,6 +380,24 @@ const ModeratorPage: React.FC = () => {
             case 'PROCESSING': return 'Жалоба в работе у модератора';
             case 'RESOLVED': return 'Жалоба решена (контент обработан)';
             case 'REJECTED': return 'Жалоба отклонена (необоснована)';
+            default: return '';
+        }
+    };
+
+    // Получение иконки для типа контента
+    const getContentTypeIcon = (type: 'POST' | 'COMMENT') => {
+        switch (type) {
+            case 'POST': return <FaFileAlt size={14} />;
+            case 'COMMENT': return <FaComment size={14} />;
+            default: return null;
+        }
+    };
+
+    // Получение текста для типа контента
+    const getContentTypeText = (type: 'POST' | 'COMMENT') => {
+        switch (type) {
+            case 'POST': return 'Пост';
+            case 'COMMENT': return 'Комментарий';
             default: return '';
         }
     };
@@ -378,13 +435,14 @@ const ModeratorPage: React.FC = () => {
                 <table className="mod-table">
                     <thead>
                         <tr>
-                            <th>Название поста</th>
-                            <th>Автор поста</th>
+                            <th className="text-center">Тип</th>
+                            <th>Контент</th>
+                            <th>Автор</th>
                             <th>Причина жалобы</th>
-                            <th className="text-right">Время первой жалобы</th>
+                            <th className="text-right">Время жалобы</th>
                             <th className="text-center">Кол-во жалоб</th>
-                            <th className="text-center">Статус поста</th>
-                            <th className="text-center">Действия с постом</th>
+                            <th className="text-center">Статус</th>
+                            <th className="text-center">Действия</th>
                             <th className="text-right">Статус жалобы</th>
                         </tr>
                     </thead>
@@ -393,10 +451,29 @@ const ModeratorPage: React.FC = () => {
                             <tr 
                                 key={complaint.id} 
                                 className="complaint-row"
-                                onClick={() => handleComplaintClick(complaint.post_id)}
+                                onClick={() => handleComplaintClick(complaint)}
                             >
-                                <td className="post-title-cell">
-                                    <span className="post-title">{complaint.post_title}</span>
+                                <td className="type-cell text-center">
+                                    <div className="content-type-badge" title={getContentTypeText(complaint.type)}>
+                                        {getContentTypeIcon(complaint.type)}
+                                        <span className="content-type-text">{getContentTypeText(complaint.type)}</span>
+                                    </div>
+                                </td>
+                                <td className="content-cell">
+                                    <div className="content-preview">
+                                        <strong className="content-title">
+                                            {complaint.type === 'POST' 
+                                                ? complaint.post_title 
+                                                : 'Комментарий'}
+                                        </strong>
+                                        {complaint.type === 'COMMENT' && complaint.comment_content && (
+                                            <div className="comment-content-preview">
+                                                {complaint.comment_content.length > 50 
+                                                    ? `${complaint.comment_content.substring(0, 50)}...` 
+                                                    : complaint.comment_content}
+                                            </div>
+                                        )}
+                                    </div>
                                 </td>
                                 <td className="author-cell">{complaint.author}</td>
                                 <td className="reason-cell">
@@ -406,8 +483,7 @@ const ModeratorPage: React.FC = () => {
                                     >
                                         {complaint.reason.length > 50 
                                             ? `${complaint.reason.substring(0, 50)}...` 
-                                            : complaint.reason
-                                        }
+                                            : complaint.reason}
                                     </span>
                                 </td>
                                 <td className="date-cell text-right">
@@ -417,18 +493,40 @@ const ModeratorPage: React.FC = () => {
                                     <span className="complaint-count">{complaint.complaint_count}</span>
                                 </td>
                                 <td className="status-cell text-center">
-                                    <span className={`post-status ${getPostStatusClass(complaint.is_approved)}`}>
-                                        {getPostStatusText(complaint.is_approved)}
+                                    <span className={`content-status ${getContentStatusClass(complaint.is_approved)}`}>
+                                        {getContentStatusText(complaint.is_approved)}
                                     </span>
                                 </td>
                                 <td className="actions-cell text-center" onClick={(e) => e.stopPropagation()}>
-                                    <button 
-                                        className={`visibility-btn ${complaint.is_approved ? 'btn-visible' : 'btn-hidden'}`}
-                                        onClick={() => togglePostVisibility(complaint.post_id, complaint.is_approved)}
-                                        title={complaint.is_approved ? 'Скрыть пост из публичной ленты' : 'Вернуть пост в публичную ленту'}
-                                    >
-                                        {getVisibilityButtonText(complaint.is_approved)}
-                                    </button>
+                                    <div className="visibility-actions">
+                                        {complaint.type === 'POST' && complaint.post_id && (
+                                            <button 
+                                                className={`visibility-btn ${complaint.is_approved ? 'btn-visible' : 'btn-hidden'}`}
+                                                onClick={() => togglePostVisibility(complaint.post_id!, complaint.is_approved)}
+                                                title={complaint.is_approved ? 'Скрыть пост из публичной ленты' : 'Вернуть пост в публичную ленту'}
+                                            >
+                                                {complaint.is_approved ? <FaEyeSlash size={12} /> : <FaEye size={12} />}
+                                                {getVisibilityButtonText(complaint.is_approved)}
+                                            </button>
+                                        )}
+                                        {complaint.type === 'COMMENT' && complaint.comment_id && (
+                                            <button 
+                                                className={`visibility-btn ${complaint.is_approved ? 'btn-visible' : 'btn-hidden'}`}
+                                                onClick={() => toggleCommentVisibility(complaint.comment_id!, complaint.is_approved)}
+                                                disabled={visibilityLoading[`comment_${complaint.comment_id}`]}
+                                                title={complaint.is_approved ? 'Скрыть комментарий' : 'Показать комментарий'}
+                                            >
+                                                {visibilityLoading[`comment_${complaint.comment_id}`] ? (
+                                                    '...'
+                                                ) : (
+                                                    <>
+                                                        {complaint.is_approved ? <FaEyeSlash size={12} /> : <FaEye size={12} />}
+                                                        {getVisibilityButtonText(complaint.is_approved)}
+                                                    </>
+                                                )}
+                                            </button>
+                                        )}
+                                    </div>
                                 </td>
                                 <td className="complaint-status-cell text-right" onClick={(e) => e.stopPropagation()}>
                                     <select 
@@ -451,7 +549,7 @@ const ModeratorPage: React.FC = () => {
         );
     };
 
-    // Рендер таблицы с пользователями с жалобами
+    // Рендер таблицы с пользователями с жалобами (без изменений)
     const renderUsersWithComplaintsTable = () => {
        if (usersLoading) {
             return <div className="loading-state">Загрузка пользователей...</div>;
@@ -461,7 +559,6 @@ const ModeratorPage: React.FC = () => {
             return <div className="error-state">{usersError}</div>;
         }
 
-        // Проверка на null И на длину
         if (!usersWithComplaints || usersWithComplaints.length === 0) {
             return <div className="no-data">Пользователей с жалобами не найдено</div>;
         }
@@ -550,7 +647,7 @@ const ModeratorPage: React.FC = () => {
         );
     };
 
-    // Рендер формы добавления модератора
+    // Рендер формы добавления модератора (без изменений)
     const renderAddModeratorForm = () => {
         return (
             <div className="add-moderator-tab">
@@ -675,7 +772,6 @@ const ModeratorPage: React.FC = () => {
     return (
         <ContentLayout>
             <div className="moderator-container">
-                {/* Верхняя фиолетовая панель с вкладками */}
                 <div className="mod-header-tabs">
                     <div 
                         className={`mod-tab ${activeTab === 'content' ? 'active' : ''}`}
@@ -697,7 +793,6 @@ const ModeratorPage: React.FC = () => {
                     </div>
                 </div>
 
-                {/* Основной контент */}
                 <div className="mod-content">
                     {renderContent()}
                 </div>

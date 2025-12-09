@@ -8,7 +8,8 @@
     display: flex;
     justify-content: center;
     align-items: center;
-    z-index: 1000;
+    z-index: 2000;
+    backdrop-filter: blur(2px);
 }
 
 .modal-content {
@@ -16,30 +17,88 @@
     padding: 24px;
     border-radius: 12px;
     width: 90%;
-    max-width: 400px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    max-width: 450px;
+    box-shadow: 0 8px 30px rgba(0,0,0,0.2);
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    animation: modalAppear 0.2s ease-out;
 }
 
-.modal-content h3 {
+@keyframes modalAppear {
+    from {
+        opacity: 0;
+        transform: scale(0.95);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1);
+    }
+}
+
+.modal-header {
+    margin-bottom: 20px;
+}
+
+.modal-header h3 {
     margin-top: 0;
-    margin-bottom: 12px;
+    margin-bottom: 8px;
+    font-size: 18px;
+    color: #333;
+}
+
+.modal-description {
+    color: #666;
+    font-size: 14px;
+    line-height: 1.4;
+    margin: 0;
+}
+
+.modal-body {
+    margin-bottom: 20px;
 }
 
 .report-textarea {
     width: 100%;
-    padding: 10px;
-    margin-top: 10px;
-    border: 1px solid #ccc;
-    border-radius: 6px;
+    padding: 12px;
+    border: 1px solid #ddd;
+    border-radius: 8px;
     resize: vertical;
     font-size: 14px;
+    line-height: 1.4;
+    transition: border-color 0.2s;
+    font-family: inherit;
+}
+
+.report-textarea:focus {
+    outline: none;
+    border-color: #3498db;
+    box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
+}
+
+.report-textarea:disabled {
+    background-color: #f5f5f5;
+    cursor: not-allowed;
+}
+
+.textarea-info {
+    margin-top: 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.char-count {
+    font-size: 12px;
+    color: #888;
 }
 
 .report-error {
     color: #e74c3c;
     font-size: 13px;
     margin-top: 8px;
+    padding: 8px;
+    background-color: #ffebee;
+    border-radius: 4px;
+    border-left: 3px solid #e74c3c;
 }
 
 .modal-actions {
@@ -50,11 +109,14 @@
 }
 
 .btn-cancel, .btn-submit {
-    padding: 8px 16px;
+    padding: 10px 20px;
     border: none;
-    border-radius: 6px;
+    border-radius: 8px;
     cursor: pointer;
     font-weight: 500;
+    font-size: 14px;
+    transition: all 0.2s;
+    min-width: 100px;
 }
 
 .btn-cancel {
@@ -62,11 +124,21 @@
     color: #333;
 }
 
+.btn-cancel:hover:not(:disabled) {
+    background: #e0e0e0;
+}
+
 .btn-submit {
     background: #e74c3c;
     color: white;
 }
 
-.btn-submit:hover {
+.btn-submit:hover:not(:disabled) {
     background: #c0392b;
+}
+
+.btn-cancel:disabled,
+.btn-submit:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
 }

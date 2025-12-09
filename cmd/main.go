@@ -197,16 +197,26 @@ func main() {
 	}
 
 	// 8. Маршруты модерации (только для авторизованных)
+	// 8. Маршруты модерации
 	modRoutes := api.Group("/mod")
 	{
 		modRoutes.Use(middleware.AuthMiddleware())
 
+		// Жалобы
 		modRoutes.GET("/complaints", moderation.GetComplaints)
 		modRoutes.PUT("/complaints/:complaintID/status", moderation.UpdateComplaintStatus)
+
+		// Жалобы на посты
+		modRoutes.POST("/posts/:postID/complaint", moderation.CreatePostComplaint)
 		modRoutes.PUT("/posts/:postID/visibility", moderation.TogglePostVisibility)
 		modRoutes.GET("/posts/:postID/complaints", moderation.GetPostComplaints)
 
-		// Управление пользователями с жалобами
+		// Жалобы на комментарии
+		modRoutes.POST("/comments/:commentID/complaint", moderation.CreateCommentComplaint)
+		modRoutes.PUT("/comments/:commentID/visibility", moderation.ToggleCommentVisibility)
+		modRoutes.GET("/comments/:commentID/complaints", moderation.GetCommentComplaints)
+
+		// Управление пользователями
 		modRoutes.GET("/users-with-complaints", moderation.GetUsersWithComplaints)
 		modRoutes.POST("/users/:userID/block", moderation.BlockUser)
 		modRoutes.POST("/users/:userID/unblock", moderation.UnblockUser)
@@ -216,7 +226,6 @@ func main() {
 		modRoutes.POST("/users/:userID/assign-moderator", moderation.AssignModeratorRole)
 		modRoutes.POST("/users/:userID/remove-moderator", moderation.RemoveModeratorRole)
 	}
-
 	// 9. Маршруты избранного (только для авторизованных)
 	favouriteRoutes := api.Group("/favourites")
 	{

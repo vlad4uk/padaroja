@@ -1,63 +1,60 @@
 services:
-  padaroja-db:
+  postgres:
     image: postgres:15-alpine
-    container_name: padaroja-db
-    restart: unless-stopped  # Изменили на unless-stopped
+    container_name: tblog_postgres
     environment:
       POSTGRES_USER: admintblog
-      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_PASSWORD: system
       POSTGRES_DB: tblog
     ports:
       - "5432:5432"
     volumes:
-      # Добавляем скрипт для создания расширения UUID
-      - ./init-uuid.sql:/docker-entrypoint-initdb.d/01-init-uuid.sql:ro
-      - pgdata:/var/lib/postgresql/data
-      
-    # Упрощенный healthcheck
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U admintblog -d tblog"]
-      interval: 5s
-      timeout: 5s
-      retries: 10
-      start_period: 30s
-  # 2. BACKEND SERVICE
-  padaroja-backend:
-    build: .
-    container_name: padaroja-backend
-    restart: on-failure
+      - postgres_data:/var/lib/postgresql/data
+    networks:
+      - app-network
+    restart: unless-stopped
+
+  backend:
+    build:
+      context: .
+      dockerfile: Dockerfile.backend
+    container_name: tblog_backend
     ports:
       - "8080:8080"
     environment:
-      # Используйте имя сервиса DB_HOST: db
-      DB_HOST: padaroja-db
+      DB_HOST: postgres
       DB_PORT: 5432
       DB_USER: admintblog
-      DB_PASSWORD: ${DB_PASSWORD}
+      DB_PASSWORD: system
       DB_NAME: tblog
       DB_SSL_MODE: disable
-      # ... другие переменные бэкенда ...
-      
-    # 4. УСЛОВНАЯ ЗАВИСИМОСТЬ
+      JWT_SECRET: bcnd3mfu4roej7snbc3hry2tpyi1djet
+      JWT_EXPIRY_HOURS: 24
+      SERVER_PORT: 8080
+      FRONTEND_URL: http://localhost:3000
+      APP_ENV: development
     depends_on:
-      padaroja-db:
-        condition: service_healthy # Запускается только после успешного Healthcheck БД
+      - postgres
+    networks:
+      - app-network
+    restart: unless-stopped
 
-  # 3. FRONTEND SERVICE (Nginx)
-  padaroja-frontend:
-    # ИСПРАВЛЕНО: Заменили заполнитель на 'frontend', предполагая, что это имя каталога.
-    # ПРОВЕРЬТЕ: Замените './frontend' на фактический путь к вашему Dockerfile для фронтенда, если он другой!
-    build: ./web 
-    container_name: padaroja-frontend
-    restart: on-failure
+  frontend:
+    build:
+      context: .
+      dockerfile: Dockerfile.frontend
+    container_name: tblog_frontend
     ports:
-      - "80:80"
+      - "3000:80"
     depends_on:
-      - padaroja-backend # Зависит от бэкенда для проксирования запросов
-    volumes:
-      # ИЗМЕНЕНИЕ: Теперь ожидается, что файл default.conf находится в каталоге ./frontend_conf/
-      # ВАЖНО: Создайте каталог 'frontend_conf' и переместите 'default.conf' туда.
-      - ./frontend_conf/default.conf:/etc/nginx/conf.d/default.conf:ro
+      - backend
+    networks:
+      - app-network
+    restart: unless-stopped
+
+networks:
+  app-network:
+    driver: bridge
 
 volumes:
-  pgdata:
+  postgres_data:

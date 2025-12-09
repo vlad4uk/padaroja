@@ -90,7 +90,6 @@ const PostCreatePage: React.FC = () => {
 
     const handleRemoveImage = (e: React.MouseEvent) => { e.stopPropagation(); updateCurrentSlide('imageUrl', ''); };
 
-    // --- 🚀 ПУБЛИКАЦИЯ (СВЯЗЬ С БЭКОМ) ---
     const handlePublish = async () => {
         if (!isLoggedIn) {
              alert('Для публикации необходимо войти в систему.');

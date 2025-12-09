@@ -1,4 +1,4 @@
-// internal/domain/models/complaint.go (обновленная версия)
+// internal/domain/models/complaint.go
 package models
 
 import (
@@ -6,6 +6,14 @@ import (
 
 	"github.com/google/uuid"
 	"gorm.io/gorm"
+)
+
+// ComplaintType определяет тип объекта жалобы
+type ComplaintType string
+
+const (
+	ComplaintTypePost    ComplaintType = "POST"
+	ComplaintTypeComment ComplaintType = "COMMENT"
 )
 
 // ComplaintStatus определяет возможные статусы жалобы
@@ -25,12 +33,15 @@ type Complaint struct {
 	UpdatedAt time.Time      `json:"updated_at"`
 	DeletedAt gorm.DeletedAt `gorm:"index" json:"-"`
 
-	UserID uint            `gorm:"not null" json:"user_id"`
-	PostID uint            `gorm:"not null;constraint:OnDelete:CASCADE;" json:"post_id"`
-	Reason string          `gorm:"type:text;not null" json:"reason"`
-	Status ComplaintStatus `gorm:"type:varchar(20);default:'NEW'" json:"status"`
+	UserID    uint            `gorm:"not null" json:"user_id"`
+	Type      ComplaintType   `gorm:"type:varchar(20);not null;default:'POST'" json:"type"` // POST или COMMENT
+	PostID    *uint           `gorm:"constraint:OnDelete:CASCADE;" json:"post_id,omitempty"`
+	CommentID *uint           `gorm:"constraint:OnDelete:CASCADE;" json:"comment_id,omitempty"`
+	Reason    string          `gorm:"type:text;not null" json:"reason"`
+	Status    ComplaintStatus `gorm:"type:varchar(20);default:'NEW'" json:"status"`
 
-	// Связи (опционально, для более удобных JOIN запросов)
-	Post Post `gorm:"foreignKey:PostID" json:"-"`
-	User User `gorm:"foreignKey:UserID" json:"-"`
+	// Связи
+	Post    Post    `gorm:"foreignKey:PostID" json:"post,omitempty"`
+	Comment Comment `gorm:"foreignKey:CommentID" json:"comment,omitempty"`
+	User    User    `gorm:"foreignKey:UserID" json:"-"`
 }

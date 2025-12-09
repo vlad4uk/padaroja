@@ -17,7 +17,8 @@ type Comment struct {
 	UpdatedAt  time.Time `gorm:"default:CURRENT_TIMESTAMP" json:"updated_at"`
 
 	// Связи
-	User   User     `gorm:"foreignKey:UserID" json:"user"`
-	Post   Post     `gorm:"foreignKey:PostID" json:"-"`
-	Parent *Comment `gorm:"foreignKey:ParentID" json:"parent"` // ✅ Теперь всегда загружаем родителя
+	User       User        `gorm:"foreignKey:UserID" json:"user"`
+	Post       Post        `gorm:"foreignKey:PostID" json:"-"`
+	Parent     *Comment    `gorm:"foreignKey:ParentID" json:"parent"`
+	Complaints []Complaint `gorm:"foreignKey:CommentID" json:"-"` // Добавляем связь с жалобами
 }

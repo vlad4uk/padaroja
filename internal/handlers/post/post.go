@@ -665,6 +665,7 @@ func DeletePost(c *gin.Context) {
 // REPORT POST
 // =========================================================================
 
+// ReportPost - создание жалобы на пост (упрощенная версия)
 func ReportPost(c *gin.Context) {
 	// 1. Проверка авторизации и получение UserID
 	userID, exists := c.Get("userID")
@@ -688,37 +689,52 @@ func ReportPost(c *gin.Context) {
 	}
 
 	// 3. Получение данных запроса (Reason)
-	var req ReportRequest
+	var req struct {
+		Reason string `json:"reason" binding:"required,min=10,max=500"`
+	}
+
 	if err := c.ShouldBindJSON(&req); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	// Объявляем переменную вне транзакции
-	var newComplaint models.Complaint
-
-	// 4. Создание новой жалобы (БЕЗ автоматического скрытия поста)
-	err = database.DB.Transaction(func(tx *gorm.DB) error {
-		// Инициализируем жалобу
-		newComplaint = models.Complaint{
-			ID:     uuid.New(),
-			UserID: reporterID,
-			PostID: uint(postID),
-			Reason: req.Reason,
-			Status: models.StatusNew,
+	// 4. Проверяем существование поста
+	var post models.Post
+	if err := database.DB.First(&post, postID).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			c.JSON(http.StatusNotFound, gin.H{"error": "Post not found"})
+			return
 		}
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Database error"})
+		return
+	}
 
-		if err := tx.Create(&newComplaint).Error; err != nil {
-			return err
-		}
+	// 5. Проверяем, не оставил ли пользователь уже жалобу на этот пост
+	var existingComplaint models.Complaint
+	err = database.DB.Where("user_id = ? AND post_id = ?", reporterID, postID).
+		First(&existingComplaint).Error
 
-		// ❌ УБИРАЕМ автоматическое скрытие поста
-		// Пост остается видимым до решения модератора
+	if err == nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "You have already reported this post"})
+		return
+	} else if err != gorm.ErrRecordNotFound {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Database error"})
+		return
+	}
 
-		return nil
-	})
+	// 6. Создаем новую жалобу
+	postIDUint := uint(postID)
+	newComplaint := models.Complaint{
+		ID:     uuid.New(),
+		UserID: reporterID,
+		Type:   models.ComplaintTypePost,
+		PostID: &postIDUint, // Используем указатель
+		Reason: req.Reason,
+		Status: models.StatusNew,
+	}
 
-	if err != nil {
+	if err := database.DB.Create(&newComplaint).Error; err != nil {
+		fmt.Println("Error creating complaint:", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to create complaint"})
 		return
 	}
@@ -726,6 +742,7 @@ func ReportPost(c *gin.Context) {
 	c.JSON(http.StatusCreated, gin.H{
 		"message":      "Complaint successfully reported",
 		"complaint_id": newComplaint.ID,
+		"complaint":    newComplaint,
 	})
 }
 

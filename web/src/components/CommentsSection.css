@@ -759,3 +759,52 @@
     font-weight: 400;
     flex: 1;
 }
+
+/* Добавьте в CommentsSection.css */
+.report-btn {
+    background: none;
+    border: none;
+    padding: 6px 12px;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    transition: color 0.2s ease;
+    font-family: inherit;
+    border-radius: 4px;
+    min-height: 28px;
+    color: #e74c3c;
+}
+
+.report-btn:hover:not(:disabled) {
+    color: #c0392b;
+    background-color: rgba(231, 76, 60, 0.05);
+}
+
+.report-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+    color: #909090;
+}
+
+/* Стили для спиннера в кнопке */
+.spinner-icon {
+    animation: spin 1s linear infinite;
+    margin-right: 4px;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* Стиль для скрытого комментария */
+.comment-hidden-badge {
+    background: #ffebee;
+    color: #c62828;
+    font-size: 11px;
+    padding: 2px 6px;
+    border-radius: 4px;
+    margin-left: 8px;
+}
