@@ -84,7 +84,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
 
     const fetchUserProfile = async () => {
         try {
-            const response = await fetch(`http://localhost:8080/api/user/${profileUserId}/profile`, {
+            const response = await fetch(`/api/user/${profileUserId}/profile`, {
                 credentials: 'include',
             });
             if (response.ok) {
@@ -104,10 +104,10 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
         try {
             // Получаем количество подписчиков и подписок
             const [followersRes, followingRes] = await Promise.all([
-                fetch(`http://localhost:8080/api/user/${profileUser.id}/followers/count`, {
+                fetch(`/api/user/${profileUser.id}/followers/count`, {
                     credentials: 'include',
                 }),
-                fetch(`http://localhost:8080/api/user/${profileUser.id}/following/count`, {
+                fetch(`/api/user/${profileUser.id}/following/count`, {
                     credentials: 'include',
                 })
             ]);
@@ -125,7 +125,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
             // Проверяем, подписан ли текущий пользователь
             if (currentUser && currentUser.id !== profileUser.id) {
                 const followCheckRes = await fetch(
-                    `http://localhost:8080/api/user/${profileUser.id}/follow/check`, 
+                    `/api/user/${profileUser.id}/follow/check`, 
                     { credentials: 'include' }
                 );
                 if (followCheckRes.ok) {
@@ -145,7 +145,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
         try {
             if (isFollowing) {
                 // Отписываемся
-                await fetch(`http://localhost:8080/api/user/${profileUser.id}/follow`, {
+                await fetch(`/api/user/${profileUser.id}/follow`, {
                     method: 'DELETE',
                     credentials: 'include',
                 });
@@ -153,7 +153,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
                 setFollowersCount(prev => Math.max(0, prev - 1));
             } else {
                 // Подписываемся
-                await fetch(`http://localhost:8080/api/user/${profileUser.id}/follow`, {
+                await fetch(`/api/user/${profileUser.id}/follow`, {
                     method: 'POST',
                     credentials: 'include',
                 });

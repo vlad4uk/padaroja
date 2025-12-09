@@ -140,7 +140,7 @@ const PostCreatePage: React.FC = () => {
         };
 
         try {
-            const response = await axios.post('http://localhost:8080/api/posts', postData, {
+            const response = await axios.post('/api/posts', postData, {
                 withCredentials: true, 
                 headers: {
                     'Content-Type': 'application/json'

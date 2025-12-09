@@ -29,7 +29,7 @@ const ReviewsList: React.FC<ReviewsListProps> = ({ userId }) => {
 
   const fetchReviews = async () => {
     try {
-      const response = await axios.get('http://localhost:8080/api/reviews/user', {
+      const response = await axios.get('/api/reviews/user', {
         withCredentials: true
       });
       setReviews(response.data);
@@ -44,7 +44,7 @@ const ReviewsList: React.FC<ReviewsListProps> = ({ userId }) => {
     if (!confirm('Удалить этот отзыв?')) return;
 
     try {
-      await axios.delete(`http://localhost:8080/api/reviews/${reviewId}`, {
+      await axios.delete(`/api/reviews/${reviewId}`, {
         withCredentials: true
       });
       setReviews(reviews.filter(review => review.id !== reviewId));

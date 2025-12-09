@@ -22,7 +22,7 @@ const PlacesList: React.FC = () => {
 
   const fetchPlaces = async () => {
     try {
-      const response = await axios.get('http://localhost:8080/api/places');
+      const response = await axios.get('/api/places');
       setPlaces(response.data);
     } catch (error) {
       console.error('Ошибка при загрузке мест:', error);

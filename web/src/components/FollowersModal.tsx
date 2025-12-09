@@ -40,8 +40,8 @@ const FollowersModal: React.FC<FollowersModalProps> = ({
         setLoading(true);
         try {
             const endpoint = type === 'followers' 
-                ? `http://localhost:8080/api/user/${userId}/followers`
-                : `http://localhost:8080/api/user/${userId}/following`;
+                ? `/api/user/${userId}/followers`
+                : `/api/user/${userId}/following`;
             
             const response = await axios.get(endpoint, { withCredentials: true });
             setUsers(response.data[type] || []);
@@ -54,7 +54,7 @@ const FollowersModal: React.FC<FollowersModalProps> = ({
 
     const handleUnfollow = async (targetUserId: number) => {
         try {
-            await axios.delete(`http://localhost:8080/api/user/${targetUserId}/follow`, 
+            await axios.delete(`/api/user/${targetUserId}/follow`, 
                 { withCredentials: true });
             
             // Обновляем список
@@ -66,7 +66,7 @@ const FollowersModal: React.FC<FollowersModalProps> = ({
 
     const handleFollow = async (targetUserId: number) => {
         try {
-            await axios.post(`http://localhost:8080/api/user/${targetUserId}/follow`, 
+            await axios.post(`/api/user/${targetUserId}/follow`, 
                 {}, 
                 { withCredentials: true });
             

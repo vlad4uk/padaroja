@@ -45,7 +45,7 @@ const CommentsSection: React.FC<CommentsSectionProps> = ({
       setLoading(true);
       setError('');
       const response = await axios.get<CommentsResponse>(
-        `http://localhost:8080/api/comments/post/${postId}?limit=100`, // Увеличиваем лимит
+        `/api/comments/post/${postId}?limit=100`, // Увеличиваем лимит
         { withCredentials: true }
       );
       
@@ -118,7 +118,7 @@ const CommentsSection: React.FC<CommentsSectionProps> = ({
       }));
       
       const response = await axios.get(
-        `http://localhost:8080/api/comments/${commentId}/replies`,
+        `/api/comments/${commentId}/replies`,
         { withCredentials: true }
       );
       
@@ -173,7 +173,7 @@ const CommentsSection: React.FC<CommentsSectionProps> = ({
       };
 
       const response = await axios.post(
-        `http://localhost:8080/api/comments/post/${postId}`,
+        `/api/comments/post/${postId}`,
         commentData,
         { withCredentials: true }
       );
@@ -216,7 +216,7 @@ const CommentsSection: React.FC<CommentsSectionProps> = ({
       };
 
       const response = await axios.post(
-        `http://localhost:8080/api/comments/post/${postId}`,
+        `/api/comments/post/${postId}`,
         commentData,
         { withCredentials: true }
       );
@@ -277,7 +277,7 @@ const CommentsSection: React.FC<CommentsSectionProps> = ({
 
     try {
       await axios.delete(
-        `http://localhost:8080/api/comments/${commentId}`,
+        `/api/comments/${commentId}`,
         { withCredentials: true }
       );
       
@@ -538,7 +538,7 @@ const renderComment = (comment: Comment, isReply = false, rootCommentId?: number
 const handleReportComment = async (commentId: number, reason: string) => {
     try {
         await axios.post(
-            `http://localhost:8080/api/mod/comments/${commentId}/complaint`,
+            `/api/mod/comments/${commentId}/complaint`,
             { reason },
             { withCredentials: true }
         );

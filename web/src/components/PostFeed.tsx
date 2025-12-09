@@ -67,7 +67,7 @@ const PostFeed: React.FC<PostFeedProps> = ({
         
         try {
             const favouritePromises = postIds.map(postId => 
-                axios.get<{is_favourite: boolean}>(`http://localhost:8080/api/favourites/check/${postId}`, {
+                axios.get<{is_favourite: boolean}>(`/api/favourites/check/${postId}`, {
                     withCredentials: true
                 })
             );
@@ -100,7 +100,7 @@ const PostFeed: React.FC<PostFeedProps> = ({
         
         try {
             const likePromises = postIds.map(postId => 
-                axios.get<{is_liked: boolean}>(`http://localhost:8080/api/likes/check/${postId}`, {
+                axios.get<{is_liked: boolean}>(`/api/likes/check/${postId}`, {
                     withCredentials: true
                 })
             );
@@ -130,7 +130,7 @@ const PostFeed: React.FC<PostFeedProps> = ({
         
         try {
             const countPromises = postIds.map(postId => 
-                axios.get<{likes_count: number}>(`http://localhost:8080/api/likes/count/${postId}`, {
+                axios.get<{likes_count: number}>(`/api/likes/count/${postId}`, {
                     withCredentials: true
                 })
             );
@@ -159,15 +159,15 @@ const PostFeed: React.FC<PostFeedProps> = ({
     const loadPosts = useCallback(async () => {
         setLoading(true);
         try {
-            let url = 'http://localhost:8080/api/posts';
+            let url = '/api/posts';
             const params = new URLSearchParams();
             
             if (isFavourites) {
                 // Запрос для закладок
-                url = 'http://localhost:8080/api/favourites';
+                url = '/api/favourites';
             } else if (isLikes) {
                 // Запрос для лайков
-                url = 'http://localhost:8080/api/likes';
+                url = '/api/likes';
             } else {
                 if (searchQuery) params.append('search', searchQuery);
                 if (tagQuery) params.append('tags', tagQuery);
@@ -185,7 +185,7 @@ const PostFeed: React.FC<PostFeedProps> = ({
             if (postIds.length > 0) {
                 // Загружаем актуальные счетчики лайков
                 const countPromises = postIds.map(postId => 
-                    axios.get<{likes_count: number}>(`http://localhost:8080/api/likes/count/${postId}`, {
+                    axios.get<{likes_count: number}>(`/api/likes/count/${postId}`, {
                         withCredentials: true
                     })
                 );
@@ -250,7 +250,7 @@ const PostFeed: React.FC<PostFeedProps> = ({
         try {
             if (wasFavourite) {
                 // Удаляем из закладок
-                await axios.delete(`http://localhost:8080/api/favourites/${postId}`, {
+                await axios.delete(`/api/favourites/${postId}`, {
                     withCredentials: true
                 });
                 
@@ -260,7 +260,7 @@ const PostFeed: React.FC<PostFeedProps> = ({
                 }
             } else {
                 // Добавляем в закладки
-                await axios.post(`http://localhost:8080/api/favourites/${postId}`, {}, {
+                await axios.post(`/api/favourites/${postId}`, {}, {
                     withCredentials: true
                 });
             }
@@ -309,7 +309,7 @@ const PostFeed: React.FC<PostFeedProps> = ({
         try {
             if (wasLiked) {
                 // Удаляем лайк
-                await axios.delete(`http://localhost:8080/api/likes/${postId}`, {
+                await axios.delete(`/api/likes/${postId}`, {
                     withCredentials: true
                 });
                 
@@ -319,7 +319,7 @@ const PostFeed: React.FC<PostFeedProps> = ({
                 }
             } else {
                 // Добавляем лайк
-                await axios.post(`http://localhost:8080/api/likes/${postId}`, {}, {
+                await axios.post(`/api/likes/${postId}`, {}, {
                     withCredentials: true
                 });
             }
@@ -372,7 +372,7 @@ const PostFeed: React.FC<PostFeedProps> = ({
     const handleDelete = useCallback(async (id: number) => {
         if (!window.confirm("Удалить этот пост?")) return;
         try {
-            await axios.delete(`http://localhost:8080/api/posts/${id}`, { withCredentials: true });
+            await axios.delete(`/api/posts/${id}`, { withCredentials: true });
             setPosts(prev => prev.filter(post => post.id !== id));
             // Также удаляем из favourites и likes если были там
             const newFavourites = new Set<number>(favourites);
@@ -394,7 +394,7 @@ const PostFeed: React.FC<PostFeedProps> = ({
     const handleSubmitReport = useCallback(async (reason: string) => {
         if (!reportPostId) return;
         try {
-            await axios.post(`http://localhost:8080/api/posts/${reportPostId}/report`, 
+            await axios.post(`/api/posts/${reportPostId}/report`, 
                 { reason: reason }, { withCredentials: true }
             );
             alert("Жалоба отправлена.");

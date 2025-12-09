@@ -36,7 +36,7 @@ const PostEditPage: React.FC = () => {
     useEffect(() => {
         const fetchPostData = async () => {
             try {
-                const response = await axios.get(`http://localhost:8080/api/posts/${id}`, { withCredentials: true });
+                const response = await axios.get(`/api/posts/${id}`, { withCredentials: true });
                 const data = response.data;
 
                 setTitle(data.title);
@@ -149,7 +149,7 @@ const PostEditPage: React.FC = () => {
         };
 
         try {
-            await axios.put(`http://localhost:8080/api/posts/${id}`, postData, { withCredentials: true });
+            await axios.put(`/api/posts/${id}`, postData, { withCredentials: true });
             alert('Публикация обновлена!');
             navigate(`/post/${id}`);
         } catch (error) {
@@ -164,7 +164,7 @@ const PostEditPage: React.FC = () => {
         if (!window.confirm("Вы уверены, что хотите удалить этот пост безвозвратно?")) return;
         
         try {
-            await axios.delete(`http://localhost:8080/api/posts/${id}`, { withCredentials: true });
+            await axios.delete(`/api/posts/${id}`, { withCredentials: true });
             alert('Пост удален.');
             navigate('/profile');
         } catch (error) {

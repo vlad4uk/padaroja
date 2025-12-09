@@ -91,7 +91,7 @@ const SinglePostPage: React.FC = () => {
     useEffect(() => {
         const fetchPost = async () => {
             try {
-                const response = await axios.get(`http://localhost:8080/api/posts/${id}`, {
+                const response = await axios.get(`/api/posts/${id}`, {
                     withCredentials: true 
                 });
                 
@@ -133,7 +133,7 @@ const SinglePostPage: React.FC = () => {
     const fetchAuthorInfo = useCallback(async (userId: number) => {
         try {
             const response = await axios.get(
-                `http://localhost:8080/api/user/${userId}/profile`,
+                `/api/user/${userId}/profile`,
                 { withCredentials: true }
             );
             setUserAvatar(response.data.image_url || '');
@@ -149,7 +149,7 @@ const SinglePostPage: React.FC = () => {
         
         try {
             const response = await axios.get<{is_liked: boolean}>(
-                `http://localhost:8080/api/likes/check/${postId}`,
+                `/api/likes/check/${postId}`,
                 { withCredentials: true }
             );
             setIsLiked(response.data.is_liked);
@@ -164,7 +164,7 @@ const SinglePostPage: React.FC = () => {
         
         try {
             const response = await axios.get<{is_favourite: boolean}>(
-                `http://localhost:8080/api/favourites/check/${postId}`,
+                `/api/favourites/check/${postId}`,
                 { withCredentials: true }
             );
             setIsFavourite(response.data.is_favourite);
@@ -177,7 +177,7 @@ const SinglePostPage: React.FC = () => {
     const loadLikesCount = async (postId: number) => {
         try {
             const response = await axios.get<{likes_count: number}>(
-                `http://localhost:8080/api/likes/count/${postId}`,
+                `/api/likes/count/${postId}`,
                 { withCredentials: true }
             );
             setLikesCount(response.data.likes_count);
@@ -207,11 +207,11 @@ const SinglePostPage: React.FC = () => {
         
         try {
             if (wasLiked) {
-                await axios.delete(`http://localhost:8080/api/likes/${postIdNum}`, {
+                await axios.delete(`/api/likes/${postIdNum}`, {
                     withCredentials: true
                 });
             } else {
-                await axios.post(`http://localhost:8080/api/likes/${postIdNum}`, {}, {
+                await axios.post(`/api/likes/${postIdNum}`, {}, {
                     withCredentials: true
                 });
             }
@@ -261,11 +261,11 @@ const SinglePostPage: React.FC = () => {
         
         try {
             if (wasFavourite) {
-                await axios.delete(`http://localhost:8080/api/favourites/${postIdNum}`, {
+                await axios.delete(`/api/favourites/${postIdNum}`, {
                     withCredentials: true
                 });
             } else {
-                await axios.post(`http://localhost:8080/api/favourites/${postIdNum}`, {}, {
+                await axios.post(`/api/favourites/${postIdNum}`, {}, {
                     withCredentials: true
                 });
             }
@@ -297,7 +297,7 @@ const SinglePostPage: React.FC = () => {
         }
 
         try {
-            await axios.delete(`http://localhost:8080/api/posts/${postId}`, {
+            await axios.delete(`/api/posts/${postId}`, {
                 withCredentials: true
             });
             alert('Пост успешно удален!');
@@ -311,7 +311,7 @@ const SinglePostPage: React.FC = () => {
     // --- ОБРАБОТЧИКИ ЖАЛОБЫ ---
    const handleReport = async (postId: number, reason: string) => {
         try {
-            await axios.post(`http://localhost:8080/api/posts/${postId}/report`, 
+            await axios.post(`/api/posts/${postId}/report`, 
                 { reason }, 
                 { withCredentials: true }
             );
@@ -336,7 +336,7 @@ const SinglePostPage: React.FC = () => {
     const handleSubmitReport = async (reason: string) => {
         if (!reportPostId) return;
         try {
-            await axios.post(`http://localhost:8080/api/posts/${reportPostId}/report`, 
+            await axios.post(`/api/posts/${reportPostId}/report`, 
                 { reason: reason }, { withCredentials: true }
             );
             alert("Жалоба отправлена.");
@@ -358,7 +358,7 @@ const SinglePostPage: React.FC = () => {
     
     try {
         const response = await axios.patch(
-            `http://localhost:8080/api/posts/${post.id}/comments`,
+            `/api/posts/${post.id}/comments`,
             { disabled: !commentsDisabled },
             { withCredentials: true }
         );

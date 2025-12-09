@@ -26,7 +26,7 @@ const PlaceDetailsPage: React.FC = () => {
 
   const fetchPlaceDetails = async () => {
     try {
-      const response = await axios.get(`http://localhost:8080/api/map/place/${placeId}`);
+      const response = await axios.get(`/api/map/place/${placeId}`);
       setPlaceData(response.data);
     } catch (error) {
       console.error('Ошибка при загрузке деталей места:', error);

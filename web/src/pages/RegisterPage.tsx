@@ -5,7 +5,7 @@ import AuthIllustration from '../components/AuthIllustration.tsx';
 import loginImage from '../assets/bird04.png';
 
 // Базовый URL Go-бэкенда
-const API_BASE_URL = 'http://localhost:8080/api/auth'; 
+const API_BASE_URL = '/api/auth'; 
 
 const RegisterPage: React.FC = () => {
   const [username, setUsername] = useState('');

@@ -73,7 +73,7 @@ const ModeratorPage: React.FC = () => {
     const fetchComplaints = async () => {
         try {
             setLoading(true);
-            const response = await axios.get('http://localhost:8080/api/mod/complaints', {
+            const response = await axios.get('/api/mod/complaints', {
                 withCredentials: true
             });
             setComplaints(response.data);
@@ -90,7 +90,7 @@ const ModeratorPage: React.FC = () => {
     const fetchUsersWithComplaints = async () => {
         try {
             setUsersLoading(true);
-            const response = await axios.get('http://localhost:8080/api/mod/users-with-complaints', {
+            const response = await axios.get('/api/mod/users-with-complaints', {
                 withCredentials: true
             });
             setUsersWithComplaints(response.data);
@@ -121,7 +121,7 @@ const ModeratorPage: React.FC = () => {
     const handleStatusChange = async (complaintId: string, newStatus: Complaint['status']) => {
         try {
             await axios.put(
-                `http://localhost:8080/api/mod/complaints/${complaintId}/status`,
+                `/api/mod/complaints/${complaintId}/status`,
                 { status: newStatus },
                 { withCredentials: true }
             );
@@ -141,7 +141,7 @@ const ModeratorPage: React.FC = () => {
         
         try {
             await axios.put(
-                `http://localhost:8080/api/mod/posts/${postId}/visibility`,
+                `/api/mod/posts/${postId}/visibility`,
                 { is_approved: newStatus },
                 { withCredentials: true }
             );
@@ -167,7 +167,7 @@ const ModeratorPage: React.FC = () => {
             setVisibilityLoading(prev => ({ ...prev, [`comment_${commentId}`]: true }));
             
             await axios.put(
-                `http://localhost:8080/api/mod/comments/${commentId}/visibility`,
+                `/api/mod/comments/${commentId}/visibility`,
                 { is_approved: newStatus },
                 { withCredentials: true }
             );
@@ -196,7 +196,7 @@ const ModeratorPage: React.FC = () => {
             setBlockLoading(userId);
             
             await axios.post(
-                `http://localhost:8080/api/mod/users/${userId}/block`,
+                `/api/mod/users/${userId}/block`,
                 {},
                 { withCredentials: true }
             );
@@ -224,7 +224,7 @@ const ModeratorPage: React.FC = () => {
             setUnblockLoading(userId);
             
             await axios.post(
-                `http://localhost:8080/api/mod/users/${userId}/unblock`,
+                `/api/mod/users/${userId}/unblock`,
                 {},
                 { withCredentials: true }
             );
@@ -270,7 +270,7 @@ const ModeratorPage: React.FC = () => {
             setAssignSuccess('');
             
             const response = await axios.get(
-                `http://localhost:8080/api/mod/users/search?q=${encodeURIComponent(searchQuery)}`,
+                `/api/mod/users/search?q=${encodeURIComponent(searchQuery)}`,
                 { withCredentials: true }
             );
             setSearchResults(response.data);
@@ -294,7 +294,7 @@ const ModeratorPage: React.FC = () => {
             setAssignSuccess('');
             
             await axios.post(
-                `http://localhost:8080/api/mod/users/${userId}/assign-moderator`,
+                `/api/mod/users/${userId}/assign-moderator`,
                 {},
                 { withCredentials: true }
             );
@@ -328,7 +328,7 @@ const ModeratorPage: React.FC = () => {
             setAssignSuccess('');
             
             await axios.post(
-                `http://localhost:8080/api/mod/users/${userId}/remove-moderator`,
+                `/api/mod/users/${userId}/remove-moderator`,
                 {},
                 { withCredentials: true }
             );

@@ -293,11 +293,11 @@ const MapView: React.FC<MapViewProps> = ({ targetUserId }) => {
         // ВСЕГДА проверяем targetUserId в первую очередь
         if (targetUserId) {
           // Страница другого пользователя (/user/:userId)
-          endpoint = `http://localhost:8080/api/map/user/${targetUserId}/data`;
+          endpoint = `/api/map/user/${targetUserId}/data`;
           config = { withCredentials: false };
         } else if (isLoggedIn && currentUser) {
           // Своя страница (/profile)
-          endpoint = `http://localhost:8080/api/map/user-data`;
+          endpoint = `/api/map/user-data`;
           config = { withCredentials: true };
         } else {
           setLoading(false);
@@ -311,7 +311,7 @@ const MapView: React.FC<MapViewProps> = ({ targetUserId }) => {
         let userPostsData = [];
         if (!targetUserId && currentUser?.id && isLoggedIn) {
           try {
-            const postsResponse = await axios.get(`http://localhost:8080/api/user/posts`, {
+            const postsResponse = await axios.get(`/api/user/posts`, {
               withCredentials: true
             });
             userPostsData = postsResponse.data || [];
@@ -432,7 +432,7 @@ const MapView: React.FC<MapViewProps> = ({ targetUserId }) => {
       setLoading(true);
       
       // 1. Создаем место
-      const placeResponse = await axios.post('http://localhost:8080/api/places', {
+      const placeResponse = await axios.post('/api/places', {
         name: reviewData.name,
         desc: '',
         latitude: selectedLocation.lat,
@@ -444,7 +444,7 @@ const MapView: React.FC<MapViewProps> = ({ targetUserId }) => {
       const newPlace = placeResponse.data.place;
       
       // 2. Создаем отзыв
-      await axios.post('http://localhost:8080/api/reviews', {
+      await axios.post('/api/reviews', {
         place_id: newPlace.id,
         rating: reviewData.rating,
         content: reviewData.content,
@@ -455,7 +455,7 @@ const MapView: React.FC<MapViewProps> = ({ targetUserId }) => {
 
       // 3. Если выбран пост для прикрепления, привязываем его
       if (reviewData.attachPostId) {
-        await axios.put(`http://localhost:8080/api/posts/${reviewData.attachPostId}/attach-to-place`, {
+        await axios.put(`/api/posts/${reviewData.attachPostId}/attach-to-place`, {
           place_id: newPlace.id,
           latitude: selectedLocation.lat,
           longitude: selectedLocation.lng
@@ -499,13 +499,13 @@ const MapView: React.FC<MapViewProps> = ({ targetUserId }) => {
       const postToDelete = mapData.posts.find(p => p.place_id === placeId);
       
       // Удаляем отзыв
-      await axios.delete(`http://localhost:8080/api/reviews/${reviewId}`, {
+      await axios.delete(`/api/reviews/${reviewId}`, {
         withCredentials: true
       });
 
       // Если есть пост, удаляем его
       if (postToDelete) {
-        await axios.delete(`http://localhost:8080/api/posts/${postToDelete.id}`, {
+        await axios.delete(`/api/posts/${postToDelete.id}`, {
           withCredentials: true
         });
       }
@@ -540,7 +540,7 @@ const MapView: React.FC<MapViewProps> = ({ targetUserId }) => {
     try {
       setLoading(true);
       
-      await axios.put(`http://localhost:8080/api/posts/${selectedPostForAttach}/attach-to-place`, {
+      await axios.put(`/api/posts/${selectedPostForAttach}/attach-to-place`, {
         place_id: selectedPlace.place_id,
         latitude: selectedPlace.latitude,
         longitude: selectedPlace.longitude

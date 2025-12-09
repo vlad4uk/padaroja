@@ -1,60 +1,49 @@
+version: "3.9"
+
 services:
-  postgres:
-    image: postgres:15-alpine
-    container_name: tblog_postgres
+  backend:
+    build: .
+    container_name: padaroja-backend
+    env_file: .env
+    expose:
+      - "8080"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  frontend:
+    build: ./web
+    container_name: padaroja-frontend
+    expose:
+      - "80"
+
+  db:
+    image: postgres:15
+    container_name: padaroja-db
     environment:
       POSTGRES_USER: admintblog
       POSTGRES_PASSWORD: system
       POSTGRES_DB: tblog
-    ports:
-      - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
-    networks:
-      - app-network
-    restart: unless-stopped
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U admintblog -d tblog"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
 
-  backend:
-    build:
-      context: .
-      dockerfile: Dockerfile.backend
-    container_name: tblog_backend
+  proxy:
+    image: nginx:alpine
+    container_name: padaroja-proxy
     ports:
-      - "8080:8080"
-    environment:
-      DB_HOST: postgres
-      DB_PORT: 5432
-      DB_USER: admintblog
-      DB_PASSWORD: system
-      DB_NAME: tblog
-      DB_SSL_MODE: disable
-      JWT_SECRET: bcnd3mfu4roej7snbc3hry2tpyi1djet
-      JWT_EXPIRY_HOURS: 24
-      SERVER_PORT: 8080
-      FRONTEND_URL: http://localhost:3000
-      APP_ENV: development
+      - "80:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./web/build:/usr/share/nginx/html:ro
     depends_on:
-      - postgres
-    networks:
-      - app-network
-    restart: unless-stopped
-
-  frontend:
-    build:
-      context: .
-      dockerfile: Dockerfile.frontend
-    container_name: tblog_frontend
-    ports:
-      - "3000:80"
-    depends_on:
+      - frontend
       - backend
-    networks:
-      - app-network
-    restart: unless-stopped
-
-networks:
-  app-network:
-    driver: bridge
 
 volumes:
   postgres_data:

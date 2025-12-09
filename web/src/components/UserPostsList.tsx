@@ -45,10 +45,10 @@ const UserPostsList: React.FC<UserPostsListProps> = ({ targetUserId }) => {
             let url: string;
             
             if (targetUserId) {
-                url = `http://localhost:8080/api/user/${targetUserId}/posts`;
+                url = `/api/user/${targetUserId}/posts`;
                 console.log(`Loading posts for user ID: ${targetUserId}, URL: ${url}`);
             } else {
-                url = 'http://localhost:8080/api/user/posts';
+                url = '/api/user/posts';
                 console.log('Loading posts for current user');
             }
             
@@ -88,7 +88,7 @@ const UserPostsList: React.FC<UserPostsListProps> = ({ targetUserId }) => {
         
         try {
             const favouritePromises = postIds.map(postId => 
-                axios.get<{is_favourite: boolean}>(`http://localhost:8080/api/favourites/check/${postId}`, {
+                axios.get<{is_favourite: boolean}>(`/api/favourites/check/${postId}`, {
                     withCredentials: true
                 })
             );
@@ -121,7 +121,7 @@ const UserPostsList: React.FC<UserPostsListProps> = ({ targetUserId }) => {
         
         try {
             const likePromises = postIds.map(postId => 
-                axios.get<{is_liked: boolean}>(`http://localhost:8080/api/likes/check/${postId}`, {
+                axios.get<{is_liked: boolean}>(`/api/likes/check/${postId}`, {
                     withCredentials: true
                 })
             );
@@ -151,7 +151,7 @@ const UserPostsList: React.FC<UserPostsListProps> = ({ targetUserId }) => {
         
         try {
             const countPromises = postIds.map(postId => 
-                axios.get<{likes_count: number}>(`http://localhost:8080/api/likes/count/${postId}`, {
+                axios.get<{likes_count: number}>(`/api/likes/count/${postId}`, {
                     withCredentials: true
                 })
             );
@@ -195,7 +195,7 @@ const UserPostsList: React.FC<UserPostsListProps> = ({ targetUserId }) => {
     const handleDelete = async (id: number) => {
         if (!window.confirm("Удалить этот пост?")) return;
         try {
-            await axios.delete(`http://localhost:8080/api/posts/${id}`, { withCredentials: true });
+            await axios.delete(`/api/posts/${id}`, { withCredentials: true });
             setPosts(prev => prev.filter(post => post.id !== id));
             // Удаляем из локальных состояний
             const newFavourites = new Set<number>(favourites);
@@ -235,11 +235,11 @@ const UserPostsList: React.FC<UserPostsListProps> = ({ targetUserId }) => {
         
         try {
             if (wasLiked) {
-                await axios.delete(`http://localhost:8080/api/likes/${postId}`, {
+                await axios.delete(`/api/likes/${postId}`, {
                     withCredentials: true
                 });
             } else {
-                await axios.post(`http://localhost:8080/api/likes/${postId}`, {}, {
+                await axios.post(`/api/likes/${postId}`, {}, {
                     withCredentials: true
                 });
             }
@@ -300,11 +300,11 @@ const UserPostsList: React.FC<UserPostsListProps> = ({ targetUserId }) => {
         
         try {
             if (wasFavourite) {
-                await axios.delete(`http://localhost:8080/api/favourites/${postId}`, {
+                await axios.delete(`/api/favourites/${postId}`, {
                     withCredentials: true
                 });
             } else {
-                await axios.post(`http://localhost:8080/api/favourites/${postId}`, {}, {
+                await axios.post(`/api/favourites/${postId}`, {}, {
                     withCredentials: true
                 });
             }
@@ -334,7 +334,7 @@ const UserPostsList: React.FC<UserPostsListProps> = ({ targetUserId }) => {
     const handleSubmitReport = async (reason: string) => {
         if (!reportPostId) return;
         try {
-            await axios.post(`http://localhost:8080/api/posts/${reportPostId}/report`, 
+            await axios.post(`/api/posts/${reportPostId}/report`, 
                 { reason: reason }, { withCredentials: true }
             );
             alert("Жалоба отправлена.");

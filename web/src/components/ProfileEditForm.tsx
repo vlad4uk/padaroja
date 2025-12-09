@@ -20,7 +20,7 @@ const ProfileEditForm: React.FC = () => {
     const [avatarPreview, setAvatarPreview] = useState(
         user?.image_url 
             // 💡 2. Проверяем, это Firebase URL или старый локальный
-            ? (user.image_url.startsWith('http') ? user.image_url : `http://localhost:8080${user.image_url}`)
+            ? (user.image_url.startsWith('http') ? user.image_url : `${user.image_url}`)
             : DEFAULT_AVATAR
     );
     
@@ -70,7 +70,7 @@ const ProfileEditForm: React.FC = () => {
             
             // ШАГ D: Отправляем данные (БЕЗ ФАЙЛА) на Go-бэкенд
             await axios.put(
-                'http://localhost:8080/api/user/profile',
+                '/api/user/profile',
                 formData,
                 { withCredentials: true }
             );
