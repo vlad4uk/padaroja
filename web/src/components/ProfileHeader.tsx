@@ -4,8 +4,9 @@ import { useAuth } from '../context/AuthContext.tsx';
 import FollowersModal from './FollowersModal.tsx';
 import '../components/MainLayout.css'; 
 import '../components/FollowersModal.css';
+import avatar from '../assets/bird04.png';
 
-const DEFAULT_AVATAR = 'https://i.pravatar.cc/150';
+const DEFAULT_AVATAR = avatar;
 
 // Импортируем тип из MainLayout
 export type TabType = 'Публикации' | 'Карта' | 'Изменить';

@@ -3,12 +3,13 @@
 import React, { useState, ChangeEvent } from 'react';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext.tsx';
+import avatar from '../assets/bird04.png';
 
 // 💡 1. ИМПОРТИРУЕМ ВАШУ ФУНКЦИЮ
 import { uploadImage } from '../firebase/uploadImage.js'; // (Укажите правильный путь к вашему файлу firebase.ts)
 
 // Аватар по умолчанию
-const DEFAULT_AVATAR = 'https://i.pravatar.cc/150';
+const DEFAULT_AVATAR = avatar;
 
 const ProfileEditForm: React.FC = () => {
     const { user, checkAuth } = useAuth();

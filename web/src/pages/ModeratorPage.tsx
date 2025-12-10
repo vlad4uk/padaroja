@@ -76,28 +76,37 @@ const ModeratorPage: React.FC = () => {
             const response = await axios.get('/api/mod/complaints', {
                 withCredentials: true
             });
-            setComplaints(response.data);
+            // ИСПРАВЛЕНИЕ: добавлена защита от null
+            setComplaints(response.data || []);
             setError('');
         } catch (err) {
             console.error('Ошибка загрузки жалоб:', err);
             setError('Не удалось загрузить список жалоб');
+            // ИСПРАВЛЕНИЕ: сброс на пустой массив при ошибке
+            setComplaints([]);
         } finally {
             setLoading(false);
         }
     };
 
     // Загрузка пользователей с жалобами
-    const fetchUsersWithComplaints = async () => {
+   const fetchUsersWithComplaints = async () => {
         try {
             setUsersLoading(true);
             const response = await axios.get('/api/mod/users-with-complaints', {
                 withCredentials: true
             });
-            setUsersWithComplaints(response.data);
+            
+            // ОБЯЗАТЕЛЬНО: гарантируем, что это массив
+            const data = response.data || [];
+            console.log('Fetched users:', data); // для отладки
+            
+            setUsersWithComplaints(data);
             setUsersError('');
         } catch (err) {
             console.error('Ошибка загрузки пользователей с жалобами:', err);
             setUsersError('Не удалось загрузить список пользователей');
+            setUsersWithComplaints([]); // устанавливаем пустой массив при ошибке
         } finally {
             setUsersLoading(false);
         }
@@ -273,7 +282,7 @@ const ModeratorPage: React.FC = () => {
                 `/api/mod/users/search?q=${encodeURIComponent(searchQuery)}`,
                 { withCredentials: true }
             );
-            setSearchResults(response.data);
+            setSearchResults(response.data || []);
         } catch (err: any) {
             console.error('Ошибка поиска пользователей:', err);
             setSearchError(err.response?.data?.error || 'Не удалось найти пользователей');
@@ -426,7 +435,8 @@ const ModeratorPage: React.FC = () => {
             return <div className="error-state">{error}</div>;
         }
 
-        if (complaints.length === 0) {
+        // ИСПРАВЛЕНИЕ: добавлена проверка на null
+        if (!complaints || complaints.length === 0) {
             return <div className="no-data">Жалоб не найдено</div>;
         }
 
@@ -549,19 +559,25 @@ const ModeratorPage: React.FC = () => {
         );
     };
 
-    // Рендер таблицы с пользователями с жалобами (без изменений)
+    // Рендер таблицы с пользователями с жалобами
     const renderUsersWithComplaintsTable = () => {
-       if (usersLoading) {
-            return <div className="loading-state">Загрузка пользователей...</div>;
-        }
+      if (usersLoading) {
+        return <div className="loading-state">Загрузка пользователей...</div>;
+    }
 
-      if (usersError) {
-            return <div className="error-state">{usersError}</div>;
-        }
+    if (usersError) {
+        return <div className="error-state">{usersError}</div>;
+    }
 
-        if (!usersWithComplaints || usersWithComplaints.length === 0) {
-            return <div className="no-data">Пользователей с жалобами не найдено</div>;
-        }
+    // ИСПРАВЛЕНИЕ 1: Добавляем проверку существования usersWithComplaints
+    if (!usersWithComplaints) {
+        return <div className="loading-state">Загрузка данных...</div>;
+    }
+
+    // ИСПРАВЛЕНИЕ 2: Теперь безопасно проверяем длину
+    if (usersWithComplaints.length === 0) {
+        return <div className="no-data">Пользователей с жалобами не найдено</div>;
+    }
 
         return (
             <div className="table-container">
@@ -647,7 +663,7 @@ const ModeratorPage: React.FC = () => {
         );
     };
 
-    // Рендер формы добавления модератора (без изменений)
+    // Рендер формы добавления модератора
     const renderAddModeratorForm = () => {
         return (
             <div className="add-moderator-tab">

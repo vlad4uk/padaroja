@@ -117,6 +117,10 @@ func GetComplaints(c *gin.Context) {
 		result = append(result, item)
 	}
 
+	if result == nil {
+		result = []gin.H{}
+	}
+
 	c.JSON(http.StatusOK, result)
 }
 
@@ -645,6 +649,7 @@ func RemoveModeratorRole(c *gin.Context) {
 }
 
 // GetUsersWithComplaints - получение списка пользователей с жалобами
+// GetUsersWithComplaints - получение списка пользователей с жалобами
 func GetUsersWithComplaints(c *gin.Context) {
 	// Проверка прав
 	userIDValue, exists := c.Get("userID")
@@ -671,7 +676,7 @@ func GetUsersWithComplaints(c *gin.Context) {
 	}
 
 	// Получаем пользователей с жалобами
-	var usersWithComplaints []gin.H
+	usersWithComplaints := []gin.H{} // ИСПРАВЛЕНИЕ 1: Сразу инициализируем пустым массивом
 
 	rows, err := database.DB.Raw(`
         SELECT 
@@ -692,7 +697,6 @@ func GetUsersWithComplaints(c *gin.Context) {
             (c.post_id = p.id AND c.type = 'POST') OR 
             (c.comment_id = cm.id AND c.type = 'COMMENT')
         )
-        WHERE c.id IS NOT NULL
         GROUP BY u.id, u.username, u.email, u.role_id, u.is_blocked
         HAVING COUNT(DISTINCT c.id) > 0
         ORDER BY total_complaints DESC, last_complaint_date DESC
@@ -700,7 +704,7 @@ func GetUsersWithComplaints(c *gin.Context) {
 
 	if err != nil {
 		fmt.Println("Database error fetching users with complaints:", err)
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch users with complaints"})
+		c.JSON(http.StatusOK, usersWithComplaints) // ИСПРАВЛЕНИЕ 2: Возвращаем пустой массив при ошибке
 		return
 	}
 	defer rows.Close()
@@ -710,7 +714,7 @@ func GetUsersWithComplaints(c *gin.Context) {
 		var username, email string
 		var roleID int
 		var isBlocked bool
-		var totalComplaints, activeComplaints, resolvedComplaints, rejectedComplaints int
+		var totalComplaints, activeComplaints, resolvedComplaints, rejectedComplaints *int // ИСПРАВЛЕНИЕ 3: указатели для NULL значений
 		var lastComplaintDate *time.Time
 
 		err := rows.Scan(&userID, &username, &email, &roleID, &isBlocked,
@@ -720,6 +724,27 @@ func GetUsersWithComplaints(c *gin.Context) {
 		if err != nil {
 			fmt.Println("Error scanning row:", err)
 			continue
+		}
+
+		// ИСПРАВЛЕНИЕ 4: Обработка NULL значений
+		total := 0
+		if totalComplaints != nil {
+			total = *totalComplaints
+		}
+
+		active := 0
+		if activeComplaints != nil {
+			active = *activeComplaints
+		}
+
+		resolved := 0
+		if resolvedComplaints != nil {
+			resolved = *resolvedComplaints
+		}
+
+		rejected := 0
+		if rejectedComplaints != nil {
+			rejected = *rejectedComplaints
 		}
 
 		var lastComplaintStr string
@@ -733,18 +758,15 @@ func GetUsersWithComplaints(c *gin.Context) {
 			"email":               email,
 			"role_id":             roleID,
 			"is_blocked":          isBlocked,
-			"total_complaints":    totalComplaints,
-			"active_complaints":   activeComplaints,
-			"resolved_complaints": resolvedComplaints,
-			"rejected_complaints": rejectedComplaints,
+			"total_complaints":    total,
+			"active_complaints":   active,
+			"resolved_complaints": resolved,
+			"rejected_complaints": rejected,
 			"last_complaint_date": lastComplaintStr,
 		})
 	}
 
-	if usersWithComplaints == nil {
-		usersWithComplaints = []gin.H{}
-	}
-
+	// ИСПРАВЛЕНИЕ 5: Убираем проверку на nil, так как мы уже инициализировали массив
 	c.JSON(http.StatusOK, usersWithComplaints)
 }
 

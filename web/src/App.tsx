@@ -17,6 +17,7 @@ import ModeratorPage from './pages/ModeratorPage.tsx';
 import FavouritesPage from '../src/components/FavouritesPage.tsx';
 import LikesPage from '../src/components/LikesPage.tsx';
 import PlaceDetailsPage from '../src/components/PlaceDetailsPage.tsx';
+import RulesPage from './components/RulesPage.tsx';
 
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { isLoggedIn, isLoading } = useAuth();
@@ -122,6 +123,13 @@ const App: React.FC = () => {
                   <LikesPage />
                 </ProtectedRoute>
               } 
+            />
+
+            <Route 
+                path="/settings" 
+                element={
+                    <RulesPage />
+                } 
             />
 
             <Route 

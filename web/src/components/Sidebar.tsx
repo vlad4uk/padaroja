@@ -1,10 +1,20 @@
 // src/components/Sidebar.tsx
 
 import React from 'react';
-import { FaUser, FaSearch, FaListAlt, FaBookmark, FaBell, FaSignOutAlt, FaSignInAlt, FaUserPlus, FaCog, FaPlusSquare, FaAdn } from 'react-icons/fa';
+import { FaSearch, FaListAlt, FaBookmark, FaBell, FaSignOutAlt, FaSignInAlt, FaUserPlus, FaCog, FaPlusSquare, FaAdn } from 'react-icons/fa';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.tsx'; 
 import '../components/MainLayout.css'; 
+import profileIcon from '../assets/sidebar-icons/profile.png'
+import searchIcon from '../assets/sidebar-icons/search.png'
+import favorIcon from '../assets/sidebar-icons/favor.png'
+import bookmarkIcon from '../assets/sidebar-icons/bookmark.png'
+import createIcon from '../assets/sidebar-icons/create.png'
+import adminIcon from '../assets/sidebar-icons/admin.png'
+import rulesIcon from '../assets/sidebar-icons/list.png'
+import exitIcon from '../assets/sidebar-icons/exit.png'
+
+
 
 interface NavItem {
     name: string;
@@ -15,13 +25,12 @@ interface NavItem {
 }
 
 const navItemsList: NavItem[] = [
-    { name: 'Профиль', icon: FaUser, link: '/profile', authRequired: true },
-    { name: 'Поиск', icon: FaSearch, link: '/search', authRequired: false },
-    { name: 'Мне нравится', icon: FaListAlt, link: '/subscriptions', authRequired: true },
-    { name: 'Избранное', icon: FaBookmark, link: '/bookmarks', authRequired: true },
-    { name: 'Уведомления', icon: FaBell, link: '/notifications', authRequired: true },
-    { name: 'Создать Пост', icon: FaPlusSquare, link: '/post/new', authRequired: true },
-    { name: 'Админ Панель', icon: FaAdn, link: '/admin', authRequired: true, adminOnly: true },
+    { name: 'Профиль', icon: () => <img src={profileIcon} alt="profile" className="sidebar-icon" />, link: '/profile', authRequired: true },
+    { name: 'Поиск', icon: () => <img src={searchIcon} alt="profile" className="sidebar-icon" />,  link: '/search', authRequired: false },
+    { name: 'Мне нравится', icon: () => <img src={favorIcon} alt="profile" className="sidebar-icon" />, link: '/subscriptions', authRequired: true },
+    { name: 'Избранное', icon: () => <img src={bookmarkIcon} alt="profile" className="sidebar-icon" />, link: '/bookmarks', authRequired: true },
+    { name: 'Создать Пост',icon: () => <img src={createIcon} alt="profile" className="sidebar-icon" />, link: '/post/new', authRequired: true },
+    { name: 'Админ Панель', icon: () => <img src={adminIcon} alt="profile" className="sidebar-icon" />, link: '/admin', authRequired: true, adminOnly: true },
 ];
 
 const Sidebar: React.FC = () => { 
@@ -69,12 +78,9 @@ const Sidebar: React.FC = () => {
             <div className="sidebar-nav-list bottom-nav"> 
                 {isLoggedIn ? (
                     <>
-                        <Link 
-                            to={'/settings'}
-                            className={`sidebar-nav-item ${location.pathname === '/settings' ? 'active' : ''}`}
-                        >
-                            <FaCog className="sidebar-icon" />
-                            Настройки
+                        <Link to={'/settings'} className={`sidebar-nav-item ${location.pathname === '/settings' ? 'active' : ''}`}>
+                            <img src={rulesIcon} alt="rulesIcon" className="sidebar-icon" />
+                            Правила
                         </Link>
                         <div 
                             className="sidebar-nav-item" 
