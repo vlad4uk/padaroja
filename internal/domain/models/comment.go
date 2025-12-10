@@ -1,11 +1,9 @@
-// models/comment.go
 package models
 
 import (
 	"time"
 )
 
-// models/comment.go
 type Comment struct {
 	ID         uint      `gorm:"primaryKey" json:"id"`
 	PostID     uint      `gorm:"not null;constraint:OnDelete:CASCADE;" json:"post_id"`
@@ -16,9 +14,8 @@ type Comment struct {
 	CreatedAt  time.Time `gorm:"default:CURRENT_TIMESTAMP" json:"created_at"`
 	UpdatedAt  time.Time `gorm:"default:CURRENT_TIMESTAMP" json:"updated_at"`
 
-	// Связи
 	User       User        `gorm:"foreignKey:UserID" json:"user"`
 	Post       Post        `gorm:"foreignKey:PostID" json:"-"`
 	Parent     *Comment    `gorm:"foreignKey:ParentID" json:"parent"`
-	Complaints []Complaint `gorm:"foreignKey:CommentID" json:"-"` // Добавляем связь с жалобами
+	Complaints []Complaint `gorm:"foreignKey:CommentID" json:"-"`
 }

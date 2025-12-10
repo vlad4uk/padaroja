@@ -3,7 +3,7 @@ import './AuthLayout.css';
 
 interface AuthLayoutProps {
   children: React.ReactNode;
-  illustration: React.ReactNode; // Для иллюстрации слева
+  illustration: React.ReactNode;
 }
 
 const AuthLayout: React.FC<AuthLayoutProps> = ({ children, illustration }) => {

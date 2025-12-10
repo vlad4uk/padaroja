@@ -1,4 +1,3 @@
-// components/CommentItem.tsx
 import React, { useState } from 'react';
 import { Comment } from '../types/comment';
 import { useAuth } from '../context/AuthContext.tsx';
@@ -52,7 +51,6 @@ const CommentItem: React.FC<CommentItemProps> = ({
 
   return (
     <div className={`comment-item comment-level-${commentLevel}`}>
-      {/* ✅ ИСПРАВЛЕНО: Проверяем наличие parent */}
       {comment.parent && comment.parent.user && (
         <div className="reply-indicator">
           <span className="reply-arrow">↳</span>

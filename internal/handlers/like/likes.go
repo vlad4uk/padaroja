@@ -10,7 +10,6 @@ import (
 	"gorm.io/gorm"
 )
 
-// LikePost - добавление лайка к посту
 func LikePost(c *gin.Context) {
 	userIDInterface, exists := c.Get("userID")
 	if !exists {
@@ -18,7 +17,6 @@ func LikePost(c *gin.Context) {
 		return
 	}
 
-	// Преобразуем userID к правильному типу
 	userID, ok := userIDInterface.(int)
 	if !ok {
 		if userIDUint, ok := userIDInterface.(uint); ok {
@@ -36,14 +34,12 @@ func LikePost(c *gin.Context) {
 		return
 	}
 
-	// Проверяем, существует ли пост
 	var post models.Post
 	if err := database.DB.First(&post, postID).Error; err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Post not found"})
 		return
 	}
 
-	// Проверяем, не лайкнул ли уже пользователь этот пост
 	var existingLike models.Like
 	err = database.DB.Where("user_id = ? AND post_id = ?", userID, postID).First(&existingLike).Error
 
@@ -55,10 +51,8 @@ func LikePost(c *gin.Context) {
 		return
 	}
 
-	// Используем транзакцию для атомарности
 	tx := database.DB.Begin()
 
-	// Создаем новую запись лайка
 	like := models.Like{
 		UserID: userID,
 		PostID: postID,
@@ -70,7 +64,6 @@ func LikePost(c *gin.Context) {
 		return
 	}
 
-	// Обновляем счетчик лайков в посте
 	if err := tx.Model(&models.Post{}).Where("id = ?", postID).
 		Update("likes_count", gorm.Expr("likes_count + ?", 1)).Error; err != nil {
 		tx.Rollback()
@@ -83,7 +76,6 @@ func LikePost(c *gin.Context) {
 	c.JSON(http.StatusCreated, gin.H{"message": "Post liked successfully"})
 }
 
-// UnlikePost - удаление лайка
 func UnlikePost(c *gin.Context) {
 	userIDInterface, exists := c.Get("userID")
 	if !exists {
@@ -91,7 +83,6 @@ func UnlikePost(c *gin.Context) {
 		return
 	}
 
-	// Преобразуем userID к правильному типу
 	userID, ok := userIDInterface.(int)
 	if !ok {
 		if userIDUint, ok := userIDInterface.(uint); ok {
@@ -109,7 +100,6 @@ func UnlikePost(c *gin.Context) {
 		return
 	}
 
-	// Используем транзакцию для атомарности
 	tx := database.DB.Begin()
 
 	result := tx.Where("user_id = ? AND post_id = ?", userID, postID).Delete(&models.Like{})
@@ -125,7 +115,6 @@ func UnlikePost(c *gin.Context) {
 		return
 	}
 
-	// Обновляем счетчик лайков в посте (не даем уйти в минус)
 	if err := tx.Model(&models.Post{}).Where("id = ? AND likes_count > 0", postID).
 		Update("likes_count", gorm.Expr("likes_count - ?", 1)).Error; err != nil {
 		tx.Rollback()
@@ -138,7 +127,6 @@ func UnlikePost(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "Post unliked successfully"})
 }
 
-// GetUserLikes - получение постов, которые лайкнул пользователь
 func GetUserLikes(c *gin.Context) {
 	userIDInterface, exists := c.Get("userID")
 	if !exists {
@@ -146,7 +134,6 @@ func GetUserLikes(c *gin.Context) {
 		return
 	}
 
-	// Преобразуем userID к правильному типу
 	userID, ok := userIDInterface.(int)
 	if !ok {
 		if userIDUint, ok := userIDInterface.(uint); ok {
@@ -170,14 +157,12 @@ func GetUserLikes(c *gin.Context) {
 		return
 	}
 
-	// Преобразуем в формат, аналогичный PostResponse
 	response := make([]gin.H, 0)
 	for _, like := range likes {
 		if like.Post.ID == 0 {
-			continue // Пропускаем если пост не загружен
+			continue
 		}
 
-		// Получаем теги для поста
 		var tags []string
 		database.DB.Table("tags").
 			Joins("JOIN place_tags ON place_tags.tag_id = tags.id").
@@ -188,7 +173,6 @@ func GetUserLikes(c *gin.Context) {
 			tags = []string{}
 		}
 
-		// Получаем данные пользователя
 		userAvatar := ""
 		userName := "Неизвестный пользователь"
 		if like.Post.User.ID != 0 {
@@ -196,7 +180,6 @@ func GetUserLikes(c *gin.Context) {
 			userName = like.Post.User.Username
 		}
 
-		// Используем сохраненное количество лайков из поста
 		response = append(response, gin.H{
 			"id":          like.Post.ID,
 			"user_id":     like.Post.UserID,
@@ -205,17 +188,16 @@ func GetUserLikes(c *gin.Context) {
 			"place_name":  like.Post.Place.Name,
 			"tags":        tags,
 			"photos":      like.Post.Photos,
-			"likes_count": like.Post.LikesCount, // Используем сохраненное значение
+			"likes_count": like.Post.LikesCount,
 			"user_avatar": userAvatar,
 			"user_name":   userName,
-			"is_liked":    true, // Помечаем как лайкнутый
+			"is_liked":    true,
 		})
 	}
 
 	c.JSON(http.StatusOK, response)
 }
 
-// CheckLike - проверка, лайкнул ли пользователь пост
 func CheckLike(c *gin.Context) {
 	userIDInterface, exists := c.Get("userID")
 	if !exists {
@@ -223,7 +205,6 @@ func CheckLike(c *gin.Context) {
 		return
 	}
 
-	// Преобразуем userID к правильному типу
 	userID, ok := userIDInterface.(int)
 	if !ok {
 		if userIDUint, ok := userIDInterface.(uint); ok {
@@ -256,7 +237,6 @@ func CheckLike(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"is_liked": true})
 }
 
-// GetPostLikesCount - получение количества лайков для поста
 func GetPostLikesCount(c *gin.Context) {
 	postIDStr := c.Param("postID")
 	postID, err := strconv.Atoi(postIDStr)
@@ -265,7 +245,6 @@ func GetPostLikesCount(c *gin.Context) {
 		return
 	}
 
-	// Получаем пост с сохраненным количеством лайков
 	var post models.Post
 	if err := database.DB.Select("likes_count").First(&post, postID).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {

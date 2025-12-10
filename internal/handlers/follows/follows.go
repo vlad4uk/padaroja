@@ -10,9 +10,8 @@ import (
 	"gorm.io/gorm"
 )
 
-// FollowUser - подписаться на пользователя
 func FollowUser(c *gin.Context) {
-	// Получаем ID пользователя, на которого подписываемся
+
 	followedIDStr := c.Param("userID")
 	followedID, err := strconv.Atoi(followedIDStr)
 	if err != nil {
@@ -20,7 +19,6 @@ func FollowUser(c *gin.Context) {
 		return
 	}
 
-	// Получаем ID подписчика (текущий пользователь)
 	userIDValue, exists := c.Get("userID")
 	if !exists {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "User not authenticated"})
@@ -28,20 +26,17 @@ func FollowUser(c *gin.Context) {
 	}
 	followerID := int(userIDValue.(uint))
 
-	// Нельзя подписаться на самого себя
 	if followerID == followedID {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Cannot follow yourself"})
 		return
 	}
 
-	// Проверяем, существует ли пользователь, на которого подписываемся
 	var targetUser models.User
 	if err := database.DB.First(&targetUser, followedID).Error; err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "User to follow not found"})
 		return
 	}
 
-	// Проверяем, не подписаны ли уже
 	var existingFollow models.Followers
 	err = database.DB.Where("follower_id = ? AND followed_id = ?", followerID, followedID).First(&existingFollow).Error
 
@@ -50,7 +45,6 @@ func FollowUser(c *gin.Context) {
 		return
 	}
 
-	// Создаем подписку
 	follow := models.Followers{
 		FollowerID: followerID,
 		FollowedID: followedID,
@@ -67,7 +61,6 @@ func FollowUser(c *gin.Context) {
 	})
 }
 
-// UnfollowUser - отписаться от пользователя
 func UnfollowUser(c *gin.Context) {
 	followedIDStr := c.Param("userID")
 	followedID, err := strconv.Atoi(followedIDStr)
@@ -83,7 +76,6 @@ func UnfollowUser(c *gin.Context) {
 	}
 	followerID := int(userIDValue.(uint))
 
-	// Удаляем подписку
 	result := database.DB.Where("follower_id = ? AND followed_id = ?", followerID, followedID).Delete(&models.Followers{})
 
 	if result.Error != nil {
@@ -99,7 +91,6 @@ func UnfollowUser(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "Successfully unfollowed user"})
 }
 
-// CheckFollow - проверить, подписан ли текущий пользователь на другого
 func CheckFollow(c *gin.Context) {
 	targetUserIDStr := c.Param("userID")
 	targetUserID, err := strconv.Atoi(targetUserIDStr)
@@ -130,7 +121,6 @@ func CheckFollow(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"is_following": true})
 }
 
-// GetFollowersCount - получить количество подписчиков
 func GetFollowersCount(c *gin.Context) {
 	userIDStr := c.Param("userID")
 	userID, err := strconv.Atoi(userIDStr)
@@ -145,7 +135,6 @@ func GetFollowersCount(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"followers_count": count})
 }
 
-// GetFollowingCount - получить количество подписок
 func GetFollowingCount(c *gin.Context) {
 	userIDStr := c.Param("userID")
 	userID, err := strconv.Atoi(userIDStr)
@@ -160,7 +149,6 @@ func GetFollowingCount(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"following_count": count})
 }
 
-// GetFollowersList - получить список подписчиков
 func GetFollowersList(c *gin.Context) {
 	userIDStr := c.Param("userID")
 	userID, err := strconv.Atoi(userIDStr)
@@ -189,7 +177,6 @@ func GetFollowersList(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"followers": followers})
 }
 
-// GetFollowingList - получить список подписок
 func GetFollowingList(c *gin.Context) {
 	userIDStr := c.Param("userID")
 	userID, err := strconv.Atoi(userIDStr)

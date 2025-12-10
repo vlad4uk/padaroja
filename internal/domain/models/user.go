@@ -11,10 +11,8 @@ type User struct {
 	Is_blocked   bool      `gorm:"default:false" json:"is_blocked"`
 	Created_at   time.Time `gorm:"default:CURRENT_TIMESTAMP" json:"created_at"`
 
-	// ✅ ДОБАВЛЕНО: Поле Bio (до 150 символов)
 	Bio string `gorm:"size:150" json:"bio"`
 
-	// ✅ ИСПРАВЛЕНО: Удален 'unique' для Image_Url. Используем 'image_url' в JSON.
 	ImageUrl string `json:"image_url"`
 }
 

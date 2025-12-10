@@ -1,4 +1,3 @@
-// src/components/CommentReportButton.tsx
 import React, { useState } from 'react';
 import { FaFlag } from 'react-icons/fa';
 import ReportModal from './ReportModal.tsx';

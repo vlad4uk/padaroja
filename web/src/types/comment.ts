@@ -1,4 +1,3 @@
-// types/comment.ts
 export interface CommentUser {
   id: number;
   username: string;
@@ -14,8 +13,8 @@ export interface Comment {
   is_approved: boolean;
   created_at: string;
   user: CommentUser;
-  parent?: Comment; // ✅ ДОБАВЛЕНО: информация о родительском комментарии
-  replies?: Comment[]; // ✅ ДОБАВЛЕНО: вложенные ответы
+  parent?: Comment;
+  replies?: Comment[]; 
 }
 
 export interface CreateCommentRequest {

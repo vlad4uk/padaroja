@@ -26,35 +26,29 @@ import (
 )
 
 func main() {
-	// 1. Загрузка переменных окружения
 	env := os.Getenv("APP_ENV")
 	if env == "" {
 		env = "development"
 	}
 
-	// В development режиме загружаем из .env файла
 	if env == "development" {
 		if err := godotenv.Load(); err != nil {
 			log.Printf("Warning: .env file not found: %v", err)
 		}
 	}
 
-	// 2. Инициализация JWT секрета
 	if err := utils.InitJWTSecret(); err != nil {
 		log.Fatalf("Failed to initialize JWT secret: %v", err)
 	}
 
-	// 3. Подключение к БД
 	database.ConnectDB()
 
-	// 4. Инициализация Gin с режимом из .env
 	if env == "production" {
 		gin.SetMode(gin.ReleaseMode)
 	}
 
 	router := gin.Default()
 
-	// 5. Настройка CORS из переменных окружения
 	frontendURL := os.Getenv("FRONTEND_URL")
 	if frontendURL == "" {
 		frontendURL = "http://localhost:3000"
@@ -69,7 +63,6 @@ func main() {
 		MaxAge:           12 * time.Hour,
 	}
 
-	// Если в development, разрешаем все origins для удобства
 	if env == "development" {
 		corsConfig.AllowOriginFunc = func(origin string) bool {
 			return true
@@ -79,16 +72,13 @@ func main() {
 
 	router.Use(cors.New(corsConfig))
 
-	// 6. Порт сервера из .env
 	serverPort := os.Getenv("SERVER_PORT")
 	if serverPort == "" {
 		serverPort = "8080"
 	}
 
-	// 7. Роутинг
 	api := router.Group("/api")
 
-	// 1. Маршруты аутентификации (открыты)
 	authRoutes := api.Group("/auth")
 	{
 		authRoutes.POST("/register", auth.Register)
@@ -96,14 +86,11 @@ func main() {
 		authRoutes.POST("/logout", auth.Logout)
 	}
 
-	// 2. Маршруты пользователя
 	userRoutes := api.Group("/user")
 	{
-		// Публичные профили пользователей - доступны всем
 		userRoutes.GET("/:userID/profile", middleware.OptionalAuthMiddleware(), profile.GetUserProfileByID)
 		userRoutes.GET("/:userID/posts", middleware.OptionalAuthMiddleware(), post.GetUserPostsByID)
 
-		// Защищенные маршруты (требуют авторизации)
 		protectedUserRoutes := userRoutes.Group("")
 		protectedUserRoutes.Use(middleware.AuthMiddleware())
 		{
@@ -121,33 +108,25 @@ func main() {
 		}
 	}
 
-	// 3. Маршруты постов
 	postRoutes := api.Group("/posts")
 	{
-		// 1. Публичная лента - доступна всем (гости и авторизованные)
 		postRoutes.GET("", middleware.OptionalAuthMiddleware(), post.GetPublicFeed)
 
-		// 2. Получение одного поста - доступно всем
 		postRoutes.GET("/:postID", middleware.OptionalAuthMiddleware(), post.GetPost)
 
-		// 3. Защищенные операции
 		postRoutes.POST("", middleware.AuthMiddleware(), post.CreatePost)
 		postRoutes.PUT("/:postID", middleware.AuthMiddleware(), post.UpdatePost)
 		postRoutes.DELETE("/:postID", middleware.AuthMiddleware(), post.DeletePost)
 		postRoutes.POST("/:postID/report", middleware.AuthMiddleware(), post.ReportPost)
 		postRoutes.PUT("/:postID/attach-to-place", middleware.AuthMiddleware(), post.AttachPostToPlace)
 
-		// 4. Управление комментариями
 		postRoutes.PATCH("/:postID/comments", middleware.AuthMiddleware(), post.ToggleComments)
 	}
 
-	// 4. Маршруты комментариев
 	commentRoutes := api.Group("/comments")
 	{
-		// Получение комментариев - доступно всем
 		commentRoutes.GET("/post/:postID", middleware.OptionalAuthMiddleware(), comment.GetComments)
 
-		// Защищенные операции
 		commentRoutes.POST("/post/:postID", middleware.AuthMiddleware(), comment.CreateComment)
 		commentRoutes.GET("/:commentID/replies", middleware.OptionalAuthMiddleware(), comment.GetCommentReplies)
 		commentRoutes.GET("/:commentID/latest-reply", middleware.OptionalAuthMiddleware(), comment.GetLatestReply)
@@ -155,36 +134,28 @@ func main() {
 		commentRoutes.DELETE("/:commentID", middleware.AuthMiddleware(), comment.DeleteComment)
 	}
 
-	// 5. Маршруты для карты
 	mapRoutes := api.Group("/map")
 	{
-		// Публичная информация о местах
 		mapRoutes.GET("/place/:placeID", middleware.OptionalAuthMiddleware(), maps.GetPlaceDetails)
 
-		// Данные карты по ID пользователя (доступны всем)
 		mapRoutes.GET("/user/:userID/data", maps.GetMapDataByUserID)
 
-		// Защищенный маршрут (личные данные текущего пользователя)
 		mapRoutes.GET("/user-data", middleware.AuthMiddleware(), maps.GetUserMapData)
 	}
 
-	// 6. Маршруты мест
 	placeRoutes := api.Group("/places")
 	{
-		// Публичные данные мест
+
 		placeRoutes.GET("", middleware.OptionalAuthMiddleware(), places.GetPlaces)
 
-		// Защищенные операции
 		placeRoutes.POST("", middleware.AuthMiddleware(), places.CreatePlace)
 	}
 
-	// 7. Маршруты отзывов
 	reviewRoutes := api.Group("/reviews")
 	{
-		// Публичные отзывы мест
+
 		reviewRoutes.GET("/place/:placeID", middleware.OptionalAuthMiddleware(), reviews.GetPlaceReviews)
 
-		// Защищенные операции
 		protectedReviewRoutes := reviewRoutes.Group("")
 		protectedReviewRoutes.Use(middleware.AuthMiddleware())
 		{
@@ -196,37 +167,30 @@ func main() {
 		}
 	}
 
-	// 8. Маршруты модерации (только для авторизованных)
-	// 8. Маршруты модерации
 	modRoutes := api.Group("/mod")
 	{
 		modRoutes.Use(middleware.AuthMiddleware())
 
-		// Жалобы
 		modRoutes.GET("/complaints", moderation.GetComplaints)
 		modRoutes.PUT("/complaints/:complaintID/status", moderation.UpdateComplaintStatus)
 
-		// Жалобы на посты
 		modRoutes.POST("/posts/:postID/complaint", moderation.CreatePostComplaint)
 		modRoutes.PUT("/posts/:postID/visibility", moderation.TogglePostVisibility)
 		modRoutes.GET("/posts/:postID/complaints", moderation.GetPostComplaints)
 
-		// Жалобы на комментарии
 		modRoutes.POST("/comments/:commentID/complaint", moderation.CreateCommentComplaint)
 		modRoutes.PUT("/comments/:commentID/visibility", moderation.ToggleCommentVisibility)
 		modRoutes.GET("/comments/:commentID/complaints", moderation.GetCommentComplaints)
 
-		// Управление пользователями
 		modRoutes.GET("/users-with-complaints", moderation.GetUsersWithComplaints)
 		modRoutes.POST("/users/:userID/block", moderation.BlockUser)
 		modRoutes.POST("/users/:userID/unblock", moderation.UnblockUser)
 
-		// Управление модераторами
 		modRoutes.GET("/users/search", moderation.SearchUsers)
 		modRoutes.POST("/users/:userID/assign-moderator", moderation.AssignModeratorRole)
 		modRoutes.POST("/users/:userID/remove-moderator", moderation.RemoveModeratorRole)
 	}
-	// 9. Маршруты избранного (только для авторизованных)
+
 	favouriteRoutes := api.Group("/favourites")
 	{
 		favouriteRoutes.Use(middleware.AuthMiddleware())
@@ -238,13 +202,11 @@ func main() {
 		favouriteRoutes.GET("/check-multiple", favourite.CheckMultipleFavourites)
 	}
 
-	// 10. Маршруты лайков
 	likeRoutes := api.Group("/likes")
 	{
-		// Публичные: количество лайков
+
 		likeRoutes.GET("/count/:postID", middleware.OptionalAuthMiddleware(), like.GetPostLikesCount)
 
-		// Защищенные операции
 		protectedLikeRoutes := likeRoutes.Group("")
 		protectedLikeRoutes.Use(middleware.AuthMiddleware())
 		{
@@ -255,7 +217,6 @@ func main() {
 		}
 	}
 
-	// Запуск сервера
 	log.Printf("Сервер запущен на порту %s в режиме %s", serverPort, env)
 	if err := router.Run(":" + serverPort); err != nil {
 		log.Fatalf("Error running server: %v", err)

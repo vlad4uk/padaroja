@@ -1,14 +1,10 @@
-// src/components/ProfileEditForm.tsx (ПОЛНЫЙ КОД)
-
 import React, { useState, ChangeEvent } from 'react';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext.tsx';
 import avatar from '../assets/bird04.png';
 
-// 💡 1. ИМПОРТИРУЕМ ВАШУ ФУНКЦИЮ
-import { uploadImage } from '../firebase/uploadImage.js'; // (Укажите правильный путь к вашему файлу firebase.ts)
+import { uploadImage } from '../firebase/uploadImage.js'; 
 
-// Аватар по умолчанию
 const DEFAULT_AVATAR = avatar;
 
 const ProfileEditForm: React.FC = () => {
@@ -20,7 +16,6 @@ const ProfileEditForm: React.FC = () => {
     const [avatarFile, setAvatarFile] = useState<File | null>(null);
     const [avatarPreview, setAvatarPreview] = useState(
         user?.image_url 
-            // 💡 2. Проверяем, это Firebase URL или старый локальный
             ? (user.image_url.startsWith('http') ? user.image_url : `${user.image_url}`)
             : DEFAULT_AVATAR
     );
@@ -38,7 +33,6 @@ const ProfileEditForm: React.FC = () => {
         }
     };
 
-    // 💡 3. ГЛАВНОЕ ИЗМЕНЕНИЕ (handleSubmit)
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setLoading(true);
@@ -46,30 +40,23 @@ const ProfileEditForm: React.FC = () => {
         setSuccess('');
 
         try {
-            let firebaseUrl = ''; // Переменная для URL из Firebase
+            let firebaseUrl = ''; 
 
-            // ШАГ A: Если пользователь выбрал новый файл, загружаем его
             if (avatarFile) {
-                // Показываем, что идет загрузка (можно добавить отдельный стейт)
                 setSuccess('Загрузка фото...'); 
                 
-                // Вызываем вашу функцию
                 const newUrl = await uploadImage(avatarFile);
                 firebaseUrl = newUrl;
             }
 
-            // ШАГ B: Готовим FormData ТОЛЬКО С ТЕКСТОМ
             const formData = new FormData();
             formData.append('username', username);
             formData.append('bio', bio);
 
-            // ШАГ C: Если мы получили новый URL, добавляем его в форму
-            // Бэкенд будет обновлять URL, только если он придет
             if (firebaseUrl) {
                 formData.append('image_url', firebaseUrl);
             }
             
-            // ШАГ D: Отправляем данные (БЕЗ ФАЙЛА) на Go-бэкенд
             await axios.put(
                 '/api/user/profile',
                 formData,
@@ -77,10 +64,9 @@ const ProfileEditForm: React.FC = () => {
             );
             
             setSuccess('Профиль успешно обновлен!');
-            await checkAuth(); // Обновляем глобальное состояние (он загрузит новый URL)
+            await checkAuth(); 
 
         } catch (err) {
-            // ... (ваша обработка ошибок axios) ...
             if (axios.isAxiosError(err) && err.response) {
                 if (err.response.status === 409) {
                      setError(err.response.data.error || 'Этот логин уже занят');
@@ -95,7 +81,6 @@ const ProfileEditForm: React.FC = () => {
         }
     };
 
-  // В компоненте ProfileEditForm.tsx замените JSX на этот:
 return (
     <div className="profile-edit-form-container">
         <form onSubmit={handleSubmit}>

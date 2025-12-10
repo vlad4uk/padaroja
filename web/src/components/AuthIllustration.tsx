@@ -1,4 +1,3 @@
-// components/AuthIllustration.tsx
 import React from 'react';
 
 interface AuthIllustrationProps {

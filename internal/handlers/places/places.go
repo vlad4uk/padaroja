@@ -16,7 +16,6 @@ type CreatePlaceRequest struct {
 	Longitude float64 `json:"longitude" binding:"required"`
 }
 
-// CreatePlace - Создание нового места
 func CreatePlace(c *gin.Context) {
 	var input CreatePlaceRequest
 	if err := c.ShouldBindJSON(&input); err != nil {
@@ -24,7 +23,6 @@ func CreatePlace(c *gin.Context) {
 		return
 	}
 
-	// Создаем место
 	place := models.Place{
 		Name:      input.Name,
 		Desc:      input.Desc,
@@ -49,7 +47,6 @@ func CreatePlace(c *gin.Context) {
 	})
 }
 
-// GetPlaces - Получение списка мест
 func GetPlaces(c *gin.Context) {
 	var places []models.Place
 	result := database.DB.Find(&places)

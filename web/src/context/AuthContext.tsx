@@ -1,5 +1,3 @@
-// src/context/AuthContext.tsx
-
 import React, { createContext, useContext, useState, ReactNode, useCallback, useEffect } from 'react';
 import axios from 'axios';
 
@@ -69,7 +67,6 @@ export const AuthProvider: React.FC<AuthProviderProps> = ({ children }) => {
                 role_id: userData.role_id || 1,
             });
         } catch (error) {
-            // Пользователь - гость
             setUser(null);
         } finally {
             setIsLoading(false);

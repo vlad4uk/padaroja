@@ -1,4 +1,3 @@
-// src/components/RulesPage.tsx
 import React from 'react';
 import ContentLayout from './ContentLayout.tsx';
 import './RulesPage.css';

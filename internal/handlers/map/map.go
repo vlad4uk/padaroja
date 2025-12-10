@@ -12,7 +12,6 @@ import (
 	"gorm.io/gorm"
 )
 
-// GetUserMapData - Получение всех данных пользователя для карты (отзывы + посты)
 func GetUserMapData(c *gin.Context) {
 	userID, exists := reviews.GetUserIDFromContext(c)
 	if !exists {
@@ -20,7 +19,6 @@ func GetUserMapData(c *gin.Context) {
 		return
 	}
 
-	// Получаем отзывы пользователя
 	var userReviews []models.Review
 	reviewResult := database.DB.
 		Where("user_id = ?", userID).
@@ -33,7 +31,6 @@ func GetUserMapData(c *gin.Context) {
 		return
 	}
 
-	// Формируем ответ для отзывов
 	reviewsResponse := make([]dto.MapReviewResponse, len(userReviews))
 	for i, rev := range userReviews {
 		reviewsResponse[i] = dto.MapReviewResponse{
@@ -51,7 +48,6 @@ func GetUserMapData(c *gin.Context) {
 		}
 	}
 
-	// Получаем посты пользователя
 	var userPosts []models.Post
 	postResult := database.DB.
 		Where("user_id = ?", userID).
@@ -64,13 +60,11 @@ func GetUserMapData(c *gin.Context) {
 		return
 	}
 
-	// Формируем ответ для постов
 	postsResponse := make([]dto.MapPostResponse, len(userPosts))
 	for i, p := range userPosts {
-		// Берем URLs первых фотографий
 		photoURLs := make([]string, 0)
 		for _, photo := range p.Photos {
-			if len(photoURLs) < 3 { // Максимум 3 фото для превью
+			if len(photoURLs) < 3 {
 				photoURLs = append(photoURLs, photo.Url)
 			}
 		}
@@ -94,7 +88,6 @@ func GetUserMapData(c *gin.Context) {
 	})
 }
 
-// GetPlaceDetails - Получение детальной информации о месте (все отзывы и посты)
 func GetPlaceDetails(c *gin.Context) {
 	placeIDStr := c.Param("placeID")
 	placeID, err := strconv.ParseUint(placeIDStr, 10, 32)
@@ -103,14 +96,12 @@ func GetPlaceDetails(c *gin.Context) {
 		return
 	}
 
-	// Получаем информацию о месте
 	var place models.Place
 	if err := database.DB.First(&place, placeID).Error; err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Place not found"})
 		return
 	}
 
-	// Получаем публичные отзывы о месте
 	var reviews []models.Review
 	reviewResult := database.DB.
 		Where("place_id = ? AND is_public = ?", placeID, true).
@@ -123,7 +114,6 @@ func GetPlaceDetails(c *gin.Context) {
 		return
 	}
 
-	// Получаем посты связанные с этим местом
 	var posts []models.Post
 	postResult := database.DB.
 		Where("place_id = ?", placeID).
@@ -137,7 +127,6 @@ func GetPlaceDetails(c *gin.Context) {
 		return
 	}
 
-	// Формируем ответы
 	reviewsResponse := make([]dto.ReviewResponse, len(reviews))
 	for i, rev := range reviews {
 		reviewsResponse[i] = dto.ReviewResponse{
@@ -191,100 +180,6 @@ func GetUserMapDataByID(c *gin.Context) {
 		return
 	}
 
-	// Получаем только публичные отзывы пользователя
-	var userReviews []models.Review
-	reviewResult := database.DB.
-		Where("user_id = ? AND is_public = ?", userID, true). // Только публичные!
-		Preload("Place").
-		Preload("User").
-		Find(&userReviews)
-
-	if reviewResult.Error != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch user reviews"})
-		return
-	}
-
-	// Формируем ответ для отзывов
-	reviewsResponse := make([]dto.MapReviewResponse, len(userReviews))
-	for i, rev := range userReviews {
-		reviewsResponse[i] = dto.MapReviewResponse{
-			ID:         rev.ID,
-			UserID:     rev.UserID,
-			PlaceID:    rev.PlaceID,
-			Rating:     rev.Rating,
-			Content:    rev.Content,
-			CreatedAt:  rev.CreatedAt,
-			PlaceName:  rev.Place.Name,
-			Latitude:   rev.Place.Latitude,
-			Longitude:  rev.Place.Longitude,
-			UserName:   rev.User.Username,
-			UserAvatar: rev.User.ImageUrl,
-		}
-	}
-
-	// Получаем посты пользователя (только видимые)
-	var userPosts []models.Post
-	postResult := database.DB.
-		Where("user_id = ? AND is_visible = ?", userID, true). // Только видимые посты
-		Preload("Place").
-		Preload("Photos").
-		Find(&userPosts)
-
-	if postResult.Error != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch user posts"})
-		return
-	}
-
-	// Формируем ответ для постов
-	postsResponse := make([]dto.MapPostResponse, len(userPosts))
-	for i, p := range userPosts {
-		photoURLs := make([]string, 0)
-		for _, photo := range p.Photos {
-			if len(photoURLs) < 3 {
-				photoURLs = append(photoURLs, photo.Url)
-			}
-		}
-
-		postsResponse[i] = dto.MapPostResponse{
-			ID:         p.ID,
-			Title:      p.Title,
-			PlaceID:    p.PlaceID,
-			PlaceName:  p.Place.Name,
-			Latitude:   p.Place.Latitude,
-			Longitude:  p.Place.Longitude,
-			CreatedAt:  p.CreatedAt,
-			Photos:     photoURLs,
-			LikesCount: p.LikesCount,
-		}
-	}
-
-	c.JSON(http.StatusOK, gin.H{
-		"reviews": reviewsResponse,
-		"posts":   postsResponse,
-	})
-}
-
-// GetUserPublicMapData - Получение публичных данных карты для любого пользователя
-func GetUserPublicMapData(c *gin.Context) {
-	userIDStr := c.Param("userID")
-	userID, err := strconv.ParseUint(userIDStr, 10, 32)
-	if err != nil {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID"})
-		return
-	}
-
-	// Проверяем существование пользователя
-	var user models.User
-	if err := database.DB.First(&user, userID).Error; err != nil {
-		if err == gorm.ErrRecordNotFound {
-			c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
-		} else {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Database error"})
-		}
-		return
-	}
-
-	// Получаем только публичные отзывы пользователя
 	var userReviews []models.Review
 	reviewResult := database.DB.
 		Where("user_id = ? AND is_public = ?", userID, true).
@@ -297,7 +192,6 @@ func GetUserPublicMapData(c *gin.Context) {
 		return
 	}
 
-	// Формируем ответ для отзывов
 	reviewsResponse := make([]dto.MapReviewResponse, len(userReviews))
 	for i, rev := range userReviews {
 		reviewsResponse[i] = dto.MapReviewResponse{
@@ -315,7 +209,6 @@ func GetUserPublicMapData(c *gin.Context) {
 		}
 	}
 
-	// Получаем посты пользователя (только видимые и публичные)
 	var userPosts []models.Post
 	postResult := database.DB.
 		Where("user_id = ? AND is_visible = ?", userID, true).
@@ -328,7 +221,6 @@ func GetUserPublicMapData(c *gin.Context) {
 		return
 	}
 
-	// Формируем ответ для постов
 	postsResponse := make([]dto.MapPostResponse, len(userPosts))
 	for i, p := range userPosts {
 		photoURLs := make([]string, 0)
@@ -357,8 +249,7 @@ func GetUserPublicMapData(c *gin.Context) {
 	})
 }
 
-// GetMapDataByUserID - Получение данных карты по ID пользователя
-func GetMapDataByUserID(c *gin.Context) {
+func GetUserPublicMapData(c *gin.Context) {
 	userIDStr := c.Param("userID")
 	userID, err := strconv.ParseUint(userIDStr, 10, 32)
 	if err != nil {
@@ -366,9 +257,8 @@ func GetMapDataByUserID(c *gin.Context) {
 		return
 	}
 
-	// Получаем данные о пользователе
-	var targetUser models.User
-	if err := database.DB.First(&targetUser, userID).Error; err != nil {
+	var user models.User
+	if err := database.DB.First(&user, userID).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
 			c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
 		} else {
@@ -377,10 +267,9 @@ func GetMapDataByUserID(c *gin.Context) {
 		return
 	}
 
-	// Получаем отзывы пользователя
 	var userReviews []models.Review
 	reviewResult := database.DB.
-		Where("user_id = ?", userID).
+		Where("user_id = ? AND is_public = ?", userID, true).
 		Preload("Place").
 		Preload("User").
 		Find(&userReviews)
@@ -390,20 +279,6 @@ func GetMapDataByUserID(c *gin.Context) {
 		return
 	}
 
-	// Получаем посты пользователя
-	var userPosts []models.Post
-	postResult := database.DB.
-		Where("user_id = ?", userID).
-		Preload("Place").
-		Preload("Photos").
-		Find(&userPosts)
-
-	if postResult.Error != nil {
-		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch user posts"})
-		return
-	}
-
-	// Формируем ответ для отзывов
 	reviewsResponse := make([]dto.MapReviewResponse, len(userReviews))
 	for i, rev := range userReviews {
 		reviewsResponse[i] = dto.MapReviewResponse{
@@ -421,7 +296,104 @@ func GetMapDataByUserID(c *gin.Context) {
 		}
 	}
 
-	// Формируем ответ для постов
+	var userPosts []models.Post
+	postResult := database.DB.
+		Where("user_id = ? AND is_visible = ?", userID, true).
+		Preload("Place").
+		Preload("Photos").
+		Find(&userPosts)
+
+	if postResult.Error != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch user posts"})
+		return
+	}
+	postsResponse := make([]dto.MapPostResponse, len(userPosts))
+	for i, p := range userPosts {
+		photoURLs := make([]string, 0)
+		for _, photo := range p.Photos {
+			if len(photoURLs) < 3 {
+				photoURLs = append(photoURLs, photo.Url)
+			}
+		}
+
+		postsResponse[i] = dto.MapPostResponse{
+			ID:         p.ID,
+			Title:      p.Title,
+			PlaceID:    p.PlaceID,
+			PlaceName:  p.Place.Name,
+			Latitude:   p.Place.Latitude,
+			Longitude:  p.Place.Longitude,
+			CreatedAt:  p.CreatedAt,
+			Photos:     photoURLs,
+			LikesCount: p.LikesCount,
+		}
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"reviews": reviewsResponse,
+		"posts":   postsResponse,
+	})
+}
+
+func GetMapDataByUserID(c *gin.Context) {
+	userIDStr := c.Param("userID")
+	userID, err := strconv.ParseUint(userIDStr, 10, 32)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid user ID"})
+		return
+	}
+
+	var targetUser models.User
+	if err := database.DB.First(&targetUser, userID).Error; err != nil {
+		if err == gorm.ErrRecordNotFound {
+			c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
+		} else {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Database error"})
+		}
+		return
+	}
+
+	var userReviews []models.Review
+	reviewResult := database.DB.
+		Where("user_id = ?", userID).
+		Preload("Place").
+		Preload("User").
+		Find(&userReviews)
+
+	if reviewResult.Error != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch user reviews"})
+		return
+	}
+
+	var userPosts []models.Post
+	postResult := database.DB.
+		Where("user_id = ?", userID).
+		Preload("Place").
+		Preload("Photos").
+		Find(&userPosts)
+
+	if postResult.Error != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch user posts"})
+		return
+	}
+
+	reviewsResponse := make([]dto.MapReviewResponse, len(userReviews))
+	for i, rev := range userReviews {
+		reviewsResponse[i] = dto.MapReviewResponse{
+			ID:         rev.ID,
+			UserID:     rev.UserID,
+			PlaceID:    rev.PlaceID,
+			Rating:     rev.Rating,
+			Content:    rev.Content,
+			CreatedAt:  rev.CreatedAt,
+			PlaceName:  rev.Place.Name,
+			Latitude:   rev.Place.Latitude,
+			Longitude:  rev.Place.Longitude,
+			UserName:   rev.User.Username,
+			UserAvatar: rev.User.ImageUrl,
+		}
+	}
+
 	postsResponse := make([]dto.MapPostResponse, len(userPosts))
 	for i, p := range userPosts {
 		photoURLs := make([]string, 0)

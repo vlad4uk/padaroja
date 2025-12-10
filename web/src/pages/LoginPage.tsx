@@ -2,17 +2,15 @@ import React, { useState } from 'react';
 import axios from 'axios';
 import AuthLayout from '../components/AuthLayout.tsx';
 import { useNavigate } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext.tsx'; // Импортируем useAuth
+import { useAuth } from '../context/AuthContext.tsx'; 
 import AuthIllustration from '../components/AuthIllustration.tsx';
 import loginImage from '../assets/bird04.png';
 
 
-// Базовый URL Go-бэкенда
 const API_BASE_URL = '/api/auth'; 
 
 const LoginPage: React.FC = () => {
   const navigate = useNavigate();
-  // 💡 1. Получаем функцию login из контекста
   const { login } = useAuth(); 
   
   const [email, setEmail] = useState('');
@@ -26,7 +24,6 @@ const LoginPage: React.FC = () => {
     setLoading(true);
 
     try {
-      // КЛЮЧЕВОЙ ЗАПРОС С withCredentials: true
       const response = await axios.post(
         `${API_BASE_URL}/login`,
         {
@@ -34,31 +31,25 @@ const LoginPage: React.FC = () => {
           password: password,
         },
         {
-          // ОБЯЗАТЕЛЬНО для отправки куки на Go-бэкенд и получения куки в ответ
           withCredentials: true, 
         }
       );
 
-      // В случае успеха:
       console.log('Login successful:', response.data);
       
-      // 💡 2. Вызываем login, чтобы обновить состояние React-контекста
       login(response.data); 
 
       alert(`Вход успешен! Добро пожаловать, ${response.data.user.username}`);
       
-      // 💡 3. Переходим на страницу профиля
       navigate('/profile');
 
     } catch (err) {
       if (axios.isAxiosError(err) && err.response) {
-        // Предполагаем, что Go-бэкенд возвращает ошибку в формате { "error": "..." }
         setError(err.response.data.error || 'Login failed');
       } else {
         setError('An unexpected error occurred. Check server connection.');
       }
     } finally {
-      // Это выполнится в любом случае (успех или ошибка)
       setLoading(false);
     }
   };
@@ -108,7 +99,6 @@ const LoginPage: React.FC = () => {
           />
         </div>
 
-        {/* Checkbox "Remember me" */}
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
           <label style={{ fontSize: '0.875rem', color: '#3f4254', display: 'flex', alignItems: 'center' }}>
             <input type="checkbox" style={{ marginRight: '8px' }} />
@@ -116,7 +106,6 @@ const LoginPage: React.FC = () => {
           </label>
         </div>
         
-        {/* Отображение ошибки */}
         {error && <p style={{ color: 'red', textAlign: 'center', fontSize: '0.875rem', marginBottom: '10px' }}>{error}</p>}
 
 

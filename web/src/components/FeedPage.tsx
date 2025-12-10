@@ -1,5 +1,3 @@
-// src/pages/FeedPage.tsx
-
 import React, { useState, useEffect } from 'react';
 import PostFeed from '../components/PostFeed.tsx';
 import RightFilters from '../components/RightFilters.tsx';

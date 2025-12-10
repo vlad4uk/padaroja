@@ -1,4 +1,3 @@
-// src/components/CommentActionsMenu.tsx
 import React, { useState, useRef, useEffect } from 'react';
 import { FaTrash, FaEllipsisV } from 'react-icons/fa';
 import { useAuth } from '../context/AuthContext.tsx';

@@ -14,5 +14,5 @@ type CreateReviewWithPostRequest struct {
 		IsPublic bool   `json:"is_public"`
 	} `json:"review_data" binding:"required"`
 
-	PostID *uint `json:"post_id"` // ID существующего поста для прикрепления
+	PostID *uint `json:"post_id"`
 }

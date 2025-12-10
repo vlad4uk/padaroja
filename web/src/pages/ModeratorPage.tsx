@@ -1,4 +1,3 @@
-// src/pages/ModeratorPage.tsx
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
@@ -6,14 +5,13 @@ import ContentLayout from '../components/ContentLayout.tsx';
 import './ModeratorPage.css';
 import { FaFileAlt, FaComment, FaEye, FaEyeSlash } from 'react-icons/fa';
 
-// --- ИНТЕРФЕЙСЫ ---
 interface Complaint {
     id: string;
-    type: 'POST' | 'COMMENT'; // Добавляем тип жалобы
-    post_id?: number; // Может быть null для комментариев
-    comment_id?: number; // Может быть null для постов
+    type: 'POST' | 'COMMENT'; 
+    post_id?: number; 
+    comment_id?: number; 
     post_title: string;
-    comment_content?: string; // Контент комментария
+    comment_content?: string; 
     author: string;
     reason: string;
     status: 'NEW' | 'PROCESSING' | 'RESOLVED' | 'REJECTED';
@@ -55,7 +53,6 @@ const ModeratorPage: React.FC = () => {
     const [usersError, setUsersError] = useState('');
     const navigate = useNavigate();
     
-    // Состояния для добавления модератора
     const [searchQuery, setSearchQuery] = useState('');
     const [searchResults, setSearchResults] = useState<UserSearchResult[]>([]);
     const [searchLoading, setSearchLoading] = useState(false);
@@ -66,10 +63,8 @@ const ModeratorPage: React.FC = () => {
     const [unblockLoading, setUnblockLoading] = useState<number | null>(null);
     const [assignSuccess, setAssignSuccess] = useState('');
 
-    // Состояния для управления видимостью
     const [visibilityLoading, setVisibilityLoading] = useState<{ [key: string]: boolean }>({});
 
-    // Загрузка жалоб
     const fetchComplaints = async () => {
         try {
             setLoading(true);
@@ -118,7 +113,6 @@ const ModeratorPage: React.FC = () => {
         } else if (activeTab === 'users') {
             fetchUsersWithComplaints();
         } else if (activeTab === 'add_mod') {
-            // Сбросить состояние поиска при переключении вкладок
             setSearchQuery('');
             setSearchResults([]);
             setSearchError('');
@@ -126,7 +120,6 @@ const ModeratorPage: React.FC = () => {
         }
     }, [activeTab]);
 
-    // Обработчик изменения статуса жалобы
     const handleStatusChange = async (complaintId: string, newStatus: Complaint['status']) => {
         try {
             await axios.put(
@@ -167,7 +160,6 @@ const ModeratorPage: React.FC = () => {
         }
     };
 
-    // Обработчик переключения видимости комментария
     const toggleCommentVisibility = async (commentId: number, currentStatus: boolean) => {
         const newStatus = !currentStatus;
         const action = newStatus ? 'показан' : 'скрыт';

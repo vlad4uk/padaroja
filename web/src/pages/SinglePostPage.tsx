@@ -10,7 +10,6 @@ import { FaRegBookmark, FaBookmark, FaAngleDoubleLeft, FaAngleDoubleRight, FaTim
 import { useAuth } from '../context/AuthContext.tsx'; 
 import CommentsSection from '../components/CommentsSection.tsx';
 
-// --- ИНТЕРФЕЙСЫ ---
 
 interface ParagraphData {
     id: number;
@@ -34,7 +33,7 @@ interface PostDetailData {
     paragraphs: ParagraphData[] | null;
     photos: PhotoData[] | null;
     user_id: number;
-    comments_disabled: boolean; // ✅ Обязательно добавляем
+    comments_disabled: boolean; 
     author_info?: {
         username: string;
         image_url: string;

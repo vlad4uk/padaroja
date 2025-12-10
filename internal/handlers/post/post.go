@@ -13,7 +13,6 @@ import (
 	"gorm.io/gorm"
 )
 
-// PlaceCreationData - DTO для данных Места
 type PlaceCreationData struct {
 	Name      string  `json:"name" binding:"required"`
 	Desc      string  `json:"desc"`
@@ -21,7 +20,6 @@ type PlaceCreationData struct {
 	Longitude float64 `json:"longitude"`
 }
 
-// PostCreationRequest - DTO для всего запроса на создание Поста
 type PostCreationRequest struct {
 	Title      string             `json:"title" binding:"required"`
 	PlaceData  PlaceCreationData  `json:"place_data" binding:"required"`
@@ -30,7 +28,6 @@ type PostCreationRequest struct {
 	Photos     []models.PostPhoto `json:"photos"`
 }
 
-// PostResponse - DTO для ответа (ID теперь uint)
 type PostResponse struct {
 	ID         uint               `json:"id"`
 	UserID     uint               `json:"user_id"`
@@ -44,7 +41,6 @@ type PostResponse struct {
 	UserName   string             `json:"user_name"`   // Добавьте это поле
 }
 
-// DetailPostResponse - DTO для детального ответа (ID теперь uint)
 type DetailPostResponse struct {
 	ID          uint               `json:"id"`
 	UserID      uint               `json:"user_id"`
@@ -70,7 +66,6 @@ type ReportRequest struct {
 	Reason string `json:"reason" binding:"required"`
 }
 
-// Вспомогательная функция для безопасного извлечения userID
 func getUserIDFromContext(c *gin.Context) (uint, bool) {
 	val, exists := c.Get("userID")
 	if !exists {
@@ -103,10 +98,6 @@ func getUserIDFromContext(c *gin.Context) (uint, bool) {
 
 	return userID, true
 }
-
-// =========================================================================
-// CREATE POST
-// =========================================================================
 
 func CreatePost(c *gin.Context) {
 	userID, exists := getUserIDFromContext(c)
@@ -206,10 +197,6 @@ func CreatePost(c *gin.Context) {
 	c.JSON(http.StatusCreated, gin.H{"message": "Post created successfully"})
 }
 
-// =========================================================================
-// GET USER POSTS (Личный кабинет: только посты текущего пользователя)
-// =========================================================================
-
 // В функции GetUserPosts добавьте предзагрузку User и обновите формирование ответа
 func GetUserPosts(c *gin.Context) {
 	userID, exists := getUserIDFromContext(c)
@@ -275,10 +262,6 @@ func GetUserPosts(c *gin.Context) {
 	c.JSON(http.StatusOK, response)
 }
 
-// =========================================================================
-// GET SINGLE POST
-// =========================================================================
-
 func GetPost(c *gin.Context) {
 	postIDStr := c.Param("postID")
 
@@ -334,25 +317,15 @@ func GetPost(c *gin.Context) {
 	c.JSON(http.StatusOK, response)
 }
 
-// =========================================================================
-// GET PUBLIC FEED (Публичная лента: все одобренные посты, кроме постов текущего пользователя)
-// =========================================================================
-
-// post.go - только обновленная функция GetPublicFeed
 func GetPublicFeed(c *gin.Context) {
 	var posts []models.Post
 
-	// Базовый запрос для всех пользователей - показываем все одобренные посты
 	db := database.DB.Model(&models.Post{}).Where("is_approved = ?", true)
 
-	// Проверяем, авторизован ли пользователь через OptionalAuthMiddleware
 	userID, exists := c.Get("userID")
 	if exists && userID != nil {
-		// Если авторизован, показываем все одобренные посты (можно добавить фильтры по блокировке)
 		uid, ok := userID.(uint)
 		if ok && uid != 0 {
-			// Можно добавить логику исключения постов заблокированных пользователей
-			// db = db.Where("user_id NOT IN (SELECT blocked_user_id FROM blocked_users WHERE blocker_id = ?)", uid)
 		}
 	}
 
@@ -565,8 +538,6 @@ func DeletePost(c *gin.Context) {
 	err = database.DB.Transaction(func(tx *gorm.DB) error {
 		var post models.Post
 
-		// 1. Проверяем существование поста и права пользователя
-		// ✅ Используем прямую проверку с First
 		result := tx.Where("id = ? AND user_id = ?", postID, userID).First(&post)
 		if result.Error != nil {
 			if result.Error == gorm.ErrRecordNotFound {
@@ -595,8 +566,6 @@ func DeletePost(c *gin.Context) {
 			return err
 		}
 
-		// D. Удаляем жалобы на пост (ВАЖНО: перед удалением поста)
-		// ✅ Используем сырой SQL если GORM не работает
 		if err := tx.Exec("DELETE FROM complaints WHERE post_id = ?", post.ID).Error; err != nil {
 			fmt.Printf("DEBUG: Error deleting complaints with SQL: %v\n", err)
 			// Пробуем через GORM
@@ -755,11 +724,11 @@ func GetUserPostsByID(c *gin.Context) {
 		return
 	}
 
-	fmt.Printf("GetUserPostsByID DEBUG: Fetching posts for user ID: %d\n", userID) // ✅ Добавьте этот лог
+	fmt.Printf("GetUserPostsByID DEBUG: Fetching posts for user ID: %d\n", userID)
 
 	var posts []models.Post
 	result := database.DB.
-		Where("user_id = ?", userID). // ✅ Убедитесь, что используется переданный userID
+		Where("user_id = ?", userID).
 		Preload("User").
 		Preload("Photos").
 		Preload("Paragraphs").
@@ -886,8 +855,6 @@ func AttachPostToPlace(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "Post successfully attached to place"})
 }
 
-// internal/handlers/post/post.go
-// ToggleComments - включение/выключение комментариев
 func ToggleComments(c *gin.Context) {
 	userIDValue, exists := c.Get("userID")
 	if !exists {

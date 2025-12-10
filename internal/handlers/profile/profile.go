@@ -11,9 +11,7 @@ import (
 	"gorm.io/gorm"
 )
 
-// GetCurrentUserProfile - Извлекает полную информацию о профиле авторизованного пользователя.
-// Ответ содержит id, username, bio и image_url.
-func GetCurrentUserProfile(c *gin.Context) { // ✅ ПЕРЕИМЕНОВАНО
+func GetCurrentUserProfile(c *gin.Context) {
 	// 1. Получение UserID из контекста Gin
 	userIDValue, exists := c.Get("userID")
 	if !exists {
@@ -25,13 +23,9 @@ func GetCurrentUserProfile(c *gin.Context) { // ✅ ПЕРЕИМЕНОВАНО
 	// Приведение типа userID (из middleware: uint -> int для GORM)
 	userID := int(userIDValue.(uint))
 
-	// 2. Поиск пользователя в базе данных
-
 	var user models.User
 
-	// !!! ВАЖНО: Выбираем все поля, необходимые для AuthContext
-
-	err := database.DB.Select("id, username, bio, image_url, role_id").First(&user, userID).Error // ✅ ДОБАВЛЕН role_id
+	err := database.DB.Select("id, username, bio, image_url, role_id").First(&user, userID).Error
 	if err != nil {
 		if err == gorm.ErrRecordNotFound {
 			c.JSON(http.StatusNotFound, gin.H{"error": "User not found."})
@@ -48,7 +42,7 @@ func GetCurrentUserProfile(c *gin.Context) { // ✅ ПЕРЕИМЕНОВАНО
 		"username":  user.Username,
 		"bio":       user.Bio,
 		"image_url": user.ImageUrl,
-		"role_id":   user.RoleID, // ✅ ИСПРАВЛЕНО: role_id вместо roleId
+		"role_id":   user.RoleID,
 	})
 }
 
@@ -135,7 +129,7 @@ func UpdateUserProfile(c *gin.Context) {
 
 	// 9. Возвращаем обновленные данные
 	var updatedUser models.User
-	database.DB.Select("id, username, bio, image_url, role_id").First(&updatedUser, userID) // ✅ ДОБАВЛЕН role_id
+	database.DB.Select("id, username, bio, image_url, role_id").First(&updatedUser, userID)
 
 	c.JSON(http.StatusOK, gin.H{
 		"message": "Profile updated successfully!",
@@ -145,12 +139,11 @@ func UpdateUserProfile(c *gin.Context) {
 			"username":  updatedUser.Username,
 			"bio":       updatedUser.Bio,
 			"image_url": updatedUser.ImageUrl,
-			"role_id":   updatedUser.RoleID, // ✅ ДОБАВЛЕНО
+			"role_id":   updatedUser.RoleID,
 		},
 	})
 }
 
-// GetUserProfileByID - Получает профиль любого пользователя по ID ✅ ПЕРЕИМЕНОВАНО
 func GetUserProfileByID(c *gin.Context) {
 	userIDStr := c.Param("userID")
 
