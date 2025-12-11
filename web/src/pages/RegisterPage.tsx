@@ -4,7 +4,6 @@ import AuthLayout from '../components/AuthLayout.tsx';
 import AuthIllustration from '../components/AuthIllustration.tsx';
 import loginImage from '../assets/bird04.png';
 
-// Базовый URL Go-бэкенда
 const API_BASE_URL = '/api/auth'; 
 
 const RegisterPage: React.FC = () => {
@@ -36,14 +35,11 @@ const RegisterPage: React.FC = () => {
           email,
           password,
         }
-        // withCredentials: true не требуется, так как куки еще не устанавливаются
       );
 
-      // В случае успеха:
       console.log('Registration successful:', response.data);
       setMessage(response.data.message || 'Registration successful! Now you can log in.');
       
-      // Очистка формы
       setUsername('');
       setEmail('');
       setPassword('');
@@ -51,7 +47,6 @@ const RegisterPage: React.FC = () => {
 
     } catch (err) {
       if (axios.isAxiosError(err) && err.response) {
-        // Отображение ошибки с бэкенда (например, "User already exists")
         setError(err.response.data.error || 'Registration failed');
       } else {
         setError('An unexpected error occurred. Check server connection.');

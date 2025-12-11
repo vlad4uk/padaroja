@@ -1,4 +1,3 @@
-// src/components/ReportModal.tsx (обновленная версия)
 import React, { useState, useEffect } from 'react';
 import './ReportModal.css';
 
@@ -28,7 +27,6 @@ const ReportModal: React.FC<ReportModalProps> = ({
     const [reason, setReason] = useState('');
     const [error, setError] = useState('');
 
-    // Сброс состояния при закрытии
     useEffect(() => {
         if (!isOpen) {
             setReason('');
@@ -36,7 +34,6 @@ const ReportModal: React.FC<ReportModalProps> = ({
         }
     }, [isOpen]);
 
-    // Обработка клавиш
     useEffect(() => {
         const handleKeyDown = (e: KeyboardEvent) => {
             if (!isOpen) return;
@@ -68,10 +65,8 @@ const ReportModal: React.FC<ReportModalProps> = ({
         
         try {
             await onSubmit(trimmedReason);
-            // Не закрываем модалку здесь - родительский компонент закроет после успеха
         } catch (error) {
             console.error('Ошибка при отправке жалобы:', error);
-            // Ошибка уже обработана в родительском компоненте
         }
     };
 
@@ -92,7 +87,7 @@ const ReportModal: React.FC<ReportModalProps> = ({
                         value={reason}
                         onChange={(e) => {
                             setReason(e.target.value);
-                            setError(''); // Сбрасываем ошибку при изменении
+                            setError(''); 
                         }}
                         rows={4}
                         disabled={loading}

@@ -32,7 +32,6 @@ const PostEditPage: React.FC = () => {
 
     const fileInputRef = useRef<HTMLInputElement>(null);
 
-    // 1. ЗАГРУЗКА ДАННЫХ
     useEffect(() => {
         const fetchPostData = async () => {
             try {
@@ -47,7 +46,6 @@ const PostEditPage: React.FC = () => {
                 const paragraphs = data.paragraphs || [];
                 const photos = data.photos || [];
 
-                // Определяем максимальный порядок (чтобы создать слайды в правильном порядке)
                 const maxOrderText = paragraphs.length > 0 ? Math.max(...paragraphs.map((p: any) => p.order)) : 0;
                 const maxOrderPhoto = photos.length > 0 ? Math.max(...photos.map((p: any) => p.order)) : 0;
                 const totalSlides = Math.max(maxOrderText, maxOrderPhoto);
@@ -84,7 +82,6 @@ const PostEditPage: React.FC = () => {
         }
     }, [id, isLoggedIn, navigate]);
 
-    // --- Логика слайдера ---
     const handleNextSlide = () => currentSlideIndex < slides.length - 1 && setCurrentSlideIndex(prev => prev + 1);
     const handlePrevSlide = () => currentSlideIndex > 0 && setCurrentSlideIndex(prev => prev - 1);
 
@@ -131,7 +128,6 @@ const PostEditPage: React.FC = () => {
 
     const handleRemoveImage = (e: React.MouseEvent) => { e.stopPropagation(); updateCurrentSlide('imageUrl', ''); };
 
-    // --- ОБНОВЛЕНИЕ И УДАЛЕНИЕ ---
     const handleUpdate = async () => {
         if (!title.trim() || !place.trim()) return alert('Заполните название и место');
         setIsSaving(true);

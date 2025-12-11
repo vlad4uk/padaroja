@@ -10,10 +10,8 @@ import (
 	"github.com/golang-jwt/jwt/v5"
 )
 
-// JWT секрет из переменных окружения
 var JwtSecret []byte
 
-// Инициализация JWT секрета
 func InitJWTSecret() error {
 	secret := os.Getenv("JWT_SECRET")
 	if secret == "" {
@@ -24,17 +22,14 @@ func InitJWTSecret() error {
 }
 
 func GenerateJWT(userID uint) (string, error) {
-	// Проверяем инициализацию секрета
 	if len(JwtSecret) == 0 {
 		if err := InitJWTSecret(); err != nil {
 			return "", err
 		}
 	}
 
-	// Получаем время жизни токена из .env (по умолчанию 24 часа)
 	expiryHoursStr := os.Getenv("JWT_EXPIRY_HOURS")
-	expiryHours := 24 // значение по умолчанию
-
+	expiryHours := 24
 	if expiryHoursStr != "" {
 		if hours, err := strconv.Atoi(expiryHoursStr); err == nil && hours > 0 {
 			expiryHours = hours
@@ -54,9 +49,8 @@ func GenerateJWT(userID uint) (string, error) {
 	return t, err
 }
 
-// Валидация JWT и получение ID пользователя
 func ValidateJWT(tokenString string) (uint, error) {
-	// Проверяем инициализацию секрета
+
 	if len(JwtSecret) == 0 {
 		if err := InitJWTSecret(); err != nil {
 			return 0, err
@@ -64,7 +58,7 @@ func ValidateJWT(tokenString string) (uint, error) {
 	}
 
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
-		// Проверка метода подписи
+
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("Unexpected signing method: %v", token.Header["alg"])
 		}
@@ -76,7 +70,7 @@ func ValidateJWT(tokenString string) (uint, error) {
 	}
 
 	if claims, ok := token.Claims.(jwt.MapClaims); ok && token.Valid {
-		// Проверка существования и типа "user_id"
+
 		if userIDFloat, ok := claims["user_id"].(float64); ok {
 			return uint(userIDFloat), nil
 		}

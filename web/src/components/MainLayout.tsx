@@ -1,4 +1,3 @@
-// src/components/MainLayout.tsx
 import React, { useState, useEffect } from 'react'; 
 import { useParams } from 'react-router-dom';
 import Sidebar from '../components/Sidebar.tsx';
@@ -9,7 +8,6 @@ import '../components/MainLayout.css';
 import UserPostsList from '../components/UserPostsList.tsx';
 import { useAuth } from '../context/AuthContext.tsx';
 
-// Общий тип для всех компонентов
 export type TabType = 'Публикации' | 'Карта' | 'Изменить';
 
 const MainLayout: React.FC = () => {
@@ -51,7 +49,7 @@ const MainLayout: React.FC = () => {
                 </div>
             );
             case 'Карта':
-            return <MapView targetUserId={targetUserId} />; // Передаем ID пользователя
+            return <MapView targetUserId={targetUserId} />; 
             case 'Публикации':
             default:
             return (

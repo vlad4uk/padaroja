@@ -12,7 +12,6 @@ import (
 	"gorm.io/gorm"
 )
 
-// Вспомогательная функция для получения userID из контекста
 func GetUserIDFromContext(c *gin.Context) (uint, bool) {
 	val, exists := c.Get("userID")
 	if !exists {
@@ -46,7 +45,6 @@ func GetUserIDFromContext(c *gin.Context) (uint, bool) {
 	return userID, true
 }
 
-// CreateReview - Создание отзыва о месте
 func CreateReview(c *gin.Context) {
 	userID, exists := GetUserIDFromContext(c)
 	if !exists {
@@ -60,7 +58,6 @@ func CreateReview(c *gin.Context) {
 		return
 	}
 
-	// Проверяем существование места
 	var place models.Place
 	if err := database.DB.First(&place, input.PlaceID).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
@@ -71,7 +68,6 @@ func CreateReview(c *gin.Context) {
 		return
 	}
 
-	// Проверяем, не оставлял ли пользователь уже отзыв на это место
 	var existingReview models.Review
 	err := database.DB.Where("user_id = ? AND place_id = ?", userID, input.PlaceID).First(&existingReview).Error
 	if err == nil {
@@ -82,7 +78,6 @@ func CreateReview(c *gin.Context) {
 		return
 	}
 
-	// Создаем отзыв
 	review := models.Review{
 		UserID:   int(userID),
 		PlaceID:  input.PlaceID,
@@ -105,7 +100,6 @@ func CreateReview(c *gin.Context) {
 	})
 }
 
-// GetUserReviews - Получение всех отзывов пользователя
 func GetUserReviews(c *gin.Context) {
 	userID, exists := GetUserIDFromContext(c)
 	if !exists {
@@ -145,7 +139,6 @@ func GetUserReviews(c *gin.Context) {
 	c.JSON(http.StatusOK, response)
 }
 
-// UpdateReview - Обновление отзыва
 func UpdateReview(c *gin.Context) {
 	userID, exists := GetUserIDFromContext(c)
 	if !exists {
@@ -161,7 +154,6 @@ func UpdateReview(c *gin.Context) {
 		return
 	}
 
-	// Находим отзыв и проверяем владельца
 	var review models.Review
 	if err := database.DB.Where("id = ? AND user_id = ?", reviewID, userID).First(&review).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
@@ -172,7 +164,6 @@ func UpdateReview(c *gin.Context) {
 		return
 	}
 
-	// Обновляем поля
 	updates := make(map[string]interface{})
 	if input.Rating != 0 {
 		updates["rating"] = input.Rating
@@ -192,7 +183,6 @@ func UpdateReview(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "Review updated successfully"})
 }
 
-// DeleteReview - Удаление отзыва
 func DeleteReview(c *gin.Context) {
 	userID, exists := GetUserIDFromContext(c)
 	if !exists {
@@ -202,7 +192,6 @@ func DeleteReview(c *gin.Context) {
 
 	reviewID := c.Param("reviewID")
 
-	// Находим отзыв и проверяем владельца
 	var review models.Review
 	if err := database.DB.Where("id = ? AND user_id = ?", reviewID, userID).First(&review).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
@@ -221,7 +210,6 @@ func DeleteReview(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "Review deleted successfully"})
 }
 
-// GetPlaceReviews - Получение отзывов о конкретном месте
 func GetPlaceReviews(c *gin.Context) {
 	placeIDStr := c.Param("placeID")
 	placeID, err := strconv.ParseUint(placeIDStr, 10, 32)
@@ -254,7 +242,7 @@ func GetPlaceReviews(c *gin.Context) {
 			CreatedAt:  review.CreatedAt,
 			UserName:   review.User.Username,
 			UserAvatar: review.User.ImageUrl,
-			PlaceName:  "", // Можно добавить если нужно
+			PlaceName:  "",
 		}
 	}
 
@@ -282,7 +270,7 @@ func CreateReviewWithPlace(c *gin.Context) {
 			IsPublic bool   `json:"is_public"`
 		} `json:"review_data" binding:"required"`
 
-		PostID *uint `json:"post_id"` // ID существующего поста для прикрепления
+		PostID *uint `json:"post_id"`
 	}
 
 	if err := c.ShouldBindJSON(&input); err != nil {
@@ -290,7 +278,6 @@ func CreateReviewWithPlace(c *gin.Context) {
 		return
 	}
 
-	// Начинаем транзакцию
 	tx := database.DB.Begin()
 	defer func() {
 		if r := recover(); r != nil {
@@ -298,7 +285,6 @@ func CreateReviewWithPlace(c *gin.Context) {
 		}
 	}()
 
-	// 1. Создаем место
 	place := models.Place{
 		Name:      input.PlaceData.Name,
 		Desc:      input.PlaceData.Desc,
@@ -312,7 +298,6 @@ func CreateReviewWithPlace(c *gin.Context) {
 		return
 	}
 
-	// 2. Создаем отзыв
 	review := models.Review{
 		UserID:   int(userID),
 		PlaceID:  place.ID,
@@ -327,9 +312,7 @@ func CreateReviewWithPlace(c *gin.Context) {
 		return
 	}
 
-	// 3. Если указан PostID, прикрепляем пост к месту
 	if input.PostID != nil {
-		// Проверяем существование поста и принадлежность пользователю
 		var post models.Post
 		if err := tx.Where("id = ? AND user_id = ?", *input.PostID, userID).First(&post).Error; err != nil {
 			tx.Rollback()
@@ -341,7 +324,6 @@ func CreateReviewWithPlace(c *gin.Context) {
 			return
 		}
 
-		// Обновляем пост с новым place_id
 		if err := tx.Model(&post).Update("place_id", place.ID).Error; err != nil {
 			tx.Rollback()
 			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to attach post to place"})
@@ -349,7 +331,6 @@ func CreateReviewWithPlace(c *gin.Context) {
 		}
 	}
 
-	// Фиксируем транзакцию
 	if err := tx.Commit().Error; err != nil {
 		tx.Rollback()
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Transaction failed"})

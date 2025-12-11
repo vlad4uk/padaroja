@@ -1,6 +1,6 @@
-// [file name]: FollowersModal.tsx
 import React, { useState, useEffect } from 'react';
 import axios from 'axios';
+import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.tsx';
 import './FollowersModal.css';
 
@@ -29,6 +29,7 @@ const FollowersModal: React.FC<FollowersModalProps> = ({
     const [users, setUsers] = useState<User[]>([]);
     const [loading, setLoading] = useState(false);
     const { user: currentUser } = useAuth();
+    const navigate = useNavigate();
 
     useEffect(() => {
         if (isOpen && userId) {
@@ -57,7 +58,6 @@ const FollowersModal: React.FC<FollowersModalProps> = ({
             await axios.delete(`/api/user/${targetUserId}/follow`, 
                 { withCredentials: true });
             
-            // Обновляем список
             fetchUsers();
         } catch (error) {
             console.error('Error unfollowing user:', error);
@@ -70,11 +70,16 @@ const FollowersModal: React.FC<FollowersModalProps> = ({
                 {}, 
                 { withCredentials: true });
             
-            // Обновляем список
             fetchUsers();
         } catch (error) {
             console.error('Error following user:', error);
         }
+    };
+
+    const handleUserClick = (userId: number, event: React.MouseEvent) => {
+        event.stopPropagation();
+        onClose();
+        navigate(`/user/${userId}`);
     };
 
     if (!isOpen) return null;
@@ -96,7 +101,12 @@ const FollowersModal: React.FC<FollowersModalProps> = ({
                         </div>
                     ) : (
                         users.map((user) => (
-                            <div key={user.follow_id} className="user-item">
+                            <div 
+                                key={user.follow_id} 
+                                className="user-item"
+                                style={{ cursor: 'pointer' }}
+                                onClick={(e) => handleUserClick(user.id, e)}
+                            >
                                 <img 
                                     src={user.image_url || 'https://i.pravatar.cc/150'} 
                                     alt={user.username}
@@ -112,9 +122,11 @@ const FollowersModal: React.FC<FollowersModalProps> = ({
                                     )}
                                 </div>
                                 
-                                {/* Кнопки действий */}
                                 {currentUser && currentUser.id !== user.id && (
-                                    <div className="user-actions">
+                                    <div 
+                                        className="user-actions"
+                                        onClick={(e) => e.stopPropagation()}
+                                    >
                                         {type === 'following' && currentUser?.id === userId ? (
                                             <button 
                                                 className="unfollow-button"

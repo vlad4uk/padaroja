@@ -1,4 +1,3 @@
-// src/components/PostActionsMenu.tsx
 import React, { useState, useRef, useEffect } from 'react';
 import { 
   FaEdit, 
@@ -58,9 +57,7 @@ const PostActionsMenu: React.FC<PostActionsMenuProps> = ({
         setIsReporting(true);
         try {
             await onReport(postID, reason);
-            // Успешное сообщение будет показано в родительском компоненте
         } catch (error) {
-            // Ошибка уже обработана в родительском компоненте
             console.error('Report failed:', error);
         } finally {
             setIsReporting(false);
@@ -134,7 +131,6 @@ const PostActionsMenu: React.FC<PostActionsMenuProps> = ({
                                 </button>
                             </>
                         ) : (
-                            // Для всех остальных пользователей
                             <button 
                                 onClick={handleReportClick}
                                 className="action-item"

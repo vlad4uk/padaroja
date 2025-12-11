@@ -12,9 +12,7 @@ import (
 	"gorm.io/gorm"
 )
 
-// GetComplaints - получение списка жалоб для модератора (объединённые посты и комментарии)
 func GetComplaints(c *gin.Context) {
-	// Проверка прав модератора
 	userIDValue, exists := c.Get("userID")
 	if !exists {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
@@ -38,7 +36,6 @@ func GetComplaints(c *gin.Context) {
 		return
 	}
 
-	// Получаем жалобы на посты
 	postComplaints := []struct {
 		models.Complaint
 		PostTitle      string `json:"post_title"`
@@ -63,7 +60,6 @@ func GetComplaints(c *gin.Context) {
 		Where("complaints.type = ? AND complaints.status IN (?, ?)",
 			models.ComplaintTypePost, models.StatusNew, models.StatusProcessing)
 
-	// Получаем жалобы на комментарии
 	commentQuery := database.DB.Table("complaints").
 		Select(`
 			complaints.*,
@@ -80,7 +76,6 @@ func GetComplaints(c *gin.Context) {
 		Where("complaints.type = ? AND complaints.status IN (?, ?)",
 			models.ComplaintTypeComment, models.StatusNew, models.StatusProcessing)
 
-	// Объединяем результаты
 	unionQuery := database.DB.Raw("? UNION ? ORDER BY created_at DESC", postQuery, commentQuery)
 
 	if err := unionQuery.Scan(&postComplaints).Error; err != nil {
@@ -89,7 +84,6 @@ func GetComplaints(c *gin.Context) {
 		return
 	}
 
-	// Форматируем результат
 	var result []gin.H
 	for _, complaint := range postComplaints {
 		item := gin.H{
@@ -107,7 +101,6 @@ func GetComplaints(c *gin.Context) {
 			"created_at":      complaint.CreatedAt.Format(time.RFC3339),
 		}
 
-		// Если это жалоба на комментарий, обрезаем контент
 		if complaint.Type == models.ComplaintTypeComment {
 			if len(complaint.CommentContent) > 100 {
 				item["comment_content"] = complaint.CommentContent[:100] + "..."
@@ -124,7 +117,6 @@ func GetComplaints(c *gin.Context) {
 	c.JSON(http.StatusOK, result)
 }
 
-// CreatePostComplaint - создание жалобы на пост
 func CreatePostComplaint(c *gin.Context) {
 	userIDValue, exists := c.Get("userID")
 	if !exists {
@@ -148,7 +140,6 @@ func CreatePostComplaint(c *gin.Context) {
 		return
 	}
 
-	// Проверяем существование поста
 	var post models.Post
 	if err := database.DB.First(&post, postID).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
@@ -159,7 +150,6 @@ func CreatePostComplaint(c *gin.Context) {
 		return
 	}
 
-	// Проверяем, не оставил ли пользователь уже жалобу на этот пост
 	var existingComplaint models.Complaint
 	err := database.DB.Where("user_id = ? AND post_id = ? AND type = ?",
 		userIDValue, postID, models.ComplaintTypePost).
@@ -173,7 +163,6 @@ func CreatePostComplaint(c *gin.Context) {
 		return
 	}
 
-	// Создаем жалобу
 	complaint := models.Complaint{
 		UserID: userIDValue.(uint),
 		Type:   models.ComplaintTypePost,
@@ -193,7 +182,6 @@ func CreatePostComplaint(c *gin.Context) {
 	})
 }
 
-// CreateCommentComplaint - создание жалобы на комментарий
 func CreateCommentComplaint(c *gin.Context) {
 	userIDValue, exists := c.Get("userID")
 	if !exists {
@@ -217,7 +205,6 @@ func CreateCommentComplaint(c *gin.Context) {
 		return
 	}
 
-	// Проверяем существование комментария
 	var comment models.Comment
 	if err := database.DB.Preload("Post").First(&comment, commentIDUint).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
@@ -228,7 +215,6 @@ func CreateCommentComplaint(c *gin.Context) {
 		return
 	}
 
-	// Проверяем, не оставил ли пользователь уже жалобу на этот комментарий
 	var existingComplaint models.Complaint
 	err := database.DB.Where("user_id = ? AND comment_id = ? AND type = ?",
 		userIDValue, commentIDUint, models.ComplaintTypeComment).
@@ -242,13 +228,12 @@ func CreateCommentComplaint(c *gin.Context) {
 		return
 	}
 
-	// Создаем жалобу
 	postID := comment.PostID
 	complaint := models.Complaint{
 		UserID:    userIDValue.(uint),
 		Type:      models.ComplaintTypeComment,
 		CommentID: &commentIDUint,
-		PostID:    &postID, // Связываем с постом для удобства
+		PostID:    &postID,
 		Reason:    request.Reason,
 		Status:    models.StatusNew,
 	}
@@ -264,7 +249,6 @@ func CreateCommentComplaint(c *gin.Context) {
 	})
 }
 
-// UpdateComplaintStatus - обновление статуса жалобы
 func UpdateComplaintStatus(c *gin.Context) {
 	complaintID := c.Param("complaintID")
 
@@ -277,7 +261,6 @@ func UpdateComplaintStatus(c *gin.Context) {
 		return
 	}
 
-	// Валидация статуса
 	validStatuses := map[models.ComplaintStatus]bool{
 		models.StatusNew:        true,
 		models.StatusProcessing: true,
@@ -296,15 +279,13 @@ func UpdateComplaintStatus(c *gin.Context) {
 		return
 	}
 
-	// Обновляем статус жалобы
 	if err := database.DB.Model(&complaint).Update("status", request.Status).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update complaint"})
 		return
 	}
 
-	// Если жалоба решена или отклонена, можно выполнить дополнительные действия
 	if request.Status == models.StatusResolved {
-		// Здесь можно автоматически скрыть контент, если нужно
+
 	}
 
 	c.JSON(http.StatusOK, gin.H{
@@ -313,7 +294,6 @@ func UpdateComplaintStatus(c *gin.Context) {
 	})
 }
 
-// TogglePostVisibility - изменение видимости поста
 func TogglePostVisibility(c *gin.Context) {
 	postID := c.Param("postID")
 
@@ -332,7 +312,6 @@ func TogglePostVisibility(c *gin.Context) {
 		return
 	}
 
-	// Обновляем видимость поста
 	if err := database.DB.Model(&post).Update("is_approved", request.IsApproved).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update post visibility"})
 		return
@@ -341,7 +320,6 @@ func TogglePostVisibility(c *gin.Context) {
 	action := "shown"
 	if !request.IsApproved {
 		action = "hidden"
-		// Обновляем статус всех активных жалоб на этот пост
 		database.DB.Model(&models.Complaint{}).
 			Where("post_id = ? AND status IN (?, ?)", postID, models.StatusNew, models.StatusProcessing).
 			Update("status", models.StatusResolved)
@@ -353,7 +331,6 @@ func TogglePostVisibility(c *gin.Context) {
 	})
 }
 
-// ToggleCommentVisibility - изменение видимости комментария
 func ToggleCommentVisibility(c *gin.Context) {
 	commentID := c.Param("commentID")
 
@@ -372,7 +349,6 @@ func ToggleCommentVisibility(c *gin.Context) {
 		return
 	}
 
-	// Обновляем видимость комментария
 	if err := database.DB.Model(&comment).Update("is_approved", request.IsApproved).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update comment visibility"})
 		return
@@ -381,7 +357,6 @@ func ToggleCommentVisibility(c *gin.Context) {
 	action := "shown"
 	if !request.IsApproved {
 		action = "hidden"
-		// Обновляем статус всех активных жалоб на этот комментарий
 		database.DB.Model(&models.Complaint{}).
 			Where("comment_id = ? AND status IN (?, ?)", commentID, models.StatusNew, models.StatusProcessing).
 			Update("status", models.StatusResolved)
@@ -393,7 +368,6 @@ func ToggleCommentVisibility(c *gin.Context) {
 	})
 }
 
-// GetPostComplaints - получение всех жалоб на конкретный пост
 func GetPostComplaints(c *gin.Context) {
 	postID := c.Param("postID")
 
@@ -409,7 +383,6 @@ func GetPostComplaints(c *gin.Context) {
 	c.JSON(http.StatusOK, complaints)
 }
 
-// GetCommentComplaints - получение всех жалоб на конкретный комментарий
 func GetCommentComplaints(c *gin.Context) {
 	commentID := c.Param("commentID")
 
@@ -425,9 +398,7 @@ func GetCommentComplaints(c *gin.Context) {
 	c.JSON(http.StatusOK, complaints)
 }
 
-// SearchUsers - поиск пользователей по имени или email
 func SearchUsers(c *gin.Context) {
-	// Проверка прав
 	userIDValue, exists := c.Get("userID")
 	if !exists {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
@@ -451,20 +422,18 @@ func SearchUsers(c *gin.Context) {
 		return
 	}
 
-	// Получаем поисковый запрос
 	query := c.Query("q")
 	if query == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Search query is required"})
 		return
 	}
 
-	// Поиск пользователей
 	var users []models.User
 	searchPattern := "%" + strings.TrimSpace(query) + "%"
 
 	err := database.DB.Select("id", "username", "email", "role_id", "is_blocked").
 		Where("username ILIKE ? OR email ILIKE ?", searchPattern, searchPattern).
-		Where("id != ?", currentUserID). // Не показываем текущего пользователя
+		Where("id != ?", currentUserID).
 		Limit(20).
 		Find(&users).Error
 
@@ -474,10 +443,8 @@ func SearchUsers(c *gin.Context) {
 		return
 	}
 
-	// Формируем ответ
 	var result []gin.H
 	for _, user := range users {
-		// Подсчитываем жалобы пользователя
 		var totalComplaints int64
 		database.DB.Model(&models.Complaint{}).
 			Joins("LEFT JOIN posts ON posts.id = complaints.post_id").
@@ -498,7 +465,6 @@ func SearchUsers(c *gin.Context) {
 	c.JSON(http.StatusOK, result)
 }
 
-// AssignModeratorRole - назначение роли модератора
 func AssignModeratorRole(c *gin.Context) {
 	userIDStr := c.Param("userID")
 	var targetUserID uint
@@ -507,7 +473,6 @@ func AssignModeratorRole(c *gin.Context) {
 		return
 	}
 
-	// Проверка прав текущего пользователя
 	userIDValue, exists := c.Get("userID")
 	if !exists {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
@@ -531,13 +496,11 @@ func AssignModeratorRole(c *gin.Context) {
 		return
 	}
 
-	// Нельзя изменить роль самому себе
 	if targetUserID == currentUserID {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Cannot change your own role"})
 		return
 	}
 
-	// Находим пользователя
 	var targetUser models.User
 	if err := database.DB.First(&targetUser, targetUserID).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
@@ -548,19 +511,16 @@ func AssignModeratorRole(c *gin.Context) {
 		return
 	}
 
-	// Проверяем, не заблокирован ли пользователь
 	if targetUser.Is_blocked {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Cannot assign moderator role to blocked user"})
 		return
 	}
 
-	// Проверяем, не является ли уже модератором
 	if targetUser.RoleID == 2 {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "User is already a moderator"})
 		return
 	}
 
-	// Назначаем роль модератора
 	if err := database.DB.Model(&targetUser).Update("role_id", 2).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to assign moderator role"})
 		return
@@ -576,7 +536,6 @@ func AssignModeratorRole(c *gin.Context) {
 	})
 }
 
-// RemoveModeratorRole - снятие роли модератора
 func RemoveModeratorRole(c *gin.Context) {
 	userIDStr := c.Param("userID")
 	var targetUserID uint
@@ -585,7 +544,6 @@ func RemoveModeratorRole(c *gin.Context) {
 		return
 	}
 
-	// Проверка прав текущего пользователя
 	userIDValue, exists := c.Get("userID")
 	if !exists {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
@@ -609,13 +567,11 @@ func RemoveModeratorRole(c *gin.Context) {
 		return
 	}
 
-	// Нельзя изменить роль самому себе
 	if targetUserID == currentUserID {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Cannot change your own role"})
 		return
 	}
 
-	// Находим пользователя
 	var targetUser models.User
 	if err := database.DB.First(&targetUser, targetUserID).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
@@ -626,13 +582,11 @@ func RemoveModeratorRole(c *gin.Context) {
 		return
 	}
 
-	// Проверяем, является ли модератором
 	if targetUser.RoleID != 2 {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "User is not a moderator"})
 		return
 	}
 
-	// Возвращаем обычную роль пользователя
 	if err := database.DB.Model(&targetUser).Update("role_id", 1).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to remove moderator role"})
 		return
@@ -648,10 +602,7 @@ func RemoveModeratorRole(c *gin.Context) {
 	})
 }
 
-// GetUsersWithComplaints - получение списка пользователей с жалобами
-// GetUsersWithComplaints - получение списка пользователей с жалобами
 func GetUsersWithComplaints(c *gin.Context) {
-	// Проверка прав
 	userIDValue, exists := c.Get("userID")
 	if !exists {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
@@ -675,8 +626,7 @@ func GetUsersWithComplaints(c *gin.Context) {
 		return
 	}
 
-	// Получаем пользователей с жалобами
-	usersWithComplaints := []gin.H{} // ИСПРАВЛЕНИЕ 1: Сразу инициализируем пустым массивом
+	usersWithComplaints := []gin.H{}
 
 	rows, err := database.DB.Raw(`
         SELECT 
@@ -704,7 +654,7 @@ func GetUsersWithComplaints(c *gin.Context) {
 
 	if err != nil {
 		fmt.Println("Database error fetching users with complaints:", err)
-		c.JSON(http.StatusOK, usersWithComplaints) // ИСПРАВЛЕНИЕ 2: Возвращаем пустой массив при ошибке
+		c.JSON(http.StatusOK, usersWithComplaints)
 		return
 	}
 	defer rows.Close()
@@ -714,7 +664,7 @@ func GetUsersWithComplaints(c *gin.Context) {
 		var username, email string
 		var roleID int
 		var isBlocked bool
-		var totalComplaints, activeComplaints, resolvedComplaints, rejectedComplaints *int // ИСПРАВЛЕНИЕ 3: указатели для NULL значений
+		var totalComplaints, activeComplaints, resolvedComplaints, rejectedComplaints *int
 		var lastComplaintDate *time.Time
 
 		err := rows.Scan(&userID, &username, &email, &roleID, &isBlocked,
@@ -726,7 +676,6 @@ func GetUsersWithComplaints(c *gin.Context) {
 			continue
 		}
 
-		// ИСПРАВЛЕНИЕ 4: Обработка NULL значений
 		total := 0
 		if totalComplaints != nil {
 			total = *totalComplaints
@@ -766,13 +715,10 @@ func GetUsersWithComplaints(c *gin.Context) {
 		})
 	}
 
-	// ИСПРАВЛЕНИЕ 5: Убираем проверку на nil, так как мы уже инициализировали массив
 	c.JSON(http.StatusOK, usersWithComplaints)
 }
 
-// BlockUser - блокировка пользователя
 func BlockUser(c *gin.Context) {
-	// Проверка прав
 	userIDValue, exists := c.Get("userID")
 	if !exists {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
@@ -796,7 +742,6 @@ func BlockUser(c *gin.Context) {
 		return
 	}
 
-	// Получаем ID пользователя для блокировки
 	userIDStr := c.Param("userID")
 	var targetUserID uint
 	if _, err := fmt.Sscanf(userIDStr, "%d", &targetUserID); err != nil {
@@ -804,13 +749,11 @@ func BlockUser(c *gin.Context) {
 		return
 	}
 
-	// Нельзя заблокировать самого себя
 	if targetUserID == currentUserID {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Cannot block yourself"})
 		return
 	}
 
-	// Находим пользователя
 	var targetUser models.User
 	if err := database.DB.First(&targetUser, targetUserID).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
@@ -821,19 +764,16 @@ func BlockUser(c *gin.Context) {
 		return
 	}
 
-	// Нельзя заблокировать другого модератора/админа
 	if targetUser.RoleID == 2 {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Cannot block another moderator/admin"})
 		return
 	}
 
-	// Проверяем, не заблокирован ли уже
 	if targetUser.Is_blocked {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "User is already blocked"})
 		return
 	}
 
-	// Блокируем пользователя
 	if err := database.DB.Model(&targetUser).Update("is_blocked", true).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to block user"})
 		return
@@ -849,9 +789,7 @@ func BlockUser(c *gin.Context) {
 	})
 }
 
-// UnblockUser - разблокировка пользователя
 func UnblockUser(c *gin.Context) {
-	// Проверка прав
 	userIDValue, exists := c.Get("userID")
 	if !exists {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
@@ -875,7 +813,6 @@ func UnblockUser(c *gin.Context) {
 		return
 	}
 
-	// Получаем ID пользователя для разблокировки
 	userIDStr := c.Param("userID")
 	var targetUserID uint
 	if _, err := fmt.Sscanf(userIDStr, "%d", &targetUserID); err != nil {
@@ -883,7 +820,6 @@ func UnblockUser(c *gin.Context) {
 		return
 	}
 
-	// Находим пользователя
 	var targetUser models.User
 	if err := database.DB.First(&targetUser, targetUserID).Error; err != nil {
 		if err == gorm.ErrRecordNotFound {
@@ -894,13 +830,11 @@ func UnblockUser(c *gin.Context) {
 		return
 	}
 
-	// Проверяем, не разблокирован ли уже
 	if !targetUser.Is_blocked {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "User is not blocked"})
 		return
 	}
 
-	// Разблокируем пользователя
 	if err := database.DB.Model(&targetUser).Update("is_blocked", false).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to unblock user"})
 		return

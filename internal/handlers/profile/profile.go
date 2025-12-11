@@ -12,15 +12,13 @@ import (
 )
 
 func GetCurrentUserProfile(c *gin.Context) {
-	// 1. Получение UserID из контекста Gin
+
 	userIDValue, exists := c.Get("userID")
 	if !exists {
-		// Этого не должно случиться после успешной авторизации
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal error: User ID not found."})
 		return
 	}
 
-	// Приведение типа userID (из middleware: uint -> int для GORM)
 	userID := int(userIDValue.(uint))
 
 	var user models.User
@@ -36,7 +34,6 @@ func GetCurrentUserProfile(c *gin.Context) {
 		return
 	}
 
-	// 3. Возвращаем данные в формате, который ожидает React
 	c.JSON(http.StatusOK, gin.H{
 		"id":        user.ID,
 		"username":  user.Username,
@@ -46,9 +43,8 @@ func GetCurrentUserProfile(c *gin.Context) {
 	})
 }
 
-// UpdateUserProfile - Обновляет профиль пользователя: username, bio, и image_url из Firebase.
 func UpdateUserProfile(c *gin.Context) {
-	// 1. Получение UserID
+
 	userIDValue, exists := c.Get("userID")
 	if !exists {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Internal error: User ID not found."})
@@ -56,18 +52,15 @@ func UpdateUserProfile(c *gin.Context) {
 	}
 	userID := int(userIDValue.(uint))
 
-	// 2. Находим текущего пользователя для сравнения
 	var currentUser models.User
 	if err := database.DB.First(&currentUser, userID).Error; err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
 		return
 	}
 
-	// 3. Создаем карту обновлений и флаг для отслеживания изменений
 	updates := make(map[string]interface{})
 	hasUpdate := false
 
-	// 4. Обработка Username
 	newUsername, usernameOk := c.GetPostForm("username")
 	if usernameOk && newUsername != currentUser.Username {
 		if len(newUsername) < 3 {
@@ -75,7 +68,6 @@ func UpdateUserProfile(c *gin.Context) {
 			return
 		}
 
-		// Проверка уникальности
 		var existingUser models.User
 		err := database.DB.Where("username = ?", newUsername).First(&existingUser).Error
 
@@ -91,10 +83,8 @@ func UpdateUserProfile(c *gin.Context) {
 		hasUpdate = true
 	}
 
-	// 5. Обработка Bio (текст)
 	if bio, bioOk := c.GetPostForm("bio"); bioOk {
 		if bio != currentUser.Bio {
-			// Ограничение на стороне сервера (до 150 символов)
 			if len(bio) > 150 {
 				c.JSON(http.StatusBadRequest, gin.H{"error": "Bio cannot exceed 150 characters."})
 				return
@@ -104,8 +94,6 @@ func UpdateUserProfile(c *gin.Context) {
 		}
 	}
 
-	// 6. Обработка Image URL (из Firebase)
-	// React отправляет полный URL, который нужно сохранить как строку
 	if imageUrl, imageUrlOk := c.GetPostForm("image_url"); imageUrlOk {
 		if imageUrl != currentUser.ImageUrl {
 			updates["image_url"] = imageUrl
@@ -113,13 +101,11 @@ func UpdateUserProfile(c *gin.Context) {
 		}
 	}
 
-	// 7. Проверка наличия обновлений
 	if !hasUpdate {
 		c.JSON(http.StatusOK, gin.H{"message": "No changes detected to update."})
 		return
 	}
 
-	// 8. Обновление базы данных
 	err := database.DB.Model(&models.User{}).Where("id = ?", userID).Updates(updates).Error
 	if err != nil {
 		fmt.Println("GORM Error updating profile:", err.Error())
@@ -127,13 +113,11 @@ func UpdateUserProfile(c *gin.Context) {
 		return
 	}
 
-	// 9. Возвращаем обновленные данные
 	var updatedUser models.User
 	database.DB.Select("id, username, bio, image_url, role_id").First(&updatedUser, userID)
 
 	c.JSON(http.StatusOK, gin.H{
 		"message": "Profile updated successfully!",
-		// Отдаем обновленный объект пользователя для React-контекста
 		"user": gin.H{
 			"id":        updatedUser.ID,
 			"username":  updatedUser.Username,

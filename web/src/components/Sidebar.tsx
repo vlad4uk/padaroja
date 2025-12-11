@@ -1,5 +1,3 @@
-// src/components/Sidebar.tsx
-
 import React from 'react';
 import { FaSearch, FaListAlt, FaBookmark, FaBell, FaSignOutAlt, FaSignInAlt, FaUserPlus, FaCog, FaPlusSquare, FaAdn } from 'react-icons/fa';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
@@ -21,7 +19,7 @@ interface NavItem {
     icon: React.ElementType;
     link: string;
     authRequired: boolean;
-    adminOnly?: boolean; // 👈 Добавили флаг для админа/модератора
+    adminOnly?: boolean; 
 }
 
 const navItemsList: NavItem[] = [
@@ -34,7 +32,7 @@ const navItemsList: NavItem[] = [
 ];
 
 const Sidebar: React.FC = () => { 
-    const { isLoggedIn, logout, user } = useAuth(); // 👈 Достаем user чтобы проверить роль
+    const { isLoggedIn, logout, user } = useAuth(); 
     const navigate = useNavigate();
     const location = useLocation();
     
@@ -43,7 +41,6 @@ const Sidebar: React.FC = () => {
         navigate('/login'); 
     };
 
-    // Проверка: является ли юзер модератором (предположим role_id === 2)
     const isModerator = user?.role_id === 2;
 
     return (
@@ -55,9 +52,7 @@ const Sidebar: React.FC = () => {
             <nav className="sidebar-nav-list">
                 {navItemsList
                     .filter(item => {
-                        // 1. Если требуется авторизация и юзер не вошел -> скрываем
                         if (item.authRequired && !isLoggedIn) return false;
-                        // 2. Если это пункт для админа, но юзер не админ -> скрываем
                         if (item.adminOnly && !isModerator) return false;
                         
                         return true;
@@ -87,7 +82,7 @@ const Sidebar: React.FC = () => {
                             onClick={handleLogout} 
                             style={{ color: 'red', fontWeight: 600, cursor: 'pointer' }}
                         >
-                            <FaSignOutAlt className="sidebar-icon" />
+                             <img src={exitIcon} alt="exitIcon" className="sidebar-icon" />
                             Выход
                         </div>
                     </>

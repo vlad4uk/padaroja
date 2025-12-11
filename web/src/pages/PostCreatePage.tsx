@@ -32,7 +32,6 @@ const PostCreatePage: React.FC = () => {
 
     const fileInputRef = useRef<HTMLInputElement>(null);
 
-    // --- Управление слайдами ---
 
     const handleNextSlide = () => currentSlideIndex < slides.length - 1 && setCurrentSlideIndex(prev => prev + 1);
     const handlePrevSlide = () => currentSlideIndex > 0 && setCurrentSlideIndex(prev => prev - 1);
@@ -68,7 +67,6 @@ const PostCreatePage: React.FC = () => {
         });
     };
 
-    // --- Работа с фото ---
     const triggerFileSelect = (e: React.MouseEvent) => { e.preventDefault(); fileInputRef.current?.click(); };
 
     const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -101,14 +99,12 @@ const PostCreatePage: React.FC = () => {
         
         setIsPublishing(true);
 
-        // 1. Парсинг тегов: разбиваем по пробелам, очищаем от '#' и пустых
         const parsedTags = tags
             .split(/\s+/) 
             .map(t => t.startsWith('#') ? t.substring(1) : t) 
             .filter(t => t.trim() !== "") 
             .map(t => t.toLowerCase()); 
 
-        // 2. Подготовка параграфов
         const paragraphs = slides
             .map((slide, index) => ({
                 content: slide.text,
@@ -116,7 +112,6 @@ const PostCreatePage: React.FC = () => {
             }))
             .filter(p => p.content.trim() !== "");
 
-        // 3. Подготовка фото
         const photos = slides
             .filter(slide => slide.imageUrl)
             .map((slide, index) => ({
@@ -125,7 +120,6 @@ const PostCreatePage: React.FC = () => {
                 is_approved: true
             }));
 
-        // 4. Сборка итогового JSON
         const postData = {
             title: title,
             place_data: {

@@ -1,4 +1,4 @@
-// src/components/ProfileHeader.tsx
+
 import React, { useState, useRef, useEffect } from 'react';
 import { useAuth } from '../context/AuthContext.tsx'; 
 import FollowersModal from './FollowersModal.tsx';
@@ -8,7 +8,6 @@ import avatar from '../assets/bird04.png';
 
 const DEFAULT_AVATAR = avatar;
 
-// Импортируем тип из MainLayout
 export type TabType = 'Публикации' | 'Карта' | 'Изменить';
 
 interface ProfileHeaderProps {
@@ -41,7 +40,6 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
     const tabRefs = useRef<(HTMLButtonElement | null)[]>([]); 
     const tabsContainerRef = useRef<HTMLDivElement>(null); 
 
-    // Загружаем данные профиля
     useEffect(() => {
         if (!isOwner && profileUserId) {
             fetchUserProfile();
@@ -51,14 +49,12 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
         }
     }, [isOwner, profileUserId, currentUser]);
 
-    // Загружаем данные о подписках
     useEffect(() => {
         if (profileUser?.id) {
             fetchFollowData();
         }
     }, [profileUser]);
 
-    // Расчет позиции активной линии табов
     useEffect(() => {
         const calculateLineStyle = () => {
             const activeIndex = availableTabs.indexOf(activeTab);
@@ -103,7 +99,6 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
         if (!profileUser?.id) return;
 
         try {
-            // Получаем количество подписчиков и подписок
             const [followersRes, followingRes] = await Promise.all([
                 fetch(`/api/user/${profileUser.id}/followers/count`, {
                     credentials: 'include',
@@ -123,7 +118,6 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
                 setFollowingCount(followingData.following_count || 0);
             }
 
-            // Проверяем, подписан ли текущий пользователь
             if (currentUser && currentUser.id !== profileUser.id) {
                 const followCheckRes = await fetch(
                     `/api/user/${profileUser.id}/follow/check`, 
@@ -145,7 +139,6 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
         setFollowLoading(true);
         try {
             if (isFollowing) {
-                // Отписываемся
                 await fetch(`/api/user/${profileUser.id}/follow`, {
                     method: 'DELETE',
                     credentials: 'include',
@@ -153,7 +146,6 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
                 setIsFollowing(false);
                 setFollowersCount(prev => Math.max(0, prev - 1));
             } else {
-                // Подписываемся
                 await fetch(`/api/user/${profileUser.id}/follow`, {
                     method: 'POST',
                     credentials: 'include',
