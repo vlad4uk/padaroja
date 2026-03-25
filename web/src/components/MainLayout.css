@@ -1,0 +1,568 @@
+/* src/styles/MainLayout.css */
+
+/* ========================================================================= */
+/* 0. ГЛОБАЛЬНЫЙ СБРОС */
+/* ========================================================================= */
+* {
+    box-sizing: border-box; 
+    margin: 0; 
+    padding: 0;
+}
+body, #root { 
+    margin: 0; 
+    padding: 0; 
+    min-height: 100vh;
+}
+body {
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif,
+    "Apple Color Emoji", "Segoe UI", "Segoe UI Symbol";
+    background-color: #fff;
+    color: #0F1419;
+}
+
+/* ========================================================================= */
+/* 1. Основной контейнер приложения */
+/* ========================================================================= */
+.app-container {
+     display: flex;
+     min-height: 100vh;
+     background-color: #fff;
+}
+
+/* ========================================================================= */
+/* 2. Боковая панель (Sidebar) */
+/* ========================================================================= */
+.sidebar {
+  width: 20%; 
+  flex-shrink: 0;
+  background-color: #fff;
+  border-right: 1px solid #eee;
+  padding: 0 12px; 
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  position: sticky;
+  top: 0;
+}
+
+.sidebar-header {
+  padding: 12px 12px; 
+  font-size: 2rem;
+  font-weight: 700;
+  color: #696cff;
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+}
+
+.sidebar-nav-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  width: 100%;
+}
+
+.sidebar a.sidebar-nav-item,
+.sidebar div.sidebar-nav-item {
+  text-decoration: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  transition: background-color 0.2s, color 0.2s;
+  font-size: 19px;
+  font-weight: 700;
+  color: #0F1419;
+  padding: 12px;
+  border-radius: 9999px;
+  margin-bottom: 4px;
+  width: fit-content; 
+}
+
+.sidebar a.sidebar-nav-item:hover,
+.sidebar div.sidebar-nav-item:hover {
+  background-color: #E7E7E8;
+  color: #0F1419;
+}
+
+.sidebar a.sidebar-nav-item.active,
+.sidebar div.sidebar-nav-item.active {
+  color: #696cff;
+  background-color: transparent;
+  font-weight: 700;
+  border-left: none;
+}
+
+.sidebar-icon {
+  font-size: 26px;
+  width: 26px;
+  height: 26px;
+  margin-right: 20px;
+}
+
+.bottom-nav {
+    margin-top: auto;
+    border-top: none;
+    padding-top: 0;
+    padding-bottom: 10px;
+}
+
+/* ========================================================================= */
+/* 3. Основная область контента */
+/* ========================================================================= */
+.main-content {
+  flex-grow: 1;
+  display: flex;
+  justify-content: flex-start;
+  padding: 0;
+  border-right: 1px solid #eee;
+}
+
+.content-area {
+  width: 100%;
+  margin: 0;
+  background-color: #fff;
+  padding: 0;
+}
+
+/* ========================================================================= */
+/* 4. Профиль и вкладки */
+/* ========================================================================= */
+.profile-section {
+  background-color: #fff;
+  padding: 16px;
+}
+
+.profile-header {
+  display: flex;
+  align-items: center; /* Выравниваем по центру по вертикали */
+  margin-bottom: 20px; 
+  padding: 10px 0;
+  gap: 20px;
+}
+
+.user-avatar {
+  width: 150px;
+  height: 150px;
+  border-radius: 50%;
+  background-color: #d8d8d8;
+  box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+  margin-right: 20px;
+  flex-shrink: 0;
+  overflow: hidden; 
+}
+
+.user-avatar img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.profile-info {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center; /* Выравниваем по вертикали по центру */
+  min-height: 150px; /* Минимальная высота как у аватара */
+}
+
+/* Верхняя строка профиля */
+.profile-top-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center; /* Выравниваем по центру по вертикали */
+  gap: 40px;
+}
+
+/* Левая часть: имя и био */
+.profile-left {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  justify-content: center; /* Выравниваем по центру по вертикали */
+}
+
+.user-name {
+  margin: 0;
+  font-size: 24px;
+  font-weight: 700;
+  color: #0F1419;
+}
+
+.user-bio {
+  margin: 0;
+  color: #666;
+  font-size: 14px;
+  line-height: 1.4;
+  max-width: 400px;
+}
+
+/* Правая часть: статистика и кнопка */
+.profile-right {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 12px;
+  min-width: 200px;
+  justify-content: center; /* Выравниваем по центру по вертикали */
+}
+
+/* Статистика подписчиков/подписок В СТРОКУ */
+.follow-stats {
+  display: flex;
+  gap: 25px; /* Отступ между элементами статистики */
+  align-items: center;
+}
+
+.stat-item {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 14px;
+  color: #666;
+  transition: color 0.2s;
+  padding: 8px 12px;
+  text-align: center;
+  white-space: nowrap;
+}
+
+.stat-item:hover {
+  color: #696cff;
+}
+
+.stat-item strong {
+  color: #0F1419;
+  font-weight: 600;
+  font-size: 16px;
+  margin-right: 4px;
+}
+
+/* Кнопки подписки */
+.follow-button {
+  padding: 8px 20px;
+  border: 1px solid #696cff;
+  border-radius: 20px;
+  background: #696cff;
+  color: white;
+  cursor: pointer;
+  font-weight: 600;
+  font-size: 14px;
+  transition: all 0.2s;
+  white-space: nowrap;
+  min-width: 120px;
+}
+
+.follow-button.unfollow {
+  background: white;
+  color: #696cff;
+}
+
+.follow-button:hover:not(:disabled) {
+  opacity: 0.9;
+  transform: translateY(-1px);
+}
+
+.follow-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Навигационные табы */
+.profile-content {
+  position: relative;
+  border-bottom: 1px solid #e0e0e0; 
+}
+
+.profile-tab-active-line {
+  position: absolute;
+  bottom: -1px;
+  left: 0;
+  height: 3px;
+  background-color: #696cff;
+  transition: transform 0.3s, width 0.3s;
+  z-index: 10;
+}
+
+.profile-tabs {
+  display: flex;
+  justify-content: flex-start;
+  margin-top: 10px;
+  padding-bottom: 0; 
+}
+
+.profile-tab {
+  background: none;
+  border: none; 
+  cursor: pointer;
+  padding: 10px 15px;
+  font-weight: 500;
+  color: #88909c;
+  margin-right: 20px;
+  transition: color 0.2s;
+}
+
+.profile-tab.active {
+  color: #696cff;
+  font-weight: 600;
+}
+
+/* Адаптивность для мобильных устройств */
+@media (max-width: 768px) {
+    .profile-header {
+        flex-direction: column;
+        align-items: center;
+        text-align: center;
+        gap: 15px;
+    }
+    
+    .profile-top-row {
+        flex-direction: column;
+        gap: 20px;
+        align-items: center;
+    }
+    
+    .user-avatar {
+        width: 120px;
+        height: 120px;
+        margin-right: 0;
+    }
+    
+    .profile-info {
+        min-height: auto;
+        align-items: center;
+    }
+    
+    .profile-right {
+        align-items: center;
+    }
+    
+    .follow-stats {
+        justify-content: center;
+    }
+    
+    .stat-item {
+        text-align: center;
+    }
+}
+/* ========================================================================= */
+/* 5. Лента */
+/* ========================================================================= */
+.main-feed {
+  margin-top: 0;
+}
+
+.post-item {
+  padding: 15px;
+  border-bottom: 1px solid #eee;
+  transition: background-color 0.1s;
+}
+
+.post-item:hover {
+  background-color: #fafafa;
+}
+/* ========================================================================= */
+/* 6. Форма редактирования (Instagram-like) */
+/* ========================================================================= */
+.profile-edit-form-container {
+    padding: 0;
+    border: none;
+    border-radius: 0;
+    background-color: transparent;
+    margin-top: 0;
+    max-width: 600px;
+    margin: 0 auto;
+}
+
+.edit-avatar-section {
+    display: flex;
+    align-items: center;
+    margin-bottom: 30px;
+    padding: 20px 0;
+    border-bottom: 1px solid #efefef;
+    gap: 15px;
+}
+
+.edit-user-avatar {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    background-color: #f0f0f0;
+    margin-right: 0;
+    flex-shrink: 0;
+    overflow: hidden;
+    border: 1px solid #e0e0e0;
+}
+
+.edit-username-placeholder {
+    font-size: 1rem;
+    font-weight: 600;
+    color: #262626;
+    margin-right: auto;
+}
+
+.change-photo-button {
+    display: flex;
+    align-items: center;
+    background-color: transparent;
+    color: #0095f6;
+    border: none;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 0.9rem;
+    transition: all 0.2s;
+    margin-left: auto;
+}
+
+.change-photo-button:hover {
+    background-color: rgba(0, 149, 246, 0.1);
+}
+
+.edit-field-group {
+    margin-bottom: 16px;
+    display: flex;
+    align-items: flex-start;
+    padding: 10px 0;
+}
+
+.edit-label {
+    display: block;
+    font-weight: 600;
+    color: #262626;
+    margin-bottom: 0;
+    font-size: 0.9rem;
+    width: 120px;
+    flex-shrink: 0;
+    padding-top: 8px;
+    text-align: left;
+}
+
+.edit-input {
+    width: 100%;
+    padding: 8px 12px;
+    border: 1px solid #dbdbdb;
+    border-radius: 3px;
+    font-size: 0.95rem;
+    background-color: #fafafa;
+    transition: all 0.2s;
+    flex: 1;
+}
+
+.edit-input:focus {
+    outline: none;
+    border-color: #a8a8a8;
+    background-color: #fff;
+}
+
+.bio-counter {
+    font-size: 0.8rem;
+    color: #8e8e8e;
+    text-align: right;
+    margin-top: 4px;
+    margin-bottom: 0;
+}
+
+.edit-actions {
+    display: flex;
+    justify-content: center;
+    gap: 12px;
+    margin-top: 30px;
+    padding-top: 20px;
+}
+
+.save-button {
+    background-color: #0095f6;
+    color: #fff;
+    border: none;
+    padding: 8px 24px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 0.9rem;
+    transition: background-color 0.2s;
+    min-width: 100px;
+}
+
+.save-button:hover:not(:disabled) {
+    background-color: #0081d6;
+}
+
+.save-button:disabled {
+    background-color: #b2dffc;
+    cursor: not-allowed;
+}
+
+.cancel-button {
+    background-color: transparent;
+    color: #262626;
+    border: 1px solid #dbdbdb;
+    padding: 8px 16px;
+    border-radius: 4px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 0.9rem;
+    transition: background-color 0.2s;
+}
+
+.cancel-button:hover {
+    background-color: #fafafa;
+}
+
+/* Сообщения об ошибках и успехе */
+.error-message {
+    color: #ed4956;
+    text-align: center;
+    margin: 15px 0;
+    font-size: 0.9rem;
+    padding: 8px 12px;
+    background-color: rgba(237, 73, 86, 0.05);
+    border-radius: 4px;
+}
+
+.success-message {
+    color: #1a7c3b;
+    text-align: center;
+    margin: 15px 0;
+    font-size: 0.9rem;
+    padding: 8px 12px;
+    background-color: rgba(26, 124, 59, 0.05);
+    border-radius: 4px;
+}
+
+/* Адаптивность для мобильных устройств */
+@media (max-width: 768px) {
+    .profile-edit-form-container {
+        padding: 0 16px;
+    }
+    
+    .edit-avatar-section {
+        flex-direction: column;
+        text-align: center;
+        gap: 15px;
+    }
+    
+    .edit-username-placeholder {
+        margin-right: 0;
+        margin-bottom: 10px;
+    }
+    
+    .change-photo-button {
+        margin-left: 0;
+    }
+    
+    .edit-field-group {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+    
+    .edit-label {
+        width: 100%;
+        padding-top: 0;
+    }
+    
+    .edit-input {
+        width: 100%;
+    }
+}

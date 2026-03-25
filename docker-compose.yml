@@ -1,0 +1,61 @@
+version: "3.9"
+
+services:
+  backend:
+    build: .
+    container_name: padaroja-backend
+    env_file: .env
+    expose:
+      - "8080"
+    networks:
+      - padaroja-network
+    depends_on:
+      db:
+        condition: service_healthy
+
+  frontend:
+    build: ./web
+    container_name: padaroja-frontend
+    expose:
+      - "80"
+    networks:
+      - padaroja-network
+
+  db:
+    image: postgres:15
+    container_name: padaroja-db
+    environment:
+      POSTGRES_USER: admintblog
+      POSTGRES_PASSWORD: system
+      POSTGRES_DB: padaroja
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./init.sql:/docker-entrypoint-initdb.d/init.sql
+    networks:
+      - padaroja-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U admintblog -d padaroja"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  proxy:
+    image: nginx:alpine
+    container_name: padaroja-proxy
+    ports:
+      - "80:80"
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      - ./web/build:/usr/share/nginx/html:ro
+    networks:
+      - padaroja-network
+    depends_on:
+      - frontend
+      - backend
+
+networks:
+  padaroja-network:
+    driver: bridge
+
+volumes:
+  postgres_data:

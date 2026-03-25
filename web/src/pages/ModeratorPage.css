@@ -1,0 +1,755 @@
+.moderator-container {
+    width: 100%;
+    height: 100%;
+    background-color: #fff;
+    border-radius: 0; 
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+}
+
+.mod-header-tabs {
+    background-color: #696cff;
+    display: flex;
+    justify-content: space-around;
+    align-items: center;
+    padding: 0;
+}
+
+.mod-tab {
+    flex: 1;
+    text-align: center;
+    padding: 20px 0;
+    color: white;
+    font-weight: 700;
+    font-size: 16px;
+    cursor: pointer;
+    border-bottom: 4px solid transparent;
+    transition: background 0.2s;
+}
+
+.mod-tab:hover {
+    background-color: rgba(255, 255, 255, 0.1);
+}
+
+.mod-tab.active {
+    border-bottom: 2px solid #FFFFFF;
+}
+
+.mod-content {
+    padding: 0;
+    flex: 1;
+    overflow-y: auto;
+    background-color: #f8f9fa;
+}
+
+.table-container {
+    padding: 20px;
+    overflow-x: auto;
+}
+
+/* Таблица для контента с жалобами и пользователей с жалобами */
+.mod-table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 1000px;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.mod-table th {
+    text-align: left;
+    font-weight: 700;
+    padding: 15px 10px;
+    border-bottom: 2px solid #eee;
+    font-size: 14px;
+    background-color: #f8f9fa;
+    color: #495057;
+}
+
+.mod-table td {
+    padding: 15px 10px;
+    border-bottom: 1px solid #f0f0f0;
+    font-size: 14px;
+    vertical-align: middle;
+    color: #333;
+}
+
+.text-right {
+    text-align: right;
+}
+
+.text-center {
+    text-align: center;
+}
+
+/* --- Стили для таблицы в разделе "Добавить модератора" --- */
+.add-moderator-tab {
+    padding: 20px;
+    background-color: #f8f9fa;
+    height: 100%;
+}
+
+.add-moderator-content {
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    padding: 24px;
+}
+
+/* Таблица результатов поиска в разделе "Добавить модератора" */
+.users-search-table {
+    width: 100%;
+    border-collapse: collapse;
+    background: white;
+    border-radius: 8px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    margin-top: 20px;
+}
+
+.users-search-table th {
+    background-color: #f8f9fa;
+    padding: 15px 12px;
+    text-align: left;
+    font-weight: 600;
+    color: #495057;
+    border-bottom: 2px solid #dee2e6;
+    font-size: 14px;
+}
+
+.users-search-table td {
+    padding: 15px 12px;
+    border-bottom: 1px solid #f0f0f0;
+    vertical-align: middle;
+    font-size: 14px;
+    color: #333;
+}
+
+.users-search-table tbody tr:hover {
+    background-color: #f8f9fa;
+}
+
+/* Стили для строк с жалобами */
+.complaint-row, .user-row {
+    transition: background-color 0.2s ease;
+    cursor: pointer;
+}
+
+.complaint-row:hover, .user-row:hover {
+    background-color: #f8f9fa;
+}
+
+.complaint-reason {
+    max-width: 200px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    cursor: help;
+}
+
+.post-title-cell, .user-username-cell {
+    max-width: 200px;
+}
+
+.post-title, .user-username {
+    font-weight: 500;
+    color: #333;
+}
+
+.user-email {
+    color: #666;
+    font-size: 13px;
+}
+
+.user-id {
+    font-family: monospace;
+    font-size: 13px;
+    color: #666;
+}
+
+/* --- Статистика жалоб для пользователей --- */
+.user-total-complaints .total-count {
+    font-weight: 600;
+    color: #495057;
+    padding: 4px 8px;
+    background-color: #f8f9fa;
+    border-radius: 4px;
+    font-size: 13px;
+}
+
+.user-active-complaints .active-count {
+    font-weight: 600;
+    color: #e74c3c;
+    padding: 4px 8px;
+    background-color: #ffebee;
+    border-radius: 4px;
+    font-size: 13px;
+}
+
+.user-resolved-complaints .resolved-count {
+    font-weight: 600;
+    color: #27ae60;
+    padding: 4px 8px;
+    background-color: #e8f5e9;
+    border-radius: 4px;
+    font-size: 13px;
+}
+
+.user-rejected-complaints .rejected-count {
+    font-weight: 600;
+    color: #f39c12;
+    padding: 4px 8px;
+    background-color: #fff3cd;
+    border-radius: 4px;
+    font-size: 13px;
+}
+
+.last-complaint-date {
+    color: #666;
+    font-size: 13px;
+}
+
+/* --- Статусы --- */
+.post-status, .user-status-badge {
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 600;
+    text-transform: uppercase;
+    display: inline-block;
+}
+
+.post-hidden {
+    background: #ff6b6b;
+    color: white;
+}
+
+.post-visible {
+    background: #51cf66;
+    color: white;
+}
+
+.user-active {
+    background-color: #51cf66;
+    color: white;
+}
+
+.user-blocked {
+    background-color: #ff6b6b;
+    color: white;
+}
+
+/* --- Кнопки --- */
+.visibility-btn, .block-user-btn, .unblock-user-btn {
+    padding: 6px 12px;
+    border: none;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    min-width: 100px;
+    text-transform: uppercase;
+}
+
+.visibility-btn {
+    min-width: 80px;
+}
+
+.btn-visible {
+    background: #ff6b6b;
+    color: white;
+}
+
+.btn-visible:hover:not(:disabled) {
+    background: #ff5252;
+}
+
+.btn-hidden {
+    background: #51cf66;
+    color: white;
+}
+
+.btn-hidden:hover:not(:disabled) {
+    background: #40c057;
+}
+
+.block-user-btn {
+    background: #e74c3c;
+    color: white;
+}
+
+.block-user-btn:hover:not(:disabled) {
+    background: #c0392b;
+}
+
+.unblock-user-btn {
+    background: #27ae60;
+    color: white;
+}
+
+.unblock-user-btn:hover:not(:disabled) {
+    background: #229954;
+}
+
+.visibility-btn:disabled,
+.block-user-btn:disabled,
+.unblock-user-btn:disabled {
+    background-color: #e0e0e0;
+    color: #999;
+    cursor: not-allowed;
+}
+
+/* Стили для селекта статуса */
+.status-select {
+    padding: 6px 12px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    background: white;
+    cursor: pointer;
+    font-size: 14px;
+    min-width: 100px;
+}
+
+.status-select:focus {
+    outline: none;
+    border-color: #696cff;
+}
+
+/* --- Поисковая секция --- */
+.search-section {
+    margin-bottom: 30px;
+}
+
+.search-header {
+    margin-bottom: 20px;
+}
+
+.search-title {
+    margin: 0 0 8px 0;
+    color: #333;
+    font-size: 20px;
+    font-weight: 600;
+}
+
+.search-description {
+    color: #666;
+    font-size: 14px;
+    line-height: 1.5;
+    margin: 0;
+}
+
+.search-input-group {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 15px;
+}
+
+.search-input {
+    flex: 1;
+    padding: 12px 15px;
+    border: 2px solid #e0e0e0;
+    border-radius: 6px;
+    font-size: 16px;
+    transition: border-color 0.3s;
+    background: white;
+}
+
+.search-input:focus {
+    outline: none;
+    border-color: #696cff;
+}
+
+.search-button {
+    padding: 12px 24px;
+    background-color: #696cff;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: background-color 0.3s;
+    font-size: 14px;
+}
+
+.search-button:hover:not(:disabled) {
+    background-color: #5a5fe0;
+}
+
+.search-button:disabled {
+    background-color: #ccc;
+    cursor: not-allowed;
+}
+
+.search-error {
+    color: #e74c3c;
+    font-size: 14px;
+    margin-top: 5px;
+    padding: 10px;
+    background-color: #ffeaea;
+    border-radius: 4px;
+    border-left: 4px solid #e74c3c;
+}
+
+.assign-success {
+    color: #27ae60;
+    font-size: 14px;
+    margin-top: 10px;
+    padding: 10px;
+    background-color: #d4edda;
+    border-radius: 4px;
+    border-left: 4px solid #27ae60;
+}
+
+/* --- Результаты поиска --- */
+.search-results {
+    margin-top: 20px;
+}
+
+.results-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 1px solid #eee;
+}
+
+.results-title {
+    margin: 0;
+    color: #333;
+    font-size: 18px;
+    font-weight: 600;
+}
+
+.results-count {
+    color: #666;
+    font-size: 14px;
+    font-weight: 500;
+}
+
+/* --- Бейджи ролей и статусов --- */
+.role-badge, .status-badge {
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 12px;
+    font-weight: 600;
+    display: inline-block;
+}
+
+.role-user {
+    background-color: #e3f2fd;
+    color: #1976d2;
+}
+
+.role-moderator {
+    background-color: #e8f5e9;
+    color: #2e7d32;
+}
+
+.status-active {
+    background-color: #e8f5e9;
+    color: #2e7d32;
+}
+
+.status-blocked {
+    background-color: #ffebee;
+    color: #c62828;
+}
+
+/* --- Кнопки действий для добавления модератора --- */
+.action-buttons {
+    display: flex;
+    gap: 8px;
+}
+
+.assign-moderator-button, .remove-moderator-button {
+    padding: 6px 12px;
+    border: none;
+    border-radius: 4px;
+    cursor: pointer;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.3s;
+    min-width: 100px;
+}
+
+.assign-moderator-button {
+    background-color: #696cff;
+    color: white;
+}
+
+.assign-moderator-button:hover:not(:disabled) {
+    background-color: #5a5fe0;
+}
+
+.remove-moderator-button {
+    background-color: #ff6b6b;
+    color: white;
+}
+
+.remove-moderator-button:hover:not(:disabled) {
+    background-color: #ff5252;
+}
+
+.assign-moderator-button:disabled,
+.remove-moderator-button:disabled {
+    background-color: #e0e0e0;
+    color: #999;
+    cursor: not-allowed;
+}
+
+/* --- Сообщения --- */
+.loading-state, .error-state, .no-data {
+    text-align: center;
+    padding: 40px;
+    font-size: 16px;
+    color: #666;
+    background: white;
+    border-radius: 8px;
+    margin: 20px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+}
+
+.error-state {
+    color: #e74c3c;
+}
+
+.no-results {
+    text-align: center;
+    padding: 40px 20px;
+    color: #666;
+    font-size: 16px;
+    background-color: #f9f9f9;
+    border-radius: 6px;
+    margin-top: 20px;
+}
+
+.no-results-icon {
+    font-size: 32px;
+    margin-bottom: 10px;
+    opacity: 0.5;
+}
+
+.no-results-text {
+    font-weight: 500;
+}
+
+.search-hint {
+    text-align: center;
+    padding: 40px 20px;
+    color: #777;
+    background-color: #f9f9f9;
+    border-radius: 6px;
+    margin-top: 20px;
+}
+
+.hint-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 15px;
+}
+
+.hint-icon {
+    font-size: 40px;
+    opacity: 0.3;
+}
+
+.hint-text {
+    font-size: 16px;
+    line-height: 1.5;
+}
+
+.hint-subtext {
+    font-size: 14px;
+    color: #999;
+    margin-top: 5px;
+}
+
+/* Адаптивность */
+@media (max-width: 768px) {
+    .add-moderator-content {
+        padding: 16px;
+    }
+    
+    .search-input-group {
+        flex-direction: column;
+    }
+    
+    .mod-table, .users-search-table {
+        display: block;
+        overflow-x: auto;
+    }
+    
+    .mod-tab {
+        padding: 15px 0;
+        font-size: 14px;
+    }
+    
+    .results-header {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 8px;
+    }
+    
+    .action-buttons {
+        flex-direction: column;
+        gap: 5px;
+    }
+    
+    .assign-moderator-button,
+    .remove-moderator-button,
+    .block-user-btn,
+    .unblock-user-btn {
+        min-width: 80px;
+        font-size: 11px;
+        padding: 5px 8px;
+    }
+    
+    .visibility-btn {
+        min-width: 70px;
+        font-size: 11px;
+        padding: 5px 8px;
+    }
+}
+
+/* Добавьте в конец файла ModeratorPage.css */
+
+/* Стили для отображения типа контента */
+.type-cell {
+    width: 100px;
+}
+
+.content-type-badge {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 4px;
+    padding: 6px;
+    border-radius: 6px;
+    background-color: #f8f9fa;
+    transition: background-color 0.2s;
+}
+
+.content-type-text {
+    font-size: 11px;
+    font-weight: 600;
+    color: #495057;
+    text-transform: uppercase;
+}
+
+/* Стили для превью контента */
+.content-cell {
+    min-width: 200px;
+    max-width: 300px;
+}
+
+.content-preview {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.content-title {
+    font-weight: 600;
+    color: #333;
+    font-size: 13px;
+}
+
+.comment-content-preview {
+    font-size: 12px;
+    color: #666;
+    line-height: 1.3;
+    font-style: italic;
+    padding: 4px 8px;
+    background-color: #f8f9fa;
+    border-radius: 4px;
+    border-left: 3px solid #696cff;
+}
+
+/* Обновленные стили статусов */
+.content-visible {
+    background: #51cf66;
+    color: white;
+}
+
+.content-hidden {
+    background: #ff6b6b;
+    color: white;
+}
+
+/* Обновленные стили для кнопок видимости */
+.visibility-actions {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+}
+
+.visibility-btn {
+    padding: 6px 10px;
+    border: none;
+    border-radius: 4px;
+    font-size: 11px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    min-width: 80px;
+    text-transform: uppercase;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 4px;
+}
+
+.btn-visible {
+    background: #ff6b6b;
+    color: white;
+}
+
+.btn-visible:hover:not(:disabled) {
+    background: #ff5252;
+}
+
+.btn-hidden {
+    background: #51cf66;
+    color: white;
+}
+
+.btn-hidden:hover:not(:disabled) {
+    background: #40c057;
+}
+
+.visibility-btn:disabled {
+    background-color: #e0e0e0;
+    color: #999;
+    cursor: not-allowed;
+    opacity: 0.7;
+}
+
+/* Адаптивность для новой колонки */
+@media (max-width: 1200px) {
+    .type-cell {
+        width: 80px;
+    }
+    
+    .content-cell {
+        min-width: 150px;
+        max-width: 200px;
+    }
+    
+    .content-type-badge {
+        padding: 4px;
+    }
+    
+    .content-type-text {
+        font-size: 10px;
+    }
+}
+
+@media (max-width: 992px) {
+    .mod-table {
+        min-width: 1200px;
+    }
+}

@@ -1,0 +1,28 @@
+# Git и метаданные
+.git
+.gitignore
+
+# Docker и Compose
+Dockerfile
+docker-compose.yml
+
+# Документация
+README.md
+
+# Бинарники и артефакты
+bin/
+*.exe
+*.log
+*.out
+
+# Кэш Go
+*.test
+*.prof
+*.tmp
+
+# Node/React (не нужны в бэкенде)
+web/node_modules
+web/build
+
+# Системные
+*.DS_Store
