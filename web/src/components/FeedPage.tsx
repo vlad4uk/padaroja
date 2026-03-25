@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import PostFeed from '../components/PostFeed.tsx';
 import RightFilters from '../components/RightFilters.tsx';
 import ContentLayout from '../components/ContentLayout.tsx';
@@ -8,6 +8,7 @@ import '../components/UserPostsFeed.css';
 const FeedPage: React.FC = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [tagSearch, setTagSearch] = useState('');
+    const [sortBy, setSortBy] = useState('new'); // 'popular', 'new', 'trending'
     const { isLoading } = useAuth();
 
     if (isLoading) {
@@ -21,21 +22,22 @@ const FeedPage: React.FC = () => {
     return (
         <ContentLayout>
             <div className="feed-page-layout">
-                {/* Основной контент - прокручивается */}
                 <div className="feed-content-area">
                     <PostFeed 
                         searchQuery={searchTerm} 
                         tagQuery={tagSearch} 
+                        sortBy={sortBy} // Добавляем
                     />
                 </div>
 
-                {/* Правая панель - закреплена */}
                 <div className="feed-filters-area">
                     <RightFilters 
                         searchTerm={searchTerm}
                         setSearchTerm={setSearchTerm}
                         tagSearch={tagSearch}
                         setTagSearch={setTagSearch}
+                        sortBy={sortBy} // Добавляем
+                        setSortBy={setSortBy} // Добавляем
                     />
                 </div>
             </div>

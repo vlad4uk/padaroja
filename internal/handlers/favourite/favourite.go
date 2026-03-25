@@ -141,7 +141,7 @@ func GetFavourites(c *gin.Context) {
 		Preload("Post").
 		Preload("Post.User").
 		Preload("Post.Photos").
-		Preload("Post.Place").
+		Preload("Post.Settlement").
 		Preload("Post.Paragraphs").
 		Find(&favourites).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch favourites"})
@@ -154,10 +154,11 @@ func GetFavourites(c *gin.Context) {
 			continue
 		}
 
+		// ИСПРАВЛЕНИЕ: Используем post_tags вместо place_tags
 		var tags []string
 		database.DB.Table("tags").
-			Joins("JOIN place_tags ON place_tags.tag_id = tags.id").
-			Where("place_tags.place_id = ?", fav.Post.PlaceID).
+			Joins("JOIN post_tags ON post_tags.tag_id = tags.id").
+			Where("post_tags.post_id = ?", fav.Post.ID).
 			Pluck("tags.name", &tags)
 
 		if tags == nil {
@@ -172,17 +173,18 @@ func GetFavourites(c *gin.Context) {
 		}
 
 		response = append(response, gin.H{
-			"id":           fav.Post.ID,
-			"user_id":      fav.Post.UserID,
-			"title":        fav.Post.Title,
-			"created_at":   fav.Post.CreatedAt,
-			"place_name":   fav.Post.Place.Name,
-			"tags":         tags,
-			"photos":       fav.Post.Photos,
-			"likes_count":  fav.Post.LikesCount,
-			"user_avatar":  userAvatar,
-			"user_name":    userName,
-			"is_favourite": true,
+			"id":              fav.Post.ID,
+			"user_id":         fav.Post.UserID,
+			"title":           fav.Post.Title,
+			"created_at":      fav.Post.CreatedAt,
+			"settlement_name": fav.Post.SettlementName,
+			"settlement_id":   fav.Post.SettlementID,
+			"tags":            tags,
+			"photos":          fav.Post.Photos,
+			"likes_count":     fav.Post.LikesCount,
+			"user_avatar":     userAvatar,
+			"user_name":       userName,
+			"is_favourite":    true,
 		})
 	}
 
@@ -240,14 +242,19 @@ func CheckMultipleFavourites(c *gin.Context) {
 		return
 	}
 
-	userID, ok := userIDInterface.(int)
-	if !ok {
-		if userIDUint, ok := userIDInterface.(uint); ok {
-			userID = int(userIDUint)
-		} else {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Invalid user ID type"})
-			return
-		}
+	var userID int
+	switch v := userIDInterface.(type) {
+	case uint:
+		userID = int(v)
+	case int:
+		userID = v
+	case int64:
+		userID = int(v)
+	case float64:
+		userID = int(v)
+	default:
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Invalid user ID type"})
+		return
 	}
 
 	postIDsParam := c.Query("post_ids")
@@ -281,13 +288,13 @@ func CheckMultipleFavourites(c *gin.Context) {
 		return
 	}
 
-	favouriteMap := make(map[int]bool)
+	favouriteMap := make(map[string]bool)
 	for _, postID := range postIDs {
-		favouriteMap[postID] = false
+		favouriteMap[strconv.Itoa(postID)] = false
 	}
 
 	for _, postID := range favouritePostIDs {
-		favouriteMap[postID] = true
+		favouriteMap[strconv.Itoa(postID)] = true
 	}
 
 	c.JSON(http.StatusOK, favouriteMap)

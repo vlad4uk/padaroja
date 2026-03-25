@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import axios from 'axios';
 import ContentLayout from '../components/ContentLayout.tsx';
+import SearchBox from '../components/SearchBox.tsx'; // Добавляем SearchBox
 import './PostEditPage.css'; 
 import { uploadImage } from '../firebase/uploadImage'; 
 import { FaPlus, FaAngleDoubleLeft, FaAngleDoubleRight, FaTimes } from 'react-icons/fa';
@@ -14,6 +15,14 @@ interface SlideData {
     isLoadingImage: boolean;
 }
 
+interface SettlementResult {
+    id: number;
+    name: string;
+    display_name: string;
+    latitude?: number;
+    longitude?: number;
+}
+
 const MAX_SLIDES = 20;
 
 const PostEditPage: React.FC = () => {
@@ -22,7 +31,8 @@ const PostEditPage: React.FC = () => {
     const { isLoggedIn } = useAuth(); 
 
     const [title, setTitle] = useState('');
-    const [place, setPlace] = useState('');
+    const [selectedSettlement, setSelectedSettlement] = useState<SettlementResult | null>(null);
+    const [settlementInput, setSettlementInput] = useState('');
     const [tags, setTags] = useState('');
     const [loading, setLoading] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
@@ -39,16 +49,28 @@ const PostEditPage: React.FC = () => {
                 const data = response.data;
 
                 setTitle(data.title);
-                setPlace(data.place_name);
+                
+                // Устанавливаем данные о населенном пункте
+                if (data.settlement_id && data.settlement_name) {
+                    setSelectedSettlement({
+                        id: data.settlement_id,
+                        name: data.settlement_name,
+                        display_name: data.settlement_name
+                    });
+                    setSettlementInput(data.settlement_name);
+                }
+
+                // Обработка тегов
                 setTags(data.tags ? data.tags.map((t: string) => `#${t}`).join(' ') : '');
 
+                // Загрузка слайдов
                 const loadedSlides: SlideData[] = [];
                 const paragraphs = data.paragraphs || [];
                 const photos = data.photos || [];
 
                 const maxOrderText = paragraphs.length > 0 ? Math.max(...paragraphs.map((p: any) => p.order)) : 0;
                 const maxOrderPhoto = photos.length > 0 ? Math.max(...photos.map((p: any) => p.order)) : 0;
-                const totalSlides = Math.max(maxOrderText, maxOrderPhoto);
+                const totalSlides = Math.max(maxOrderText, maxOrderPhoto, 1);
 
                 for (let i = 1; i <= totalSlides; i++) {
                     const p = paragraphs.find((item: any) => item.order === i);
@@ -60,10 +82,6 @@ const PostEditPage: React.FC = () => {
                         imageUrl: ph ? ph.url : '',
                         isLoadingImage: false
                     });
-                }
-
-                if (loadedSlides.length === 0) {
-                    loadedSlides.push({ id: Date.now(), text: '', imageUrl: '', isLoadingImage: false });
                 }
 
                 setSlides(loadedSlides);
@@ -81,6 +99,12 @@ const PostEditPage: React.FC = () => {
             fetchPostData();
         }
     }, [id, isLoggedIn, navigate]);
+
+    const handleSettlementSelect = (result: SettlementResult) => {
+        console.log('Settlement selected for edit:', result);
+        setSelectedSettlement(result);
+        setSettlementInput(result.name);
+    };
 
     const handleNextSlide = () => currentSlideIndex < slides.length - 1 && setCurrentSlideIndex(prev => prev + 1);
     const handlePrevSlide = () => currentSlideIndex > 0 && setCurrentSlideIndex(prev => prev - 1);
@@ -129,28 +153,63 @@ const PostEditPage: React.FC = () => {
     const handleRemoveImage = (e: React.MouseEvent) => { e.stopPropagation(); updateCurrentSlide('imageUrl', ''); };
 
     const handleUpdate = async () => {
-        if (!title.trim() || !place.trim()) return alert('Заполните название и место');
+        if (!title.trim()) {
+            alert('Введите название поста');
+            return;
+        }
+        
+        if (!selectedSettlement) {
+            alert('Выберите населенный пункт');
+            return;
+        }
+        
         setIsSaving(true);
 
-        const parsedTags = tags.split(/\s+/).map(t => t.replace('#', '')).filter(t => t.trim() !== "").map(t => t.toLowerCase()); 
-        const paragraphs = slides.map((slide, index) => ({ content: slide.text, order: index + 1 })).filter(p => p.content.trim() !== "");
-        const photos = slides.map((slide, index) => slide.imageUrl ? ({ url: slide.imageUrl, order: index + 1, is_approved: true }) : null).filter((p): p is { url: string; order: number; is_approved: boolean } => p !== null);
+        const parsedTags = tags
+            .split(/\s+/)
+            .map(t => t.startsWith('#') ? t.substring(1) : t)
+            .filter(t => t.trim() !== "")
+            .map(t => t.toLowerCase());
+
+        const paragraphs = slides
+            .map((slide, index) => ({ 
+                content: slide.text, 
+                order: index + 1 
+            }))
+            .filter(p => p.content.trim() !== "");
+
+        const photos = slides
+            .map((slide, index) => slide.imageUrl ? ({ 
+                url: slide.imageUrl, 
+                order: index + 1, 
+                is_approved: true 
+            }) : null)
+            .filter((p): p is { url: string; order: number; is_approved: boolean } => p !== null);
 
         const postData = {
             title,
-            place_data: { name: place, desc: "", latitude: 0, longitude: 0 },
-            tags: parsedTags, 
+            settlement_id: selectedSettlement.id,
+            settlement_name: settlementInput,
+            tags: parsedTags,
             paragraphs,
             photos
         };
 
+        console.log('Updating post with data:', postData);
+
         try {
-            await axios.put(`/api/posts/${id}`, postData, { withCredentials: true });
+            await axios.put(`/api/posts/${id}`, postData, { 
+                withCredentials: true,
+                headers: {
+                    'Content-Type': 'application/json'
+                }
+            });
             alert('Публикация обновлена!');
             navigate(`/post/${id}`);
-        } catch (error) {
-            console.error(error);
-            alert('Ошибка при обновлении.');
+        } catch (error: any) {
+            console.error('Ошибка обновления:', error);
+            const errorMessage = error.response?.data?.details || error.response?.data?.error || 'Ошибка при обновлении';
+            alert(errorMessage);
         } finally {
             setIsSaving(false);
         }
@@ -194,18 +253,17 @@ const PostEditPage: React.FC = () => {
                         />
                     </div>
 
-                    {/* Поле Место */}
+                    {/* Поле Место с поиском */}
                     <div className="input-wrapper">
                         <span className="input-label">Место</span>
-                        <input 
-                            type="text" 
-                            className="edit-input" 
-                            value={place} 
-                            onChange={(e) => setPlace(e.target.value)} 
+                        <SearchBox 
+                            onSelect={handleSettlementSelect}
+                            placeholder="Введите населенный пункт..."
+                            initialValue={settlementInput}
                         />
                     </div>
 
-                    {/* --- Слайдер / Редактор слайда --- */}
+                    {/* Слайдер / Редактор слайда */}
                     <div className="edit-slider-area">
                         <button className="edit-nav-btn left" onClick={handlePrevSlide} disabled={currentSlideIndex === 0}>
                             <FaAngleDoubleLeft />
@@ -272,6 +330,7 @@ const PostEditPage: React.FC = () => {
                             className="edit-input" 
                             value={tags} 
                             onChange={(e) => setTags(e.target.value)} 
+                            placeholder="#тег1 #тег2"
                         />
                     </div>
 

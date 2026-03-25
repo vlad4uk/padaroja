@@ -22,7 +22,7 @@ func ConnectDB() {
 	sslMode := os.Getenv("DB_SSL_MODE")
 
 	dbconn := fmt.Sprintf(
-		"host=%s port=%s user=%s password=%s dbname=%s sslmode=%s",
+		"host=%s port=%s user=%s password=%s dbname=%s sslmode=%s client_encoding=UTF8",
 		host, port, user, password, dbname, sslMode,
 	)
 
@@ -46,18 +46,17 @@ func ConnectDB() {
 
 	err = db.AutoMigrate(
 		&models.User{},
-		&models.Place{},
+		&models.Settlement{},
 		&models.Post{},
 		&models.Paragraph{},
 		&models.PostPhoto{},
-		&models.PlaceTags{},
+		&models.PostTag{},
 		&models.Tags{},
 		&models.Complaint{},
 		&models.Favourite{},
 		&models.Like{},
 		&models.Followers{},
 		&models.Comment{},
-		&models.Review{},
 	)
 	if err != nil {
 		log.Fatal("Failed to perform GORM AutoMigrate:", err)

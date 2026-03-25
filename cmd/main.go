@@ -2,6 +2,7 @@ package main
 
 import (
 	"log"
+	"net/http"
 	"os"
 	"time"
 
@@ -16,11 +17,10 @@ import (
 	"padaroja/internal/handlers/like"
 	maps "padaroja/internal/handlers/map"
 	"padaroja/internal/handlers/moderation"
-	"padaroja/internal/handlers/places"
 	"padaroja/internal/handlers/post"
 	"padaroja/internal/handlers/profile"
-	"padaroja/internal/handlers/reviews"
 	"padaroja/internal/middleware"
+	"padaroja/internal/sse"
 	database "padaroja/internal/storage/postgres"
 	utils "padaroja/utils/auth"
 )
@@ -48,6 +48,8 @@ func main() {
 	}
 
 	router := gin.Default()
+	hub := sse.NewHub()
+	go hub.Run()
 
 	frontendURL := os.Getenv("FRONTEND_URL")
 	if frontendURL == "" {
@@ -110,15 +112,23 @@ func main() {
 
 	postRoutes := api.Group("/posts")
 	{
+		postRoutes.GET("/stream", gin.WrapF(func(w http.ResponseWriter, r *http.Request) {
+			log.Println("SSE connection received for /stream")
+			hub.StreamAllPosts(w, r)
+		}))
+		postRoutes.GET("/stream/user", gin.WrapF(func(w http.ResponseWriter, r *http.Request) {
+			log.Printf("SSE connection received for /stream/user with params: %v", r.URL.Query())
+			hub.StreamUserPosts(w, r)
+		}))
 		postRoutes.GET("", middleware.OptionalAuthMiddleware(), post.GetPublicFeed)
 
 		postRoutes.GET("/:postID", middleware.OptionalAuthMiddleware(), post.GetPost)
 
 		postRoutes.POST("", middleware.AuthMiddleware(), post.CreatePost)
+		postRoutes.GET("/search/settlements", post.SearchSettlements)
 		postRoutes.PUT("/:postID", middleware.AuthMiddleware(), post.UpdatePost)
 		postRoutes.DELETE("/:postID", middleware.AuthMiddleware(), post.DeletePost)
 		postRoutes.POST("/:postID/report", middleware.AuthMiddleware(), post.ReportPost)
-		postRoutes.PUT("/:postID/attach-to-place", middleware.AuthMiddleware(), post.AttachPostToPlace)
 
 		postRoutes.PATCH("/:postID/comments", middleware.AuthMiddleware(), post.ToggleComments)
 	}
@@ -136,36 +146,27 @@ func main() {
 
 	mapRoutes := api.Group("/map")
 	{
-		mapRoutes.GET("/place/:placeID", middleware.OptionalAuthMiddleware(), maps.GetPlaceDetails)
 
 		mapRoutes.GET("/user/:userID/data", maps.GetMapDataByUserID)
 
 		mapRoutes.GET("/user-data", middleware.AuthMiddleware(), maps.GetUserMapData)
 	}
 
-	placeRoutes := api.Group("/places")
-	{
+	// reviewRoutes := api.Group("/reviews")
+	// {
 
-		placeRoutes.GET("", middleware.OptionalAuthMiddleware(), places.GetPlaces)
+	// 	reviewRoutes.GET("/place/:placeID", middleware.OptionalAuthMiddleware(), reviews.GetPlaceReviews)
 
-		placeRoutes.POST("", middleware.AuthMiddleware(), places.CreatePlace)
-	}
-
-	reviewRoutes := api.Group("/reviews")
-	{
-
-		reviewRoutes.GET("/place/:placeID", middleware.OptionalAuthMiddleware(), reviews.GetPlaceReviews)
-
-		protectedReviewRoutes := reviewRoutes.Group("")
-		protectedReviewRoutes.Use(middleware.AuthMiddleware())
-		{
-			protectedReviewRoutes.POST("", reviews.CreateReview)
-			protectedReviewRoutes.POST("/with-place", reviews.CreateReviewWithPlace)
-			protectedReviewRoutes.GET("/user", reviews.GetUserReviews)
-			protectedReviewRoutes.PUT("/:reviewID", reviews.UpdateReview)
-			protectedReviewRoutes.DELETE("/:reviewID", reviews.DeleteReview)
-		}
-	}
+	// 	protectedReviewRoutes := reviewRoutes.Group("")
+	// 	protectedReviewRoutes.Use(middleware.AuthMiddleware())
+	// 	{
+	// 		protectedReviewRoutes.POST("", reviews.CreateReview)
+	// 		protectedReviewRoutes.POST("/with-place", reviews.CreateReviewWithPlace)
+	// 		protectedReviewRoutes.GET("/user", reviews.GetUserReviews)
+	// 		protectedReviewRoutes.PUT("/:reviewID", reviews.UpdateReview)
+	// 		protectedReviewRoutes.DELETE("/:reviewID", reviews.DeleteReview)
+	// 	}
+	// }
 
 	modRoutes := api.Group("/mod")
 	{
@@ -191,30 +192,28 @@ func main() {
 		modRoutes.POST("/users/:userID/remove-moderator", moderation.RemoveModeratorRole)
 	}
 
-	favouriteRoutes := api.Group("/favourites")
-	{
-		favouriteRoutes.Use(middleware.AuthMiddleware())
-
-		favouriteRoutes.POST("/:postID", favourite.AddToFavourites)
-		favouriteRoutes.DELETE("/:postID", favourite.RemoveFromFavourites)
-		favouriteRoutes.GET("", favourite.GetFavourites)
-		favouriteRoutes.GET("/check/:postID", favourite.CheckFavourite)
-		favouriteRoutes.GET("/check-multiple", favourite.CheckMultipleFavourites)
-	}
-
+	// ИСПРАВЛЕННЫЙ БЛОК ДЛЯ ЛАЙКОВ
 	likeRoutes := api.Group("/likes")
 	{
-
+		// Публичные маршруты
 		likeRoutes.GET("/count/:postID", middleware.OptionalAuthMiddleware(), like.GetPostLikesCount)
 
-		protectedLikeRoutes := likeRoutes.Group("")
-		protectedLikeRoutes.Use(middleware.AuthMiddleware())
-		{
-			protectedLikeRoutes.POST("/:postID", like.LikePost)
-			protectedLikeRoutes.DELETE("/:postID", like.UnlikePost)
-			protectedLikeRoutes.GET("", like.GetUserLikes)
-			protectedLikeRoutes.GET("/check/:postID", like.CheckLike)
-		}
+		// Защищенные маршруты - ВАЖНО: определяем их на корневом уровне группы
+		likeRoutes.POST("/:postID", middleware.AuthMiddleware(), like.LikePost)
+		likeRoutes.DELETE("/:postID", middleware.AuthMiddleware(), like.UnlikePost)
+		likeRoutes.GET("", middleware.AuthMiddleware(), like.GetUserLikes)
+		likeRoutes.GET("/check/:postID", middleware.AuthMiddleware(), like.CheckLike)
+	}
+
+	// ИСПРАВЛЕННЫЙ БЛОК ДЛЯ ИЗБРАННОГО
+	favouriteRoutes := api.Group("/favourites")
+	{
+		// Все маршруты избранного требуют авторизации
+		favouriteRoutes.POST("/:postID", middleware.AuthMiddleware(), favourite.AddToFavourites)
+		favouriteRoutes.DELETE("/:postID", middleware.AuthMiddleware(), favourite.RemoveFromFavourites)
+		favouriteRoutes.GET("", middleware.AuthMiddleware(), favourite.GetFavourites)
+		favouriteRoutes.GET("/check/:postID", middleware.AuthMiddleware(), favourite.CheckFavourite)
+		favouriteRoutes.GET("/check-multiple", middleware.AuthMiddleware(), favourite.CheckMultipleFavourites)
 	}
 
 	log.Printf("Сервер запущен на порту %s в режиме %s", serverPort, env)

@@ -10,7 +10,6 @@ import { FaRegBookmark, FaBookmark, FaAngleDoubleLeft, FaAngleDoubleRight, FaTim
 import { useAuth } from '../context/AuthContext.tsx'; 
 import CommentsSection from '../components/CommentsSection.tsx';
 
-
 interface ParagraphData {
     id: number;
     content: string;
@@ -27,13 +26,14 @@ interface PostDetailData {
     id: string;
     title: string;
     created_at: string;
-    place_name: string;
+    settlement_name: string;      // Изменено: было place_name
+    settlement_id: number;        // Добавлено
     tags: string[] | null;
     likes_count: number;
     paragraphs: ParagraphData[] | null;
     photos: PhotoData[] | null;
     user_id: number;
-    comments_disabled: boolean; 
+    comments_disabled: boolean;
     author_info?: {
         username: string;
         image_url: string;
@@ -50,43 +50,40 @@ const SinglePostPage: React.FC = () => {
     const [error, setError] = useState('');
     const [currentSlide, setCurrentSlide] = useState(0);
 
-    // --- СТЕЙТЫ ДЛЯ ЛАЙКОВ И ИЗБРАННОГО ---
+    // Стейты для лайков и избранного
     const [isLiked, setIsLiked] = useState(false);
     const [isFavourite, setIsFavourite] = useState(false);
     const [likesCount, setLikesCount] = useState(0);
     const [clickedPostId, setClickedPostId] = useState<number | null>(null);
     const [clickedLikePostId, setClickedLikePostId] = useState<number | null>(null);
 
-    // --- СТЕЙТЫ ДЛЯ АВТОРА ПОСТА ---
+    // Стейты для автора поста
     const [userAvatar, setUserAvatar] = useState<string>('');
     const [postUserName, setPostUserName] = useState<string>('');
 
-    // --- СТЕЙТЫ ДЛЯ МОДАЛЬНОГО ОКНА ЖАЛОБЫ ---
+    // Стейты для модального окна жалобы
     const [isReportModalOpen, setReportModalOpen] = useState(false);
     const [reportPostId, setReportPostId] = useState<number | null>(null);
 
-    // --- СТЕЙТЫ ДЛЯ ПОЛНОЭКРАННОГО ПРОСМОТРА ФОТО ---
+    // Стейты для полноэкранного просмотра фото
     const [isImageModalOpen, setIsImageModalOpen] = useState(false);
     const [fullscreenImage, setFullscreenImage] = useState<string | null>(null);
     const [fullscreenImageAlt, setFullscreenImageAlt] = useState<string>('');
 
-    // --- СТЕЙТ ДЛЯ КОММЕНТАРИЕВ ---
+    // Стейт для комментариев
     const [commentsDisabled, setCommentsDisabled] = useState(false);
 
     const paragraphs = post?.paragraphs || [];
     const photos = post?.photos || [];
-    // Определяем максимальное количество слайдов
-    const maxSlides = Math.max(paragraphs.length, photos.length); 
+    const maxSlides = Math.max(paragraphs.length, photos.length, 1);
     
     const currentOrder = currentSlide + 1;
-    // Находим текст и фото, соответствующие текущему порядку (слайду)
     const currentText = paragraphs.find(p => p.order === currentOrder);
     const currentPhoto = photos.find(p => p.order === currentOrder);
     
-    // Преобразуем строковый ID поста в число для PostActionsMenu
     const postIdNum = post ? parseInt(post.id) : 0;
     
-    // Загрузка поста и статусов лайков/избранного
+    // Загрузка поста и статусов
     useEffect(() => {
         const fetchPost = async () => {
             try {
@@ -95,20 +92,18 @@ const SinglePostPage: React.FC = () => {
                 });
                 
                 if (response.data) {
+                    console.log('Post data:', response.data); // Для отладки
                     setPost(response.data);
                     setLikesCount(response.data.likes_count || 0);
-                    setCommentsDisabled(response.data.comments_disabled || false); // Загружаем статус комментариев
+                    setCommentsDisabled(response.data.comments_disabled || false);
                     
-                    // Загружаем информацию об авторе
                     if (response.data.author_info) {
                         setUserAvatar(response.data.author_info.image_url || '');
                         setPostUserName(response.data.author_info.username || 'Автор');
                     } else {
-                        // Если авторская информация не пришла, загружаем отдельно
                         await fetchAuthorInfo(response.data.user_id);
                     }
                     
-                    // Загружаем статусы лайков и избранного
                     await loadLikeStatus(parseInt(response.data.id));
                     await loadFavouriteStatus(parseInt(response.data.id));
                 } else {
@@ -117,7 +112,7 @@ const SinglePostPage: React.FC = () => {
                 
             } catch (err) {
                 console.error("Ошибка при получении поста:", err);
-                setError('Не удалось загрузить пост. Возможно, он был удален или доступ ограничен.');
+                setError('Не удалось загрузить пост.');
             } finally {
                 setLoading(false);
             }
@@ -128,7 +123,6 @@ const SinglePostPage: React.FC = () => {
         }
     }, [id]);
 
-    // Загрузка информации об авторе
     const fetchAuthorInfo = useCallback(async (userId: number) => {
         try {
             const response = await axios.get(
@@ -142,10 +136,8 @@ const SinglePostPage: React.FC = () => {
         }
     }, []);
 
-    // Загрузка статуса лайка
     const loadLikeStatus = async (postId: number) => {
         if (!isLoggedIn) return;
-        
         try {
             const response = await axios.get<{is_liked: boolean}>(
                 `/api/likes/check/${postId}`,
@@ -157,10 +149,8 @@ const SinglePostPage: React.FC = () => {
         }
     };
 
-    // Загрузка статуса избранного
     const loadFavouriteStatus = async (postId: number) => {
         if (!isLoggedIn) return;
-        
         try {
             const response = await axios.get<{is_favourite: boolean}>(
                 `/api/favourites/check/${postId}`,
@@ -172,7 +162,6 @@ const SinglePostPage: React.FC = () => {
         }
     };
 
-    // Загрузка количества лайков
     const loadLikesCount = async (postId: number) => {
         try {
             const response = await axios.get<{likes_count: number}>(
@@ -185,7 +174,6 @@ const SinglePostPage: React.FC = () => {
         }
     };
 
-    // --- ОБРАБОТЧИКИ ЛАЙКОВ ---
     const toggleLike = async () => {
         if (!isLoggedIn) {
             alert("Необходимо авторизоваться");
@@ -197,7 +185,6 @@ const SinglePostPage: React.FC = () => {
         
         setClickedLikePostId(postIdNum);
         
-        // Оптимистичное обновление
         const wasLiked = isLiked;
         const newLikesCount = wasLiked ? likesCount - 1 : likesCount + 1;
         
@@ -206,43 +193,27 @@ const SinglePostPage: React.FC = () => {
         
         try {
             if (wasLiked) {
-                await axios.delete(`/api/likes/${postIdNum}`, {
-                    withCredentials: true
-                });
+                await axios.delete(`/api/likes/${postIdNum}`, { withCredentials: true });
             } else {
-                await axios.post(`/api/likes/${postIdNum}`, {}, {
-                    withCredentials: true
-                });
+                await axios.post(`/api/likes/${postIdNum}`, {}, { withCredentials: true });
             }
             
-            // Обновляем актуальное количество лайков
-            setTimeout(() => {
-                loadLikesCount(postIdNum);
-                // Дополнительное обновление через секунду для синхронизации
-                setTimeout(() => {
-                    loadLikesCount(postIdNum);
-                }, 1000);
-            }, 100);
+            setTimeout(() => loadLikesCount(postIdNum), 100);
             
         } catch (err: any) {
             console.error("Ошибка при обновлении лайка:", err);
-            
-            // Откатываем изменения при ошибке
             setIsLiked(wasLiked);
             setLikesCount(likesCount);
             
             if (err.response?.status === 401) {
                 alert("Необходимо авторизоваться");
                 navigate('/login');
-            } else {
-                alert("Не удалось обновить лайк");
             }
         } finally {
             setTimeout(() => setClickedLikePostId(null), 300);
         }
     };
 
-    // --- ОБРАБОТЧИКИ ИЗБРАННОГО ---
     const toggleFavourite = async () => {
         if (!isLoggedIn) {
             alert("Необходимо авторизоваться");
@@ -254,123 +225,89 @@ const SinglePostPage: React.FC = () => {
         
         setClickedPostId(postIdNum);
         
-        // Оптимистичное обновление
         const wasFavourite = isFavourite;
         setIsFavourite(!wasFavourite);
         
         try {
             if (wasFavourite) {
-                await axios.delete(`/api/favourites/${postIdNum}`, {
-                    withCredentials: true
-                });
+                await axios.delete(`/api/favourites/${postIdNum}`, { withCredentials: true });
             } else {
-                await axios.post(`/api/favourites/${postIdNum}`, {}, {
-                    withCredentials: true
-                });
+                await axios.post(`/api/favourites/${postIdNum}`, {}, { withCredentials: true });
             }
         } catch (err: any) {
             console.error("Ошибка при обновлении закладки:", err);
-            
-            // Откатываем изменения при ошибке
             setIsFavourite(wasFavourite);
             
             if (err.response?.status === 401) {
                 alert("Необходимо авторизоваться");
                 navigate('/login');
-            } else {
-                alert("Не удалось обновить закладку");
             }
         } finally {
             setTimeout(() => setClickedPostId(null), 300);
         }
     };
 
-    // --- ОБРАБОТЧИКИ ДЛЯ PostActionsMenu ---
     const handleEdit = (postId: number) => {
         navigate(`/post/edit/${postId}`);
     };
 
     const handleDelete = async (postId: number) => {
-        if (!window.confirm('Вы уверены, что хотите удалить этот пост? Это действие необратимо.')) {
-            return;
-        }
+        if (!window.confirm('Вы уверены, что хотите удалить этот пост?')) return;
 
         try {
-            await axios.delete(`/api/posts/${postId}`, {
-                withCredentials: true
-            });
-            alert('Пост успешно удален!');
-            navigate('/profile'); 
+            await axios.delete(`/api/posts/${postId}`, { withCredentials: true });
+            alert('Пост удален!');
+            navigate('/profile');
         } catch (error) {
-            console.error('Ошибка удаления поста:', error);
-            alert('Не удалось удалить пост. Убедитесь, что вы являетесь его автором.');
+            console.error('Ошибка удаления:', error);
+            alert('Не удалось удалить пост.');
         }
     };
     
-    // --- ОБРАБОТЧИКИ ЖАЛОБЫ ---
-   const handleReport = async (postId: number, reason: string) => {
+    const handleReport = async (postId: number, reason: string) => {
         try {
             await axios.post(`/api/posts/${postId}/report`, 
                 { reason }, 
                 { withCredentials: true }
             );
-            alert("Жалоба на пост отправлена.");
+            alert("Жалоба отправлена.");
             return Promise.resolve();
         } catch (err: any) {
             console.error('Ошибка при отправке жалобы:', err);
             
             if (err.response?.status === 401) {
-                alert("Необходимо авторизоваться для отправки жалобы");
+                alert("Необходимо авторизоваться");
                 navigate('/login');
-            } else if (err.response?.status === 400) {
-                alert(err.response.data.error || "Некорректный запрос");
             } else {
-                alert("Ошибка при отправке жалобы. Попробуйте позже.");
+                alert("Ошибка при отправке жалобы.");
             }
-            
             return Promise.reject(err);
         }
     };
 
-    const handleSubmitReport = async (reason: string) => {
-        if (!reportPostId) return;
+    const toggleComments = async () => {
+        if (!post || !isLoggedIn) return;
+        
+        if (user?.id !== post.user_id) {
+            alert("Только автор может изменять настройки комментариев");
+            return;
+        }
+        
         try {
-            await axios.post(`/api/posts/${reportPostId}/report`, 
-                { reason: reason }, { withCredentials: true }
+            const response = await axios.patch(
+                `/api/posts/${post.id}/comments`,
+                { disabled: !commentsDisabled },
+                { withCredentials: true }
             );
-            alert("Жалоба отправлена.");
-            setReportModalOpen(false);
+            
+            setCommentsDisabled(response.data.comments_disabled);
+            alert(`Комментарии ${response.data.comments_disabled ? 'отключены' : 'включены'}`);
         } catch (err: any) {
-            alert(err.response?.status === 401 ? "Нужно авторизоваться." : "Ошибка отправки.");
+            console.error("Ошибка при изменении статуса комментариев:", err);
+            alert("Не удалось изменить настройки комментариев");
         }
     };
 
-    // --- ОБРАБОТЧИКИ ДЛЯ КОММЕНТАРИЕВ ---
-    const toggleComments = async () => {
-    if (!post || !isLoggedIn) return;
-    
-    // Проверяем, что пользователь - автор поста
-    if (user?.id !== post.user_id) {
-        alert("Только автор может изменять настройки комментариев");
-        return;
-    }
-    
-    try {
-        const response = await axios.patch(
-            `/api/posts/${post.id}/comments`,
-            { disabled: !commentsDisabled },
-            { withCredentials: true }
-        );
-        
-        setCommentsDisabled(response.data.comments_disabled);
-        alert(`Комментарии ${response.data.comments_disabled ? 'отключены' : 'включены'}`);
-    } catch (err: any) {
-        console.error("Ошибка при изменении статуса комментариев:", err);
-        alert("Не удалось изменить настройки комментариев");
-    }
-};
-
-    // --- НАВИГАЦИЯ ПО СЛАЙДАМ ---
     const handleNext = () => {
         if (currentSlide < maxSlides - 1) {
             setCurrentSlide(currentSlide + 1);
@@ -383,39 +320,33 @@ const SinglePostPage: React.FC = () => {
         }
     };
 
-    // Переход на страницу автора
     const handleAuthorClick = () => {
         if (post?.user_id) {
             navigate(`/user/${post.user_id}`);
         }
     };
 
-    // --- ОБРАБОТЧИКИ ДЛЯ ПОЛНОЭКРАННОГО ПРОСМОТРА ФОТО ---
     const handleImageClick = (imageUrl: string) => {
         setFullscreenImage(imageUrl);
-        setFullscreenImageAlt(`Фото из поста "${post?.title}" - слайд ${currentSlide + 1}`);
+        setFullscreenImageAlt(`Фото из поста "${post?.title}"`);
         setIsImageModalOpen(true);
     };
 
     const closeImageModal = () => {
         setIsImageModalOpen(false);
         setFullscreenImage(null);
-        setFullscreenImageAlt('');
     };
 
-    // Закрытие по ESC
     useEffect(() => {
         const handleEscKey = (e: KeyboardEvent) => {
             if (e.key === 'Escape' && isImageModalOpen) {
                 closeImageModal();
             }
         };
-
         document.addEventListener('keydown', handleEscKey);
         return () => document.removeEventListener('keydown', handleEscKey);
     }, [isImageModalOpen]);
 
-    // --- РЕНДЕРИНГ СОСТОЯНИЙ ---
     if (loading) {
         return (
             <ContentLayout>
@@ -457,12 +388,16 @@ const SinglePostPage: React.FC = () => {
                             <span className="sp-author-name">{postUserName || 'Автор'}</span>
                         </div>
                         
-                        <span className="sp-date">Опубликовано: {new Date(post.created_at).toLocaleDateString()}</span>
-                        <span className="sp-place-name"><BsGlobeAmericas size={14}/> {post.place_name}</span>
+                        <span className="sp-date">
+                            {new Date(post.created_at).toLocaleDateString()}
+                        </span>
                         
-                       
+                        {/* ОТОБРАЖЕНИЕ НАСЕЛЕННОГО ПУНКТА - ИЗМЕНЕНО */}
+                        <span className="sp-place-name">
+                            <BsGlobeAmericas size={14}/> {post.settlement_name}
+                        </span>
                         
-                        {/* Лайки с возможностью клика */}
+                        {/* Лайки */}
                         <span 
                             className="sp-likes-count"
                             onClick={toggleLike}
@@ -476,14 +411,12 @@ const SinglePostPage: React.FC = () => {
                         >
                             <BsGlobeAmericas 
                                 size={14} 
-                                style={{ 
-                                    color: isLiked ? '#e74c3c' : '#666' 
-                                }} 
+                                style={{ color: isLiked ? '#e74c3c' : '#666' }} 
                             />
                             {likesCount}
                         </span>
                         
-                        {/* Закладка с возможностью клика */}
+                        {/* Закладка */}
                         <div 
                             onClick={toggleFavourite}
                             style={{
@@ -498,13 +431,14 @@ const SinglePostPage: React.FC = () => {
                             )}
                         </div>
                         
+                        {/* Теги */}
                         <span className="sp-tags">
                             {(post.tags ?? []).length > 0 
                                 ? ' #' + (post.tags ?? []).join(' #') 
                                 : ''}
                         </span>
 
-                         {/* Индикатор статуса комментариев */}
+                        {/* Статус комментариев */}
                         <span className="sp-comments-status">
                             {commentsDisabled ? (
                                 <>
@@ -520,7 +454,7 @@ const SinglePostPage: React.FC = () => {
                         </span>
                     </div>
                     
-                    {/* ИНТЕГРАЦИЯ PostActionsMenu */}
+                    {/* Меню действий */}
                     {post.user_id && (
                         <div className="sp-author-actions">
                             <PostActionsMenu 
@@ -528,7 +462,7 @@ const SinglePostPage: React.FC = () => {
                                 postAuthorID={post.user_id}
                                 onEdit={handleEdit}
                                 onDelete={handleDelete}
-                                onReport={handleReport} // Теперь передаем правильную функцию
+                                onReport={handleReport}
                                 onToggleComments={toggleComments}
                                 commentsDisabled={commentsDisabled}
                                 userRole={user?.role_id}
@@ -545,7 +479,9 @@ const SinglePostPage: React.FC = () => {
 
                     <div className="sp-slide-view sp-slider-box">
                         <div className="sp-slide-meta">
-                            <span className="sp-slide-info">Слайд {currentSlide + 1} из {maxSlides}</span>
+                            <span className="sp-slide-info">
+                                Слайд {currentSlide + 1} из {maxSlides}
+                            </span>
                         </div>
 
                         <div className="sp-slide-body">
@@ -553,7 +489,7 @@ const SinglePostPage: React.FC = () => {
                                 {currentPhoto ? (
                                     <img 
                                         src={currentPhoto.url} 
-                                        alt={`Slide ${currentSlide + 1}`} 
+                                        alt={`Слайд ${currentSlide + 1}`} 
                                         className="sp-photo-img"
                                         onClick={() => handleImageClick(currentPhoto.url)}
                                         style={{ cursor: 'pointer' }}
@@ -573,7 +509,7 @@ const SinglePostPage: React.FC = () => {
                     </button>
                 </div>
 
-                {/* Раздел комментариев отдельно */}
+                {/* Комментарии */}
                 <div className="sp-comments-section-wrapper">
                     <CommentsSection 
                         postId={postIdNum} 
@@ -588,14 +524,20 @@ const SinglePostPage: React.FC = () => {
                 </div>
             </div>
             
-            {/* МОДАЛЬНОЕ ОКНО ЖАЛОБЫ */}
+            {/* Модальное окно жалобы */}
+            {/* Модальное окно жалобы */}
             <ReportModal 
                 isOpen={isReportModalOpen}
                 onClose={() => setReportModalOpen(false)}
-                onSubmit={handleSubmitReport}
+                onSubmit={async (reason: string) => {
+                    if (reportPostId) {
+                        await handleReport(reportPostId, reason);
+                        setReportModalOpen(false);
+                    }
+                }}
             />
 
-            {/* МОДАЛЬНОЕ ОКНО ДЛЯ ПОЛНОЭКРАННОГО ПРОСМОТРА ФОТО */}
+            {/* Модальное окно для фото */}
             {isImageModalOpen && fullscreenImage && (
                 <div className="image-modal-overlay" onClick={closeImageModal}>
                     <div className="image-modal-content" onClick={(e) => e.stopPropagation()}>
@@ -607,9 +549,6 @@ const SinglePostPage: React.FC = () => {
                             alt={fullscreenImageAlt} 
                             className="fullscreen-image"
                         />
-                        <div className="image-modal-info">
-                            <span>{fullscreenImageAlt}</span>
-                        </div>
                     </div>
                 </div>
             )}

@@ -1,6 +1,7 @@
 package like
 
 import (
+	"log"
 	"net/http"
 	"padaroja/internal/domain/models"
 	database "padaroja/internal/storage/postgres"
@@ -44,7 +45,11 @@ func LikePost(c *gin.Context) {
 	err = database.DB.Where("user_id = ? AND post_id = ?", userID, postID).First(&existingLike).Error
 
 	if err == nil {
-		c.JSON(http.StatusConflict, gin.H{"error": "Post already liked"})
+		// ИСПРАВЛЕНИЕ: Возвращаем 200 OK вместо 409 Conflict
+		c.JSON(http.StatusOK, gin.H{
+			"message":     "Post already liked",
+			"likes_count": post.LikesCount,
+		})
 		return
 	} else if err != gorm.ErrRecordNotFound {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Database error"})
@@ -73,7 +78,14 @@ func LikePost(c *gin.Context) {
 
 	tx.Commit()
 
-	c.JSON(http.StatusCreated, gin.H{"message": "Post liked successfully"})
+	// Получаем обновленное количество лайков
+	var updatedPost models.Post
+	database.DB.Select("likes_count").First(&updatedPost, postID)
+
+	c.JSON(http.StatusCreated, gin.H{
+		"message":     "Post liked successfully",
+		"likes_count": updatedPost.LikesCount,
+	})
 }
 
 func UnlikePost(c *gin.Context) {
@@ -83,14 +95,19 @@ func UnlikePost(c *gin.Context) {
 		return
 	}
 
-	userID, ok := userIDInterface.(int)
-	if !ok {
-		if userIDUint, ok := userIDInterface.(uint); ok {
-			userID = int(userIDUint)
-		} else {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Invalid user ID type"})
-			return
-		}
+	var userID int
+	switch v := userIDInterface.(type) {
+	case uint:
+		userID = int(v)
+	case int:
+		userID = v
+	case int64:
+		userID = int(v)
+	case float64:
+		userID = int(v)
+	default:
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Invalid user ID type"})
+		return
 	}
 
 	postIDStr := c.Param("postID")
@@ -100,31 +117,74 @@ func UnlikePost(c *gin.Context) {
 		return
 	}
 
+	log.Printf("Attempting to unlike post %d for user %d", postID, userID)
+
+	// Начинаем транзакцию
 	tx := database.DB.Begin()
 
-	result := tx.Where("user_id = ? AND post_id = ?", userID, postID).Delete(&models.Like{})
+	// Сначала проверяем существование лайка
+	var like models.Like
+	result := tx.Where("user_id = ? AND post_id = ?", userID, postID).First(&like)
+
 	if result.Error != nil {
 		tx.Rollback()
+		if result.Error == gorm.ErrRecordNotFound {
+			log.Printf("Like not found for post %d and user %d", postID, userID)
+
+			// Получаем текущее количество лайков
+			var post models.Post
+			database.DB.Select("likes_count").First(&post, postID)
+
+			// ИСПРАВЛЕНИЕ: возвращаем успех, если лайка нет (идемпотентность)
+			c.JSON(http.StatusOK, gin.H{
+				"message":     "Post already unliked",
+				"likes_count": post.LikesCount,
+			})
+		} else {
+			log.Printf("Error checking like: %v", result.Error)
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Database error"})
+		}
+		return
+	}
+
+	// Удаляем лайк
+	if err := tx.Delete(&like).Error; err != nil {
+		tx.Rollback()
+		log.Printf("Error deleting like: %v", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to unlike post"})
 		return
 	}
 
-	if result.RowsAffected == 0 {
+	// Обновляем счетчик лайков в посте, но не даем уйти в минус
+	var post models.Post
+	if err := tx.Select("likes_count").First(&post, postID).Error; err != nil {
 		tx.Rollback()
-		c.JSON(http.StatusNotFound, gin.H{"error": "Like not found"})
+		log.Printf("Error fetching post: %v", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch post"})
 		return
 	}
 
-	if err := tx.Model(&models.Post{}).Where("id = ? AND likes_count > 0", postID).
-		Update("likes_count", gorm.Expr("likes_count - ?", 1)).Error; err != nil {
+	newLikesCount := post.LikesCount - 1
+	if newLikesCount < 0 {
+		newLikesCount = 0
+	}
+
+	if err := tx.Model(&models.Post{}).Where("id = ?", postID).
+		Update("likes_count", newLikesCount).Error; err != nil {
 		tx.Rollback()
+		log.Printf("Error updating likes count: %v", err)
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to update likes count"})
 		return
 	}
 
+	// Подтверждаем транзакцию
 	tx.Commit()
 
-	c.JSON(http.StatusOK, gin.H{"message": "Post unliked successfully"})
+	log.Printf("Successfully unliked post %d for user %d", postID, userID)
+	c.JSON(http.StatusOK, gin.H{
+		"message":     "Post unliked successfully",
+		"likes_count": newLikesCount,
+	})
 }
 
 func GetUserLikes(c *gin.Context) {
@@ -150,7 +210,7 @@ func GetUserLikes(c *gin.Context) {
 		Preload("Post").
 		Preload("Post.User").
 		Preload("Post.Photos").
-		Preload("Post.Place").
+		Preload("Post.Settlement").
 		Preload("Post.Paragraphs").
 		Find(&likes).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch liked posts"})
@@ -165,8 +225,8 @@ func GetUserLikes(c *gin.Context) {
 
 		var tags []string
 		database.DB.Table("tags").
-			Joins("JOIN place_tags ON place_tags.tag_id = tags.id").
-			Where("place_tags.place_id = ?", like.Post.PlaceID).
+			Joins("JOIN post_tags ON post_tags.tag_id = tags.id").
+			Where("post_tags.post_id = ?", like.Post.ID).
 			Pluck("tags.name", &tags)
 
 		if tags == nil {
@@ -185,7 +245,7 @@ func GetUserLikes(c *gin.Context) {
 			"user_id":     like.Post.UserID,
 			"title":       like.Post.Title,
 			"created_at":  like.Post.CreatedAt,
-			"place_name":  like.Post.Place.Name,
+			"place_name":  like.Post.SettlementName,
 			"tags":        tags,
 			"photos":      like.Post.Photos,
 			"likes_count": like.Post.LikesCount,
@@ -222,19 +282,17 @@ func CheckLike(c *gin.Context) {
 		return
 	}
 
-	var like models.Like
-	err = database.DB.Where("user_id = ? AND post_id = ?", userID, postID).First(&like).Error
+	var count int64
+	err = database.DB.Model(&models.Like{}).
+		Where("user_id = ? AND post_id = ?", userID, postID).
+		Count(&count).Error
 
 	if err != nil {
-		if err == gorm.ErrRecordNotFound {
-			c.JSON(http.StatusOK, gin.H{"is_liked": false})
-		} else {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": "Database error"})
-		}
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Database error"})
 		return
 	}
 
-	c.JSON(http.StatusOK, gin.H{"is_liked": true})
+	c.JSON(http.StatusOK, gin.H{"is_liked": count > 0})
 }
 
 func GetPostLikesCount(c *gin.Context) {

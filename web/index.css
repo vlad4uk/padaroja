@@ -7,6 +7,10 @@ body {
   -moz-osx-font-smoothing: grayscale;
 }
 
+html {
+    overflow-y: scroll;
+}
+
 /* Сброс стилей для Box-модели */
 *, *::before, *::after {
   box-sizing: border-box;

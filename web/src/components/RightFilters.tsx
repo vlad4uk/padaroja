@@ -1,4 +1,3 @@
-
 import React from 'react';
 import { FaSearch } from 'react-icons/fa';
 import '../components/UserPostsFeed.css'; 
@@ -8,17 +7,21 @@ interface RightFiltersProps {
     setSearchTerm: (value: string) => void;
     tagSearch: string;
     setTagSearch: (value: string) => void;
+    sortBy: string; // Добавляем
+    setSortBy: (value: string) => void; // Добавляем
 }
 
 const RightFilters: React.FC<RightFiltersProps> = ({ 
     searchTerm, 
     setSearchTerm, 
     tagSearch, 
-    setTagSearch 
+    setTagSearch,
+    sortBy, // Добавляем
+    setSortBy // Добавляем
 }) => {
     return (
         <aside className="right-filters-sidebar">
-            {/* Заголовок для ясности */}
+            {/* Заголовок */}
             <div style={{ marginBottom: '30px', textAlign: 'center' }}>
                 <h3 style={{ color: '#696cff', margin: 0, fontSize: '20px' }}>
                     Фильтры
@@ -68,7 +71,50 @@ const RightFilters: React.FC<RightFiltersProps> = ({
                 />
             </div>
 
-            {/* Дополнительное пространство внизу */}
+            {/* НОВЫЙ БЛОК: Сортировка */}
+            <div className="right-sort-block" style={{ marginTop: '30px' }}>
+                <span className="tags-title">Сортировка</span>
+                <div className="tags-line" style={{ marginBottom: '15px' }}></div>
+                
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}>
+                        <input 
+                            type="radio" 
+                            name="sort" 
+                            value="popular"
+                            checked={sortBy === 'popular'}
+                            onChange={(e) => setSortBy(e.target.value)}
+                            style={{ accentColor: '#696cff', width: '18px', height: '18px' }}
+                        />
+                        <span style={{ color: '#696cff', fontSize: '16px' }}>🔥 Популярные</span>
+                    </label>
+                    
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}>
+                        <input 
+                            type="radio" 
+                            name="sort" 
+                            value="new"
+                            checked={sortBy === 'new'}
+                            onChange={(e) => setSortBy(e.target.value)}
+                            style={{ accentColor: '#696cff', width: '18px', height: '18px' }}
+                        />
+                        <span style={{ color: '#696cff', fontSize: '16px' }}>✨ Новые</span>
+                    </label>
+                    
+                    <label style={{ display: 'flex', alignItems: 'center', gap: '10px', cursor: 'pointer' }}>
+                        <input 
+                            type="radio" 
+                            name="sort" 
+                            value="trending"
+                            checked={sortBy === 'trending'}
+                            onChange={(e) => setSortBy(e.target.value)}
+                            style={{ accentColor: '#696cff', width: '18px', height: '18px' }}
+                        />
+                        <span style={{ color: '#696cff', fontSize: '16px' }}>⚡ Актуальные (лайки за 24ч)</span>
+                    </label>
+                </div>
+            </div>
+
             <div style={{ height: '50px' }}></div>
         </aside>
     );

@@ -1,0 +1,79 @@
+.search-box-container {
+    position: relative;
+    width: 100%;
+}
+
+/* Стилизуем input под custom-input из PostCreatePage */
+.search-box-input {
+    width: 100%;
+    padding: 15px; /* Как у custom-input */
+    border: 2px solid #9d9ef5; /* Как у custom-input */
+    border-radius: 20px; /* Как у custom-input */
+    outline: none;
+    font-size: 14px; /* Как у custom-input */
+    color: #333;
+    background: #fff;
+    box-sizing: border-box;
+    transition: border-color 0.3s;
+}
+
+.search-box-input:focus {
+    border-color: #696cff; /* Как у custom-input */
+    box-shadow: 0 0 0 2px rgba(105, 108, 255, 0.1); /* Как у custom-input */
+}
+
+.search-box-input::placeholder {
+    color: #888; /* Как у custom-input */
+}
+
+/* Выпадающий список остается с теми же стилями */
+.search-dropdown {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    max-height: 300px;
+    overflow-y: auto;
+    background: white;
+    border: 2px solid #9d9ef5; /* Сделаем边框 как у input */
+    border-top: none;
+    border-radius: 0 0 20px 20px; /* Скругление как у input */
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    z-index: 1000;
+    margin-top: -2px; /* Чтобы соединить с input */
+}
+
+.dropdown-item {
+    padding: 12px 15px; /* Немного увеличим padding */
+    cursor: pointer;
+    transition: background-color 0.2s;
+    border-bottom: 1px solid #f0f0f0;
+    font-size: 14px;
+    color: #333;
+}
+
+.dropdown-item:last-child {
+    border-bottom: none;
+}
+
+.dropdown-item:hover {
+    background-color: #f0f0ff; /* Светло-фиолетовый фон при наведении */
+}
+
+.dropdown-item.loading,
+.dropdown-item.empty {
+    color: #999;
+    cursor: default;
+    text-align: center;
+}
+
+.dropdown-item.loading:hover,
+.dropdown-item.empty:hover {
+    background-color: white;
+}
+
+/* Стили для выбранного элемента (опционально) */
+.dropdown-item.selected {
+    background-color: #696cff;
+    color: white;
+}
