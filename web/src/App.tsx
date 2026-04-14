@@ -16,8 +16,8 @@ import PostEditPage from './pages/PostEditPage.tsx';
 import ModeratorPage from './pages/ModeratorPage.tsx'; 
 import FavouritesPage from '../src/components/FavouritesPage.tsx';
 import LikesPage from '../src/components/LikesPage.tsx';
-import PlaceDetailsPage from '../src/components/PlaceDetailsPage.tsx';
 import RulesPage from './components/RulesPage.tsx';
+import AllPostsMapPage from './pages/AllPostsMapPage.tsx'; // Импортируем новую страницу
 
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { isLoggedIn, isLoading } = useAuth();
@@ -73,6 +73,9 @@ const App: React.FC = () => {
             <Route path="/user/:userId" element={<MainLayout />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
+            
+            {/* Новая страница с картой всех постов */}
+            <Route path="/map/all" element={<AllPostsMapPage />} />
             
             <Route 
               path="/profile" 
@@ -132,14 +135,7 @@ const App: React.FC = () => {
                 } 
             />
 
-            <Route 
-              path="/place/:placeId" 
-              element={
-                <ProtectedRoute>
-                  <PlaceDetailsPage />
-                </ProtectedRoute>
-              } 
-            />
+            
           </Routes>
         </Router>
       </Suspense>

@@ -92,6 +92,7 @@ func main() {
 	{
 		userRoutes.GET("/:userID/profile", middleware.OptionalAuthMiddleware(), profile.GetUserProfileByID)
 		userRoutes.GET("/:userID/posts", middleware.OptionalAuthMiddleware(), post.GetUserPostsByID)
+		userRoutes.GET("/search", middleware.OptionalAuthMiddleware(), profile.SearchUsers)
 
 		protectedUserRoutes := userRoutes.Group("")
 		protectedUserRoutes.Use(middleware.AuthMiddleware())
@@ -99,7 +100,6 @@ func main() {
 			protectedUserRoutes.GET("/profile", profile.GetCurrentUserProfile)
 			protectedUserRoutes.PUT("/profile", profile.UpdateUserProfile)
 			protectedUserRoutes.GET("/posts", post.GetUserPosts)
-
 			protectedUserRoutes.POST("/:userID/follow", follows.FollowUser)
 			protectedUserRoutes.DELETE("/:userID/follow", follows.UnfollowUser)
 			protectedUserRoutes.GET("/:userID/follow/check", follows.CheckFollow)
@@ -146,27 +146,12 @@ func main() {
 
 	mapRoutes := api.Group("/map")
 	{
-
 		mapRoutes.GET("/user/:userID/data", maps.GetMapDataByUserID)
 
 		mapRoutes.GET("/user-data", middleware.AuthMiddleware(), maps.GetUserMapData)
+
+		mapRoutes.GET("/posts/all", maps.GetAllPostsMapData)
 	}
-
-	// reviewRoutes := api.Group("/reviews")
-	// {
-
-	// 	reviewRoutes.GET("/place/:placeID", middleware.OptionalAuthMiddleware(), reviews.GetPlaceReviews)
-
-	// 	protectedReviewRoutes := reviewRoutes.Group("")
-	// 	protectedReviewRoutes.Use(middleware.AuthMiddleware())
-	// 	{
-	// 		protectedReviewRoutes.POST("", reviews.CreateReview)
-	// 		protectedReviewRoutes.POST("/with-place", reviews.CreateReviewWithPlace)
-	// 		protectedReviewRoutes.GET("/user", reviews.GetUserReviews)
-	// 		protectedReviewRoutes.PUT("/:reviewID", reviews.UpdateReview)
-	// 		protectedReviewRoutes.DELETE("/:reviewID", reviews.DeleteReview)
-	// 	}
-	// }
 
 	modRoutes := api.Group("/mod")
 	{

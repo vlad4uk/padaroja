@@ -1,5 +1,6 @@
+// Sidebar.tsx - в самом начале файла добавьте безопасную проверку
 import React from 'react';
-import { FaSearch, FaListAlt, FaBookmark, FaBell, FaSignOutAlt, FaSignInAlt, FaUserPlus, FaCog, FaPlusSquare, FaAdn } from 'react-icons/fa';
+import { FaSearch, FaSignOutAlt, FaSignInAlt, FaUserPlus } from 'react-icons/fa';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.tsx'; 
 import '../components/MainLayout.css'; 
@@ -11,8 +12,7 @@ import createIcon from '../assets/sidebar-icons/create.png'
 import adminIcon from '../assets/sidebar-icons/admin.png'
 import rulesIcon from '../assets/sidebar-icons/list.png'
 import exitIcon from '../assets/sidebar-icons/exit.png'
-
-
+import mapIcon from '../assets/sidebar-icons/exit.png' // Добавьте иконку для карты
 
 interface NavItem {
     name: string;
@@ -24,15 +24,29 @@ interface NavItem {
 
 const navItemsList: NavItem[] = [
     { name: 'Профиль', icon: () => <img src={profileIcon} alt="profile" className="sidebar-icon" />, link: '/profile', authRequired: true },
-    { name: 'Поиск', icon: () => <img src={searchIcon} alt="profile" className="sidebar-icon" />,  link: '/search', authRequired: false },
-    { name: 'Мне нравится', icon: () => <img src={favorIcon} alt="profile" className="sidebar-icon" />, link: '/subscriptions', authRequired: true },
-    { name: 'Избранное', icon: () => <img src={bookmarkIcon} alt="profile" className="sidebar-icon" />, link: '/bookmarks', authRequired: true },
-    { name: 'Создать Пост',icon: () => <img src={createIcon} alt="profile" className="sidebar-icon" />, link: '/post/new', authRequired: true },
-    { name: 'Админ Панель', icon: () => <img src={adminIcon} alt="profile" className="sidebar-icon" />, link: '/admin', authRequired: true, adminOnly: true },
+    { name: 'Поиск', icon: () => <img src={searchIcon} alt="search" className="sidebar-icon" />, link: '/search', authRequired: false },
+    { name: 'Карта мест', icon: () => <img src={mapIcon} alt="map" className="sidebar-icon" />, link: '/map/all', authRequired: false }, // Новая ссылка
+    { name: 'Мне нравится', icon: () => <img src={favorIcon} alt="favorites" className="sidebar-icon" />, link: '/subscriptions', authRequired: true },
+    { name: 'Избранное', icon: () => <img src={bookmarkIcon} alt="bookmarks" className="sidebar-icon" />, link: '/bookmarks', authRequired: true },
+    { name: 'Создать Пост', icon: () => <img src={createIcon} alt="create" className="sidebar-icon" />, link: '/post/new', authRequired: true },
+    { name: 'Админ Панель', icon: () => <img src={adminIcon} alt="admin" className="sidebar-icon" />, link: '/admin', authRequired: true, adminOnly: true },
 ];
 
 const Sidebar: React.FC = () => { 
-    const { isLoggedIn, logout, user } = useAuth(); 
+    let isLoggedIn = false;
+    let user = null;
+    let logout = async () => {};
+    
+    // Безопасно получаем контекст
+    try {
+        const auth = useAuth();
+        isLoggedIn = auth.isLoggedIn;
+        user = auth.user;
+        logout = auth.logout;
+    } catch (error) {
+        console.log('Auth context not available in Sidebar, using defaults');
+    }
+    
     const navigate = useNavigate();
     const location = useLocation();
     
@@ -46,7 +60,7 @@ const Sidebar: React.FC = () => {
     return (
         <aside className="sidebar">
             <div className="sidebar-header">
-                <span style={{ fontWeight: 700 }}>Padaroja.com</span>
+                <span style={{ fontWeight: 700 }}>Padaroja</span>
             </div>
             
             <nav className="sidebar-nav-list">
@@ -54,7 +68,6 @@ const Sidebar: React.FC = () => {
                     .filter(item => {
                         if (item.authRequired && !isLoggedIn) return false;
                         if (item.adminOnly && !isModerator) return false;
-                        
                         return true;
                     })
                     .map((item) => (
@@ -74,7 +87,7 @@ const Sidebar: React.FC = () => {
                 {isLoggedIn ? (
                     <>
                         <Link to={'/settings'} className={`sidebar-nav-item ${location.pathname === '/settings' ? 'active' : ''}`}>
-                            <img src={rulesIcon} alt="rulesIcon" className="sidebar-icon" />
+                            <img src={rulesIcon} alt="rules" className="sidebar-icon" />
                             Правила
                         </Link>
                         <div 
@@ -82,7 +95,7 @@ const Sidebar: React.FC = () => {
                             onClick={handleLogout} 
                             style={{ color: 'red', fontWeight: 600, cursor: 'pointer' }}
                         >
-                             <img src={exitIcon} alt="exitIcon" className="sidebar-icon" />
+                            <img src={exitIcon} alt="exit" className="sidebar-icon" />
                             Выход
                         </div>
                     </>
