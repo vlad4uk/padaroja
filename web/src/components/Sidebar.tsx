@@ -1,4 +1,3 @@
-// Sidebar.tsx - в самом начале файла добавьте безопасную проверку
 import React from 'react';
 import { FaSearch, FaSignOutAlt, FaSignInAlt, FaUserPlus } from 'react-icons/fa';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
@@ -12,7 +11,7 @@ import createIcon from '../assets/sidebar-icons/create.png'
 import adminIcon from '../assets/sidebar-icons/admin.png'
 import rulesIcon from '../assets/sidebar-icons/list.png'
 import exitIcon from '../assets/sidebar-icons/exit.png'
-import mapIcon from '../assets/sidebar-icons/exit.png' // Добавьте иконку для карты
+import mapIcon from '../assets/sidebar-icons/map.png'
 
 interface NavItem {
     name: string;

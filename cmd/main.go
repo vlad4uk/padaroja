@@ -177,7 +177,6 @@ func main() {
 		modRoutes.POST("/users/:userID/remove-moderator", moderation.RemoveModeratorRole)
 	}
 
-	// ИСПРАВЛЕННЫЙ БЛОК ДЛЯ ЛАЙКОВ
 	likeRoutes := api.Group("/likes")
 	{
 		// Публичные маршруты
@@ -190,7 +189,6 @@ func main() {
 		likeRoutes.GET("/check/:postID", middleware.AuthMiddleware(), like.CheckLike)
 	}
 
-	// ИСПРАВЛЕННЫЙ БЛОК ДЛЯ ИЗБРАННОГО
 	favouriteRoutes := api.Group("/favourites")
 	{
 		// Все маршруты избранного требуют авторизации

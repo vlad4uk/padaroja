@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import axios from 'axios';
 import AuthLayout from '../components/AuthLayout.tsx';
 import AuthIllustration from '../components/AuthIllustration.tsx';
-import loginImage from '../assets/bird04.png';
+import loginImage from '../assets/stork.png';
 
 const API_BASE_URL = '/api/auth'; 
 

@@ -4,7 +4,7 @@ import AuthLayout from '../components/AuthLayout.tsx';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.tsx'; 
 import AuthIllustration from '../components/AuthIllustration.tsx';
-import loginImage from '../assets/bird04.png';
+import loginImage from '../assets/stork.png';
 
 
 const API_BASE_URL = '/api/auth'; 
@@ -97,13 +97,6 @@ const LoginPage: React.FC = () => {
             onChange={(e) => setPassword(e.target.value)}
             required
           />
-        </div>
-
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '20px' }}>
-          <label style={{ fontSize: '0.875rem', color: '#3f4254', display: 'flex', alignItems: 'center' }}>
-            <input type="checkbox" style={{ marginRight: '8px' }} />
-            Запомнить меня
-          </label>
         </div>
         
         {error && <p style={{ color: 'red', textAlign: 'center', fontSize: '0.875rem', marginBottom: '10px' }}>{error}</p>}

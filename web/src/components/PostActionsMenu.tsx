@@ -1,12 +1,5 @@
 import React, { useState, useRef, useEffect } from 'react';
-import { 
-  FaEdit, 
-  FaTrash, 
-  FaFlag, 
-  FaEllipsisV, 
-  FaComment, 
-  FaCommentSlash
-} from 'react-icons/fa';
+import { FaEdit, FaTrash, FaFlag, FaEllipsisV, FaComment, FaCommentSlash } from 'react-icons/fa';
 import { useAuth } from '../context/AuthContext.tsx';
 import ReportModal from './ReportModal.tsx';
 
@@ -33,12 +26,10 @@ const PostActionsMenu: React.FC<PostActionsMenuProps> = ({
 }) => {
     const { user, isLoggedIn } = useAuth();
     const [isOpen, setIsOpen] = useState(false);
-    const [isReportModalOpen, setIsReportModalOpen] = useState(false);
-    const [isReporting, setIsReporting] = useState(false);
+    const [showReportModal, setShowReportModal] = useState(false);
     const menuRef = useRef<HTMLDivElement>(null);
     
     const isAuthor = isLoggedIn && user?.id === postAuthorID;
-    const isModerator = userRole === 2;
 
     useEffect(() => {
         const handleClickOutside = (event: MouseEvent) => {
@@ -46,33 +37,29 @@ const PostActionsMenu: React.FC<PostActionsMenuProps> = ({
                 setIsOpen(false);
             }
         };
-
         document.addEventListener('mousedown', handleClickOutside);
-        return () => {
-            document.removeEventListener('mousedown', handleClickOutside);
-        };
+        return () => document.removeEventListener('mousedown', handleClickOutside);
     }, []);
 
-    const handleReportSubmit = async (reason: string) => {
-        setIsReporting(true);
+    const handleReport = async (reason: string) => {
         try {
             await onReport(postID, reason);
+            // Успешно - закрываем всё
+            setShowReportModal(false);
+            setIsOpen(false);
         } catch (error) {
             console.error('Report failed:', error);
-        } finally {
-            setIsReporting(false);
-            setIsReportModalOpen(false);
+            // Не закрываем модалку при ошибке
+            throw error;
         }
     };
 
     const handleReportClick = () => {
-        setIsReportModalOpen(true);
+        setShowReportModal(true);
         setIsOpen(false);
     };
 
-    if (!isLoggedIn) {
-        return null;
-    }
+    if (!isLoggedIn) return null;
 
     return (
         <>
@@ -80,61 +67,28 @@ const PostActionsMenu: React.FC<PostActionsMenuProps> = ({
                 <button 
                     className="post-menu-button" 
                     onClick={() => setIsOpen(!isOpen)}
-                    title="Действия"
                 >
                     <FaEllipsisV />
                 </button>
                 
                 {isOpen && (
                     <div className="menu-dropdown">
-                        {/* Для автора */}
                         {isAuthor ? (
                             <>
-                                <button 
-                                    onClick={() => {
-                                        onEdit(postID);
-                                        setIsOpen(false);
-                                    }} 
-                                    className="action-item"
-                                >
+                                <button onClick={() => { onEdit(postID); setIsOpen(false); }} className="action-item">
                                     <FaEdit style={{ marginRight: '8px' }} /> Изменить
                                 </button>
-                                
                                 {onToggleComments && (
-                                    <button 
-                                        onClick={() => {
-                                            onToggleComments();
-                                            setIsOpen(false);
-                                        }}
-                                        className="action-item action-comments"
-                                    >
-                                        {commentsDisabled ? (
-                                            <>
-                                                <FaComment style={{ marginRight: '8px' }} /> Включить комментарии
-                                            </>
-                                        ) : (
-                                            <>
-                                                <FaCommentSlash style={{ marginRight: '8px' }} /> Отключить комментарии
-                                            </>
-                                        )}
+                                    <button onClick={() => { onToggleComments(); setIsOpen(false); }} className="action-item action-comments">
+                                        {commentsDisabled ? <><FaComment style={{ marginRight: '8px' }} /> Включить комментарии</> : <><FaCommentSlash style={{ marginRight: '8px' }} /> Отключить комментарии</>}
                                     </button>
                                 )}
-                                
-                                <button 
-                                    onClick={() => {
-                                        onDelete(postID);
-                                        setIsOpen(false);
-                                    }} 
-                                    className="action-item action-delete"
-                                >
+                                <button onClick={() => { onDelete(postID); setIsOpen(false); }} className="action-item action-delete">
                                     <FaTrash style={{ marginRight: '8px' }} /> Удалить
                                 </button>
                             </>
                         ) : (
-                            <button 
-                                onClick={handleReportClick}
-                                className="action-item"
-                            >
+                            <button onClick={handleReportClick} className="action-item">
                                 <FaFlag style={{ marginRight: '8px' }} /> Пожаловаться
                             </button>
                         )}
@@ -142,18 +96,10 @@ const PostActionsMenu: React.FC<PostActionsMenuProps> = ({
                 )}
             </div>
 
-            {/* Модальное окно для жалоб на посты */}
             <ReportModal
-                isOpen={isReportModalOpen}
-                onClose={() => {
-                    setIsReportModalOpen(false);
-                    setIsReporting(false);
-                }}
-                onSubmit={handleReportSubmit}
-                title="Пожаловаться на пост"
-                description="Опишите причину жалобы на пост. Модераторы проверят этот контент."
-                placeholder="Причина жалобы..."
-                loading={isReporting}
+                isOpen={showReportModal}
+                onClose={() => setShowReportModal(false)}
+                onSubmit={handleReport}
             />
         </>
     );

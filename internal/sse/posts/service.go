@@ -1,4 +1,3 @@
-// internal/sse/posts/service.go (уже существует)
 package posts
 
 import (
@@ -42,7 +41,6 @@ func (s *Service) Create(post models.Post) error {
 		return err
 	}
 
-	// Создаем сообщение с типом NEW_POST
 	message := SSEMessage{
 		Type: "NEW_POST",
 		Data: post,

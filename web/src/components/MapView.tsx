@@ -1,4 +1,4 @@
-import { MapContainer, TileLayer, Marker, Popup, useMap } from 'react-leaflet';
+import { MapContainer, TileLayer, , Popup, useMap } from 'react-leaflet';
 import { useState, useEffect, useMemo, useRef } from 'react';
 import axios from 'axios';
 import L from 'leaflet';

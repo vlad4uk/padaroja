@@ -45,7 +45,6 @@ func LikePost(c *gin.Context) {
 	err = database.DB.Where("user_id = ? AND post_id = ?", userID, postID).First(&existingLike).Error
 
 	if err == nil {
-		// ИСПРАВЛЕНИЕ: Возвращаем 200 OK вместо 409 Conflict
 		c.JSON(http.StatusOK, gin.H{
 			"message":     "Post already liked",
 			"likes_count": post.LikesCount,
@@ -135,7 +134,6 @@ func UnlikePost(c *gin.Context) {
 			var post models.Post
 			database.DB.Select("likes_count").First(&post, postID)
 
-			// ИСПРАВЛЕНИЕ: возвращаем успех, если лайка нет (идемпотентность)
 			c.JSON(http.StatusOK, gin.H{
 				"message":     "Post already unliked",
 				"likes_count": post.LikesCount,

@@ -1,4 +1,4 @@
-// RightFilters.tsx - оптимизированная версия
+// RightFilters.tsx - исправленная версия
 import React, { useState, useEffect } from 'react';
 import { FaSearch, FaMap, FaFire } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';
@@ -38,7 +38,8 @@ const RightFilters: React.FC<RightFiltersProps> = ({
     };
 
     const handleUserClick = (userId: number) => {
-        navigate(`/profile/${userId}`);
+        // ИСПРАВЛЕНО: меняем /profile/ на /user/
+        navigate(`/user/${userId}`);
     };
 
     const fetchTopUsers = async () => {

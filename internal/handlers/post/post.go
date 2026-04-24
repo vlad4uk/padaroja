@@ -108,14 +108,12 @@ func extractRussianName(alternatenames string) string {
 	parts := strings.Split(alternatenames, ",")
 	for _, part := range parts {
 		part = strings.TrimSpace(part)
-		// Проверяем наличие русских/белорусских букв
 		for _, r := range part {
 			if (r >= 'А' && r <= 'я') || r == 'Ё' || r == 'ё' || r == 'і' || r == 'ў' {
 				return part
 			}
 		}
 	}
-	// Если нет кириллицы, возвращаем первую часть
 	if len(parts) > 0 {
 		return strings.TrimSpace(parts[0])
 	}
@@ -423,7 +421,7 @@ func GetUserPosts(c *gin.Context) {
 
 	var posts []models.Post
 	result := database.DB.
-		Where("user_id = ?", userID).
+		Where("user_id = ? AND is_approved = ?", userID, true). // Добавлен фильтр is_approved
 		Preload("User").
 		Preload("Photos").
 		Preload("Paragraphs").
@@ -903,7 +901,7 @@ func GetUserPostsByID(c *gin.Context) {
 
 	var posts []models.Post
 	result := database.DB.
-		Where("user_id = ?", userID).
+		Where("user_id = ? AND is_approved = ?", userID, true). // Добавлен фильтр is_approved
 		Preload("User").
 		Preload("Photos").
 		Preload("Paragraphs").

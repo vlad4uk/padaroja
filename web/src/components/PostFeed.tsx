@@ -5,7 +5,6 @@ import { FaRegBookmark, FaBookmark } from 'react-icons/fa';
 import { BsGlobeAmericas } from "react-icons/bs";
 import { useNavigate } from 'react-router-dom';
 import PostActionsMenu from './PostActionsMenu.tsx';
-import ReportModal from './ReportModal.tsx';
 import { useAuth } from '../context/AuthContext.tsx';
 
 interface PostData {
@@ -51,8 +50,6 @@ const PostFeed: React.FC<PostFeedProps> = ({
     const [likes, setLikes] = useState<Set<number>>(new Set<number>());
     const [processingFavourite, setProcessingFavourite] = useState<Set<number>>(new Set());
     const [processingLike, setProcessingLike] = useState<Set<number>>(new Set());
-    const [isReportModalOpen, setReportModalOpen] = useState(false);
-    const [reportPostId, setReportPostId] = useState<number | null>(null);
     const [sseConnected, setSseConnected] = useState(false);
     const [likesCounts, setLikesCounts] = useState<Map<number, number>>(new Map());
 
@@ -62,7 +59,7 @@ const PostFeed: React.FC<PostFeedProps> = ({
     const maxReconnectAttempts = 5;
 
     const navigate = useNavigate();
-    const { isLoggedIn } = useAuth();
+    const { isLoggedIn, user } = useAuth();
 
     const formatDate = useCallback((dateString: string) => {
         if (!dateString) return '';
@@ -222,7 +219,6 @@ const PostFeed: React.FC<PostFeedProps> = ({
 
     // SSE подключение - НЕ подключаемся на страницах избранного и лайков
     useEffect(() => {
-        // Не подключаем SSE на страницах избранного и лайков
         if (isFavourites || isLikes) {
             return;
         }
@@ -259,7 +255,6 @@ const PostFeed: React.FC<PostFeedProps> = ({
                         case 'NEW_POST': {
                             const newPost = message.data as PostData;
 
-                            // Проверяем фильтры
                             if (searchQuery) {
                                 const matchesSearch = 
                                     newPost.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -276,7 +271,6 @@ const PostFeed: React.FC<PostFeedProps> = ({
 
                             setPosts(prev => [newPost, ...prev]);
 
-                            // Загружаем статусы для нового поста
                             if (isLoggedIn) {
                                 loadInteractionStatuses([newPost.id]);
                                 loadLikesCounts([newPost.id]);
@@ -372,7 +366,6 @@ const PostFeed: React.FC<PostFeedProps> = ({
 
         const wasFavourite = favourites.has(postId);
         
-        // Оптимистичное обновление UI
         setFavourites(prev => {
             const newSet = new Set(prev);
             if (wasFavourite) {
@@ -426,138 +419,131 @@ const PostFeed: React.FC<PostFeedProps> = ({
         }
     }, [favourites, isFavourites, isLoggedIn, navigate, processingFavourite]);
 
-    // Обработчик лайков - ИСПРАВЛЕН
-    // Обработчик лайков - ИСПРАВЛЕН
-const toggleLike = useCallback(async (postId: number, event: React.MouseEvent) => {
-    event.stopPropagation();
+    // Обработчик лайков
+    const toggleLike = useCallback(async (postId: number, event: React.MouseEvent) => {
+        event.stopPropagation();
 
-    if (!isLoggedIn) {
-        navigate('/login');
-        return;
-    }
-
-    if (processingLike.has(postId)) return;
-    setProcessingLike(prev => new Set(prev).add(postId));
-
-    const wasLiked = likes.has(postId);
-    const currentPost = posts.find(p => p.id === postId);
-    const currentLikesCount = currentPost?.likes_count || 0;
-    
-    // Оптимистичное обновление UI
-    setLikes(prev => {
-        const newSet = new Set(prev);
-        if (wasLiked) {
-            newSet.delete(postId);
-        } else {
-            newSet.add(postId);
-        }
-        return newSet;
-    });
-
-    setPosts(prev => prev.map(post =>
-        post.id === postId
-            ? { 
-                ...post, 
-                likes_count: Math.max(0, post.likes_count + (wasLiked ? -1 : 1))
-            }
-            : post
-    ));
-
-    try {
-        if (wasLiked) {
-            await axios.delete(`/api/likes/${postId}`, {
-                withCredentials: true,
-                timeout: 5000
-            });
-
-            if (isLikes) {
-                setPosts(prev => prev.filter(post => post.id !== postId));
-            }
-        } else {
-            await axios.post(`/api/likes/${postId}`, {}, {
-                withCredentials: true,
-                timeout: 5000
-            });
+        if (!isLoggedIn) {
+            navigate('/login');
+            return;
         }
 
-        // После успешного запроса, получаем актуальное количество лайков
-        const countResponse = await axios.get<{likes_count: number}>(`/api/likes/count/${postId}`, {
-            withCredentials: true,
-            timeout: 3000
+        if (processingLike.has(postId)) return;
+        setProcessingLike(prev => new Set(prev).add(postId));
+
+        const wasLiked = likes.has(postId);
+        const currentPost = posts.find(p => p.id === postId);
+        const currentLikesCount = currentPost?.likes_count || 0;
+        
+        setLikes(prev => {
+            const newSet = new Set(prev);
+            if (wasLiked) {
+                newSet.delete(postId);
+            } else {
+                newSet.add(postId);
+            }
+            return newSet;
         });
 
         setPosts(prev => prev.map(post =>
             post.id === postId
-                ? { ...post, likes_count: countResponse.data.likes_count }
+                ? { 
+                    ...post, 
+                    likes_count: Math.max(0, post.likes_count + (wasLiked ? -1 : 1))
+                }
                 : post
         ));
 
-    } catch (err: any) {
-        console.error("Ошибка при обновлении лайка:", err);
-        
-        // ИСПРАВЛЕНИЕ: Обрабатываем 409 Conflict как успех (пост уже лайкнут)
-        if (err.response?.status === 409) {
-            console.log("Пост уже лайкнут, обновляем статус");
-            // Убеждаемся, что статус лайка установлен правильно
+        try {
+            if (wasLiked) {
+                await axios.delete(`/api/likes/${postId}`, {
+                    withCredentials: true,
+                    timeout: 5000
+                });
+
+                if (isLikes) {
+                    setPosts(prev => prev.filter(post => post.id !== postId));
+                }
+            } else {
+                await axios.post(`/api/likes/${postId}`, {}, {
+                    withCredentials: true,
+                    timeout: 5000
+                });
+            }
+
+            const countResponse = await axios.get<{likes_count: number}>(`/api/likes/count/${postId}`, {
+                withCredentials: true,
+                timeout: 3000
+            });
+
+            setPosts(prev => prev.map(post =>
+                post.id === postId
+                    ? { ...post, likes_count: countResponse.data.likes_count }
+                    : post
+            ));
+
+        } catch (err: any) {
+            console.error("Ошибка при обновлении лайка:", err);
+            
+            if (err.response?.status === 409) {
+                console.log("Пост уже лайкнут, обновляем статус");
+                setLikes(prev => {
+                    const newSet = new Set(prev);
+                    newSet.add(postId);
+                    return newSet;
+                });
+                
+                try {
+                    const countResponse = await axios.get<{likes_count: number}>(`/api/likes/count/${postId}`, {
+                        withCredentials: true,
+                        timeout: 3000
+                    });
+                    setPosts(prev => prev.map(post =>
+                        post.id === postId
+                            ? { ...post, likes_count: countResponse.data.likes_count }
+                            : post
+                    ));
+                } catch (countErr) {
+                    console.error("Ошибка при получении количества лайков:", countErr);
+                }
+                
+                setProcessingLike(prev => {
+                    const newSet = new Set(prev);
+                    newSet.delete(postId);
+                    return newSet;
+                });
+                return;
+            }
+
             setLikes(prev => {
                 const newSet = new Set(prev);
-                newSet.add(postId);
+                if (wasLiked) {
+                    newSet.add(postId);
+                } else {
+                    newSet.delete(postId);
+                }
                 return newSet;
             });
-            
-            // Получаем актуальное количество лайков
-            try {
-                const countResponse = await axios.get<{likes_count: number}>(`/api/likes/count/${postId}`, {
-                    withCredentials: true,
-                    timeout: 3000
-                });
-                setPosts(prev => prev.map(post =>
-                    post.id === postId
-                        ? { ...post, likes_count: countResponse.data.likes_count }
-                        : post
-                ));
-            } catch (countErr) {
-                console.error("Ошибка при получении количества лайков:", countErr);
+
+            setPosts(prev => prev.map(post =>
+                post.id === postId
+                    ? { ...post, likes_count: currentLikesCount }
+                    : post
+            ));
+
+            if (err.response?.status === 401) {
+                navigate('/login');
+            } else if (err.response?.status !== 409) {
+                alert('Не удалось обновить лайк. Пожалуйста, попробуйте позже.');
             }
-            
+        } finally {
             setProcessingLike(prev => {
                 const newSet = new Set(prev);
                 newSet.delete(postId);
                 return newSet;
             });
-            return;
         }
-
-        // Откатываем изменения для других ошибок
-        setLikes(prev => {
-            const newSet = new Set(prev);
-            if (wasLiked) {
-                newSet.add(postId);
-            } else {
-                newSet.delete(postId);
-            }
-            return newSet;
-        });
-
-        setPosts(prev => prev.map(post =>
-            post.id === postId
-                ? { ...post, likes_count: currentLikesCount }
-                : post
-        ));
-
-        if (err.response?.status === 401) {
-            navigate('/login');
-        } else if (err.response?.status !== 409) { // Не показываем alert для 409
-            alert('Не удалось обновить лайк. Пожалуйста, попробуйте позже.');
-        }
-    } finally {
-        setProcessingLike(prev => {
-            const newSet = new Set(prev);
-            newSet.delete(postId);
-            return newSet;
-        });
-    }
-}, [likes, posts, isLikes, isLoggedIn, navigate, processingLike]);
+    }, [likes, posts, isLikes, isLoggedIn, navigate, processingLike]);
 
     const handlePostClick = useCallback((id: number) => {
         navigate(`/post/${id}`);
@@ -598,38 +584,22 @@ const toggleLike = useCallback(async (postId: number, event: React.MouseEvent) =
         }
     }, []);
 
-    const handleReport = useCallback((id: number) => {
-        setReportPostId(id);
-        setReportModalOpen(true);
-    }, []);
-
-    const handleSubmitReport = useCallback(async (reason: string) => {
-        if (!reportPostId) return;
-
-        try {
-            await axios.post(`/api/posts/${reportPostId}/report`,
-                { reason },
-                {
-                    withCredentials: true,
-                    timeout: 5000
-                }
-            );
-            alert('Жалоба успешно отправлена. Спасибо за помощь!');
-            setReportModalOpen(false);
-            setReportPostId(null);
-        } catch (err: any) {
-            console.error('Ошибка при отправке жалобы:', err);
-
-            if (err.response?.status === 401) {
-                alert('Необходимо авторизоваться для отправки жалобы');
-                navigate('/login');
-            } else if (err.response?.status === 400) {
-                alert('Вы уже отправляли жалобу на этот пост');
-            } else {
-                alert('Не удалось отправить жалобу. Пожалуйста, попробуйте позже.');
+    // Прямая отправка жалобы без промежуточных состояний
+    const handleReportPost = useCallback(async (postId: number, reason: string) => {
+        console.log('Отправка жалобы на пост:', postId, reason);
+        
+        await axios.post(`/api/posts/${postId}/report`,
+            { reason: reason },
+            {
+                withCredentials: true,
+                timeout: 5000,
+                headers: { 'Content-Type': 'application/json' }
             }
-        }
-    }, [reportPostId, navigate]);
+        );
+        
+        console.log('Жалоба успешно отправлена');
+        alert('Жалоба успешно отправлена. Спасибо за помощь!');
+    }, []);
 
     if (loading) {
         return (
@@ -694,7 +664,8 @@ const toggleLike = useCallback(async (postId: number, event: React.MouseEvent) =
                                 postAuthorID={post.user_id}
                                 onEdit={handleEdit}
                                 onDelete={handleDelete}
-                                onReport={handleReport}
+                                onReport={handleReportPost}
+                                userRole={user?.role_id}
                             />
                         </div>
 
@@ -736,7 +707,6 @@ const toggleLike = useCallback(async (postId: number, event: React.MouseEvent) =
                                     >
                                         <BsGlobeAmericas
                                             style={{
-                                                // ИСПРАВЛЕНО: красный для лайкнутых, белый для нелайкнутых
                                                 color: likes.has(post.id) ? '#e74c3c' : '#ffffff'
                                             }}
                                         />
@@ -761,15 +731,6 @@ const toggleLike = useCallback(async (postId: number, event: React.MouseEvent) =
                     </div>
                 ))}
             </div>
-
-            <ReportModal
-                isOpen={isReportModalOpen}
-                onClose={() => {
-                    setReportModalOpen(false);
-                    setReportPostId(null);
-                }}
-                onSubmit={handleSubmitReport}
-            />
         </>
     );
 };
