@@ -1,11 +1,11 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
 import ContentLayout from '../components/ContentLayout.tsx';
 import SearchBox from '../components/SearchBox.tsx';
 import './PostCreatePage.css';
 import { uploadImage } from '../firebase/uploadImage'; 
-import { FaPlus, FaAngleDoubleLeft, FaAngleDoubleRight, FaTimes, FaTrashAlt } from 'react-icons/fa';
+import { FaPlus, FaAngleDoubleLeft, FaAngleDoubleRight, FaTimes, FaTrashAlt, FaUserPlus, FaUserTimes, FaSearch } from 'react-icons/fa';
 import { useAuth } from '../context/AuthContext.tsx';
 
 interface SlideData {
@@ -23,11 +23,25 @@ interface SettlementResult {
     longitude?: number;
 }
 
+interface CollaboratorInvite {
+    username: string;
+    user_id: number;
+    role: string;
+    status: 'pending' | 'accepted' | 'declined';
+}
+
+interface SearchUserResult {
+    id: number;
+    username: string;
+    image_url: string;
+    is_followed: boolean;
+}
+
 const MAX_SLIDES = 20;
 
 const PostCreatePage: React.FC = () => {
     const navigate = useNavigate();
-    const { isLoggedIn } = useAuth(); 
+    const { user, isLoggedIn } = useAuth(); 
 
     const [title, setTitle] = useState('');
     const [selectedSettlement, setSelectedSettlement] = useState<SettlementResult | null>(null);
@@ -40,7 +54,27 @@ const PostCreatePage: React.FC = () => {
     ]);
     const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
 
+    // Стейты для соавторов
+    const [collaborators, setCollaborators] = useState<CollaboratorInvite[]>([]);
+    const [isCollaboratorSearchOpen, setIsCollaboratorSearchOpen] = useState(false);
+    const [collaboratorSearchInput, setCollaboratorSearchInput] = useState('');
+    const [collaboratorSearchResults, setCollaboratorSearchResults] = useState<SearchUserResult[]>([]);
+    const [isSearchingCollaborators, setIsSearchingCollaborators] = useState(false);
+    const [inviteRole, setInviteRole] = useState<'editor' | 'viewer'>('editor');
+    
+    // Ref для debounce
+    const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
     const fileInputRef = useRef<HTMLInputElement>(null);
+
+    // Очистка таймера при размонтировании
+    useEffect(() => {
+        return () => {
+            if (searchTimeoutRef.current) {
+                clearTimeout(searchTimeoutRef.current);
+            }
+        };
+    }, []);
 
     const handleSettlementSelect = (result: SettlementResult) => {
         console.log('Settlement selected:', result);
@@ -118,6 +152,71 @@ const PostCreatePage: React.FC = () => {
         updateCurrentSlide('imageUrl', ''); 
     };
 
+    // Функция выполнения поиска
+    const performSearch = async (query: string) => {
+        if (query.length < 2) return;
+        
+        setIsSearchingCollaborators(true);
+        try {
+            const response = await axios.get(`/api/user/search/invite?q=${encodeURIComponent(query)}`, {
+                withCredentials: true
+            });
+            console.log('Search results:', response.data);
+            setCollaboratorSearchResults(response.data.results || []);
+        } catch (error) {
+            console.error('Ошибка поиска пользователей:', error);
+            setCollaboratorSearchResults([]);
+        } finally {
+            setIsSearchingCollaborators(false);
+        }
+    };
+
+    // Обработчик ввода с debounce
+    const handleCollaboratorSearch = (value: string) => {
+        setCollaboratorSearchInput(value);
+        
+        // Очищаем предыдущий таймер
+        if (searchTimeoutRef.current) {
+            clearTimeout(searchTimeoutRef.current);
+        }
+        
+        // Устанавливаем новый таймер
+        searchTimeoutRef.current = setTimeout(() => {
+            if (value.length >= 2) {
+                performSearch(value);
+            } else {
+                setCollaboratorSearchResults([]);
+            }
+        }, 500);
+    };
+
+    // Отправка приглашения
+    const inviteCollaborator = (userId: number, username: string) => {
+        // Проверяем, не приглашён ли уже
+        if (collaborators.some(c => c.user_id === userId)) {
+            alert('Этот пользователь уже приглашён');
+            return;
+        }
+        
+        // Добавляем в локальный список со статусом pending
+        setCollaborators(prev => [...prev, {
+            username: username,
+            user_id: userId,
+            role: inviteRole,
+            status: 'pending'
+        }]);
+        
+        // Закрываем модалку и очищаем
+        setIsCollaboratorSearchOpen(false);
+        setCollaboratorSearchInput('');
+        setCollaboratorSearchResults([]);
+    };
+
+    // Удаление приглашённого
+    const removeCollaboratorInvite = (userId: number) => {
+        setCollaborators(prev => prev.filter(c => c.user_id !== userId));
+    };
+
     const handlePublish = async () => {
         if (!isLoggedIn) {
             alert('Для публикации необходимо войти в систему.');
@@ -164,14 +263,18 @@ const PostCreatePage: React.FC = () => {
                 is_approved: true
             }));
 
-        // ВАЖНО: Убедитесь, что здесь нет place_data!
+        // Подготовка данных поста с приглашениями
         const postData = {
             title: title,
-            settlement_id: Number(selectedSettlement.id),  // Принудительно преобразуем в число
-            settlement_name: settlementInput || selectedSettlement.name, // Если settlementInput пустой, используем name из selected
+            settlement_id: Number(selectedSettlement.id),
+            settlement_name: settlementInput || selectedSettlement.name,
             tags: parsedTags,
             paragraphs: paragraphs,
-            photos: photos
+            photos: photos,
+            invites: collaborators.map(c => ({
+                user_id: c.user_id,
+                role: c.role
+            }))
         };
 
         console.log('Sending post data (final):', JSON.stringify(postData, null, 2));
@@ -185,7 +288,11 @@ const PostCreatePage: React.FC = () => {
             });
 
             if (response.status === 201) {
-                alert('Публикация успешно создана!');
+                const inviteCount = collaborators.length;
+                const message = inviteCount > 0 
+                    ? `Публикация успешно создана! Приглашения отправлены ${inviteCount} пользователям.`
+                    : 'Публикация успешно создана!';
+                alert(message);
                 navigate('/profile');
             }
         } catch (error: any) {
@@ -215,6 +322,89 @@ const PostCreatePage: React.FC = () => {
     const currentSlide = slides[currentSlideIndex];
     const isMaxSlidesReached = slides.length >= MAX_SLIDES;
     const isOnlyOneSlide = slides.length === 1;
+
+    // Модальное окно поиска соавторов
+    const CollaboratorSearchModal = () => (
+        <div className="collaborator-modal-overlay" onClick={() => {
+            setIsCollaboratorSearchOpen(false);
+            setCollaboratorSearchInput('');
+            setCollaboratorSearchResults([]);
+        }}>
+            <div className="collaborator-modal" onClick={e => e.stopPropagation()}>
+                <div className="collaborator-modal-header">
+                    <h3>Пригласить соавтора</h3>
+                    <button 
+                        className="close-btn" 
+                        onClick={() => {
+                            setIsCollaboratorSearchOpen(false);
+                            setCollaboratorSearchInput('');
+                            setCollaboratorSearchResults([]);
+                        }}
+                    >
+                        ✕
+                    </button>
+                </div>
+                
+                <div className="collaborator-modal-body">
+                    <div className="role-selector">
+                        <label>Роль приглашённого:</label>
+                        <div className="role-buttons">
+                            <button 
+                                className={`role-btn ${inviteRole === 'editor' ? 'active' : ''}`}
+                                onClick={() => setInviteRole('editor')}
+                            >
+                                ✏️ Редактор
+                            </button>
+                            <button 
+                                className={`role-btn ${inviteRole === 'viewer' ? 'active' : ''}`}
+                                onClick={() => setInviteRole('viewer')}
+                            >
+                                👁️ Читатель
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div className="search-box">
+                        <FaSearch className="search-icon" />
+                        <input
+                            type="text"
+                            placeholder="Введите username (минимум 2 символа)..."
+                            value={collaboratorSearchInput}
+                            onChange={(e) => handleCollaboratorSearch(e.target.value)}
+                            autoFocus
+                        />
+                    </div>
+                    
+                    <div className="search-results">
+                        {isSearchingCollaborators && (
+                            <div className="search-loading">Поиск...</div>
+                        )}
+                        {!isSearchingCollaborators && collaboratorSearchResults.length === 0 && collaboratorSearchInput.length >= 2 && (
+                            <div className="no-results">Пользователи не найдены</div>
+                        )}
+                        {!isSearchingCollaborators && collaboratorSearchResults.map(searchUser => (
+                            <div 
+                                key={searchUser.id} 
+                                className="search-result-item" 
+                                onClick={() => inviteCollaborator(searchUser.id, searchUser.username)}
+                            >
+                                <img src={searchUser.image_url || '/default-avatar.png'} alt={searchUser.username} />
+                                <span>@{searchUser.username}</span>
+                                {searchUser.is_followed && (
+                                    <span className="follow-badge">Подписан(а)</span>
+                                )}
+                                <button className="invite-btn">Пригласить</button>
+                            </div>
+                        ))}
+                    </div>
+                    
+                    <div className="invite-info">
+                        <p>💡 Приглашённый пользователь получит уведомление и сможет принять или отклонить приглашение. Автором поста остаётесь вы.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    );
 
     return (
         <ContentLayout>
@@ -345,6 +535,49 @@ const PostCreatePage: React.FC = () => {
                         style={{ marginTop: '10px' }}
                     />
 
+                    {/* Блок соавторов */}
+                    <div className="collaborators-section">
+                        <div className="collaborators-header">
+                            <span className="collaborators-title">
+                                <FaUserPlus /> Соавторы (опционально)
+                            </span>
+                            <button 
+                                className="add-collaborator-btn"
+                                onClick={() => setIsCollaboratorSearchOpen(true)}
+                            >
+                                + Пригласить
+                            </button>
+                        </div>
+                        
+                        {collaborators.length > 0 && (
+                            <div className="collaborators-list">
+                                {collaborators.map(collab => (
+                                    <div key={collab.user_id} className="collaborator-chip">
+                                        <img src="/default-avatar.png" alt={collab.username} />
+                                        <span>@{collab.username}</span>
+                                        <span className={`role-badge ${collab.role}`}>
+                                            {collab.role === 'editor' ? '✏️' : '👁️'}
+                                        </span>
+                                        {collab.status === 'pending' && (
+                                            <span className="status-badge pending">⏳ ожидает</span>
+                                        )}
+                                        <button 
+                                            className="remove-collaborator"
+                                            onClick={() => removeCollaboratorInvite(collab.user_id)}
+                                        >
+                                            <FaUserTimes />
+                                        </button>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+                        
+                        <p className="collaborators-hint">
+                            Соавторы смогут добавлять контент в пост после принятия приглашения.
+                            Автором поста остаётесь вы.
+                        </p>
+                    </div>
+
                     {/* Кнопка публикации */}
                     <button 
                         className="publish-btn" 
@@ -355,6 +588,9 @@ const PostCreatePage: React.FC = () => {
                     </button>
                 </div>
             </div>
+
+            {/* Модальное окно приглашения соавторов */}
+            {isCollaboratorSearchOpen && <CollaboratorSearchModal />}
         </ContentLayout>
     );
 };

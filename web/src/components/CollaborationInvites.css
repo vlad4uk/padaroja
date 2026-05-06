@@ -1,0 +1,299 @@
+.invites-container {
+    background: white;
+    border-radius: 20px;
+    padding: 0;
+    max-width: 600px;
+    margin: 0;
+}
+
+.invites-title {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 18px;
+    color: #333;
+    margin-bottom: 20px;
+    padding-bottom: 10px;
+    border-bottom: 2px solid #f0f0f0;
+}
+
+.invites-list {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.invite-card {
+    background: #f9f9ff;
+    border-radius: 16px;
+    padding: 16px;
+    border: 1px solid #e9e1ff;
+    transition: none; /* Убрали анимацию */
+}
+
+.invite-card:hover {
+    /* Убрали box-shadow и transform */
+    background: #f9f9ff; /* Оставляем как есть */
+}
+
+.invite-header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.inviter-avatar {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+    border: 2px solid #8c57ff;
+}
+
+.invite-info {
+    flex: 1;
+}
+
+.inviter-name {
+    font-weight: 600;
+    color: #8c57ff;
+    margin-right: 8px;
+}
+
+.invite-action {
+    color: #666;
+    font-size: 14px;
+}
+
+.invite-post {
+    background: white;
+    border-radius: 12px;
+    padding: 12px;
+    margin-bottom: 0;
+    border: 1px solid #e0e0e0;
+}
+
+.post-title {
+    font-size: 15px;
+    font-weight: 500;
+    color: #333;
+    margin: 0 0 8px 0;
+}
+
+.invite-role-badge {
+    font-size: 12px;
+    padding: 4px 10px;
+    border-radius: 20px;
+    background: #f0f0ff;
+}
+
+.invite-role-badge.editor {
+    background: #e8f5e9;
+    color: #2e7d32;
+}
+
+.invite-role-badge.viewer {
+    background: #fff3e0;
+    color: #ef6c00;
+}
+
+.invite-date {
+    font-size: 12px;
+    color: #666;
+    margin: 10px 0 0 0;
+}
+
+.invite-actions {
+    display: flex;
+    gap: 12px;
+    margin-top: 15px;
+}
+
+.accept-btn, .decline-btn {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 10px;
+    border: none;
+    border-radius: 30px;
+    cursor: pointer;
+    font-weight: 500;
+    transition: opacity 0.2s; /* Только opacity для disabled */
+}
+
+.accept-btn {
+    background: #8c57ff;
+    color: white;
+}
+
+.accept-btn:hover:not(:disabled) {
+    background: #7a46e6;
+    /* Убрали scale */
+}
+
+.decline-btn {
+    background: white;
+    color: #ff6b6b;
+    border: 1px solid #ff6b6b;
+}
+
+.decline-btn:hover:not(:disabled) {
+    background: #fff0f0;
+    /* Убрали scale */
+}
+
+.accept-btn:disabled, .decline-btn:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+}
+
+.invites-loading, .invites-empty {
+    text-align: center;
+    padding: 40px 20px;
+    background: #f9f9ff;
+    border-radius: 20px;
+}
+
+.loading-icon, .empty-icon {
+    font-size: 40px;
+    color: #8c57ff;
+    margin-bottom: 15px;
+}
+
+.invites-empty p {
+    color: #666;
+    margin-bottom: 8px;
+}
+
+.empty-hint {
+    font-size: 12px;
+    color: #999;
+}
+
+/* Добавьте в конец файла */
+
+.invite-post-preview {
+    background: white;
+    border-radius: 12px;
+    margin: 12px 0;
+    border: 1px solid #e0e0e0;
+    overflow: hidden;
+    transition: box-shadow 0.2s ease;
+}
+
+.invite-post-preview:hover {
+    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.post-preview-content {
+    display: flex;
+    gap: 15px;
+    padding: 12px;
+}
+
+.post-preview-image {
+    flex-shrink: 0;
+    width: 100px;
+    height: 100px;
+    border-radius: 8px;
+    overflow: hidden;
+    cursor: pointer;
+}
+
+.post-preview-image img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.2s ease;
+}
+
+.post-preview-image img:hover {
+    transform: scale(1.05);
+}
+
+.post-preview-info {
+    flex: 1;
+    min-width: 0;
+}
+
+.post-preview-info .post-title {
+    font-size: 16px;
+    font-weight: 600;
+    color: #333;
+    margin: 0 0 8px 0;
+    line-height: 1.4;
+}
+
+.post-preview-text {
+    font-size: 13px;
+    color: #666;
+    line-height: 1.5;
+    margin: 0 0 8px 0;
+    overflow: hidden;
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+}
+
+.post-meta {
+    display: flex;
+    gap: 12px;
+    font-size: 12px;
+    color: #999;
+}
+
+.post-meta span {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+}
+
+.post-role-badge {
+    padding: 8px 12px;
+    border-top: 1px solid #f0f0f0;
+    background: #fafafa;
+}
+
+.view-post-btn {
+    flex: 0.5;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    padding: 10px;
+    border: 1px solid #8c57ff;
+    border-radius: 30px;
+    cursor: pointer;
+    font-weight: 500;
+    background: white;
+    color: #8c57ff;
+    transition: all 0.2s ease;
+}
+
+.view-post-btn:hover {
+    background: #f0ebff;
+    transform: translateY(-1px);
+}
+
+@media (max-width: 600px) {
+    .post-preview-content {
+        flex-direction: column;
+    }
+    
+    .post-preview-image {
+        width: 100%;
+        height: 150px;
+    }
+    
+    .invite-actions {
+        flex-wrap: wrap;
+    }
+    
+    .accept-btn, .decline-btn, .view-post-btn {
+        flex: 1;
+        min-width: 100px;
+    }
+}

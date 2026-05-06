@@ -1,5 +1,5 @@
 import React from 'react';
-import ContentLayout from '../components/ContentLayout.tsx';
+import ContentLayout from './ContentLayout.tsx';
 import PostFeed from '../components/PostFeed.tsx';
 
 const FavouritesPage: React.FC = () => {

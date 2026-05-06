@@ -1,117 +1,294 @@
-import React from 'react';
-import { FaSearch, FaSignOutAlt, FaSignInAlt, FaUserPlus } from 'react-icons/fa';
+import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
-import { useAuth } from '../context/AuthContext.tsx'; 
-import '../components/MainLayout.css'; 
-import profileIcon from '../assets/sidebar-icons/profile.png'
-import searchIcon from '../assets/sidebar-icons/search.png'
-import favorIcon from '../assets/sidebar-icons/favor.png'
-import bookmarkIcon from '../assets/sidebar-icons/bookmark.png'
-import createIcon from '../assets/sidebar-icons/create.png'
-import adminIcon from '../assets/sidebar-icons/admin.png'
-import rulesIcon from '../assets/sidebar-icons/list.png'
-import exitIcon from '../assets/sidebar-icons/exit.png'
-import mapIcon from '../assets/sidebar-icons/map.png'
+import { useAuth } from '../context/AuthContext.tsx';
+import axios from 'axios';
 
-interface NavItem {
-    name: string;
-    icon: React.ElementType;
-    link: string;
-    authRequired: boolean;
-    adminOnly?: boolean; 
-}
+// Импорты иконок
+import { FaSearch, FaSignOutAlt, FaSignInAlt, FaUserPlus, FaHome, FaHeart, FaBookmark, FaPlusCircle, FaShieldAlt, FaMapMarkedAlt, FaBell, FaUserShield } from 'react-icons/fa';
 
-const navItemsList: NavItem[] = [
-    { name: 'Профиль', icon: () => <img src={profileIcon} alt="profile" className="sidebar-icon" />, link: '/profile', authRequired: true },
-    { name: 'Поиск', icon: () => <img src={searchIcon} alt="search" className="sidebar-icon" />, link: '/search', authRequired: false },
-    { name: 'Карта мест', icon: () => <img src={mapIcon} alt="map" className="sidebar-icon" />, link: '/map/all', authRequired: false }, // Новая ссылка
-    { name: 'Мне нравится', icon: () => <img src={favorIcon} alt="favorites" className="sidebar-icon" />, link: '/subscriptions', authRequired: true },
-    { name: 'Избранное', icon: () => <img src={bookmarkIcon} alt="bookmarks" className="sidebar-icon" />, link: '/bookmarks', authRequired: true },
-    { name: 'Создать Пост', icon: () => <img src={createIcon} alt="create" className="sidebar-icon" />, link: '/post/new', authRequired: true },
-    { name: 'Админ Панель', icon: () => <img src={adminIcon} alt="admin" className="sidebar-icon" />, link: '/admin', authRequired: true, adminOnly: true },
-];
-
-const Sidebar: React.FC = () => { 
-    let isLoggedIn = false;
-    let user = null;
-    let logout = async () => {};
-    
-    // Безопасно получаем контекст
-    try {
-        const auth = useAuth();
-        isLoggedIn = auth.isLoggedIn;
-        user = auth.user;
-        logout = auth.logout;
-    } catch (error) {
-        console.log('Auth context not available in Sidebar, using defaults');
-    }
+const Sidebar: React.FC = () => {
+    const [invitesCount, setInvitesCount] = useState<number>(0);
+    const [isLoading, setIsLoading] = useState<boolean>(false);
     
     const navigate = useNavigate();
     const location = useLocation();
     
-    const handleLogout = async () => {
-        await logout(); 
-        navigate('/login'); 
+    // Получаем данные авторизации
+    const auth = useAuth();
+    const isLoggedIn = auth.isLoggedIn;
+    const user = auth.user;
+    const logout = auth.logout;
+    
+    const isAdmin = user?.role_id === 3;      // Администратор
+    const isModerator = user?.role_id === 2;   // Модератор
+    
+    // Загрузка количества приглашений
+    const fetchInvitesCount = async () => {
+        if (!isLoggedIn) return;
+        
+        setIsLoading(true);
+        try {
+            const response = await axios.get('/api/posts/invites/count', {
+                withCredentials: true,
+                timeout: 5000
+            });
+            setInvitesCount(response.data.count || 0);
+        } catch (error) {
+            console.error('Ошибка загрузки количества приглашений:', error);
+            try {
+                const pendingResponse = await axios.get('/api/posts/invites/pending', {
+                    withCredentials: true,
+                    timeout: 5000
+                });
+                setInvitesCount(pendingResponse.data.count || 0);
+            } catch (fallbackError) {
+                setInvitesCount(0);
+            }
+        } finally {
+            setIsLoading(false);
+        }
     };
-
-    const isModerator = user?.role_id === 2;
-
+    
+    useEffect(() => {
+        if (isLoggedIn) {
+            fetchInvitesCount();
+            const interval = setInterval(fetchInvitesCount, 60000);
+            return () => clearInterval(interval);
+        } else {
+            setInvitesCount(0);
+        }
+    }, [isLoggedIn]);
+    
+    const handleLogout = async () => {
+        await logout();
+        navigate('/login');
+    };
+    
+    // Стили для активного пункта меню
+    const getLinkStyle = (path: string) => ({
+        display: 'flex',
+        alignItems: 'center',
+        gap: '12px',
+        padding: '12px 16px',
+        marginBottom: '8px',
+        borderRadius: '12px',
+        textDecoration: 'none',
+        color: location.pathname === path ? '#696cff' : '#333',
+        backgroundColor: location.pathname === path ? '#f0f0ff' : 'transparent',
+        fontWeight: location.pathname === path ? '600' : '500',
+        transition: 'all 0.2s ease'
+    });
+    
+    // Элементы меню
+    const mainNavItems = [
+        { path: '/profile', label: 'Профиль', icon: <FaHome />, authRequired: true },
+        { path: '/search', label: 'Поиск', icon: <FaSearch />, authRequired: false },
+        { path: '/map/all', label: 'Карта мест', icon: <FaMapMarkedAlt />, authRequired: false },
+        { path: '/subscriptions', label: 'Мне нравится', icon: <FaHeart />, authRequired: true },
+        { path: '/bookmarks', label: 'Избранное', icon: <FaBookmark />, authRequired: true },
+        { path: '/post/new', label: 'Создать Пост', icon: <FaPlusCircle />, authRequired: true },
+    ];
+    
     return (
-        <aside className="sidebar">
-            <div className="sidebar-header">
-                <span style={{ fontWeight: 700 }}>Padaroja</span>
+        <div style={{
+            width: '280px',
+            height: '100vh',
+            position: 'sticky',
+            top: 0,
+            backgroundColor: '#fff',
+            borderRight: '1px solid #eee',
+            display: 'flex',
+            flexDirection: 'column',
+            padding: '20px 16px'
+        }}>
+            {/* Логотип */}
+            <div style={{
+                fontSize: '28px',
+                fontWeight: 'bold',
+                color: '#696cff',
+                marginBottom: '30px',
+                padding: '0 16px'
+            }}>
+                Padaroja
             </div>
             
-            <nav className="sidebar-nav-list">
-                {navItemsList
-                    .filter(item => {
-                        if (item.authRequired && !isLoggedIn) return false;
-                        if (item.adminOnly && !isModerator) return false;
-                        return true;
-                    })
+            {/* Основная навигация */}
+            <nav style={{ flex: 1 }}>
+                {mainNavItems
+                    .filter(item => !item.authRequired || isLoggedIn)
                     .map((item) => (
-                    <Link 
-                        key={item.link}
-                        to={item.link}
-                        className={`sidebar-nav-item ${location.pathname === item.link ? 'active' : ''}`}
-                        title={item.name} 
+                        <Link
+                            key={item.path}
+                            to={item.path}
+                            style={getLinkStyle(item.path)}
+                            onMouseEnter={(e) => {
+                                if (location.pathname !== item.path) {
+                                    e.currentTarget.style.backgroundColor = '#f5f5f5';
+                                }
+                            }}
+                            onMouseLeave={(e) => {
+                                if (location.pathname !== item.path) {
+                                    e.currentTarget.style.backgroundColor = 'transparent';
+                                }
+                            }}
+                        >
+                            <span style={{ fontSize: '20px' }}>{item.icon}</span>
+                            <span style={{ flex: 1 }}>{item.label}</span>
+                        </Link>
+                    ))}
+                
+                {/* События с бейджем */}
+                {isLoggedIn && (
+                    <Link
+                        to="/invites"
+                        style={getLinkStyle('/invites')}
+                        onMouseEnter={(e) => {
+                            if (location.pathname !== '/invites') {
+                                e.currentTarget.style.backgroundColor = '#f5f5f5';
+                            }
+                        }}
+                        onMouseLeave={(e) => {
+                            if (location.pathname !== '/invites') {
+                                e.currentTarget.style.backgroundColor = 'transparent';
+                            }
+                        }}
                     >
-                        <item.icon className="sidebar-icon" />
-                        {item.name}
+                        <span style={{ fontSize: '20px' }}><FaBell /></span>
+                        <span style={{ flex: 1 }}>События</span>
+                        {invitesCount > 0 && (
+                            <span style={{
+                                backgroundColor: '#e74c3c',
+                                color: 'white',
+                                fontSize: '12px',
+                                fontWeight: 'bold',
+                                padding: '2px 8px',
+                                borderRadius: '12px',
+                                minWidth: '20px',
+                                textAlign: 'center'
+                            }}>
+                                {invitesCount > 99 ? '99+' : invitesCount}
+                            </span>
+                        )}
+                        {isLoading && (
+                            <span style={{
+                                fontSize: '12px',
+                                color: '#999'
+                            }}>
+                                ...
+                            </span>
+                        )}
                     </Link>
-                ))}
+                )}
+                
+                {/* Панель модератора - доступна только модераторам */}
+                {isModerator && !isAdmin && (
+                    <Link
+                        to="/admin"
+                        style={getLinkStyle('/admin')}
+                        onMouseEnter={(e) => {
+                            if (location.pathname !== '/admin') {
+                                e.currentTarget.style.backgroundColor = '#f5f5f5';
+                            }
+                        }}
+                        onMouseLeave={(e) => {
+                            if (location.pathname !== '/admin') {
+                                e.currentTarget.style.backgroundColor = 'transparent';
+                            }
+                        }}
+                    >
+                        <span style={{ fontSize: '20px' }}><FaShieldAlt /></span>
+                        <span style={{ flex: 1 }}>Панель модератора</span>
+                    </Link>
+                )}
+                
+                {/* Админ панель - доступна только администраторам */}
+                {isAdmin && (
+                    <Link
+                        to="/adminpanel"
+                        style={getLinkStyle('/adminpanel')}
+                        onMouseEnter={(e) => {
+                            if (location.pathname !== '/adminpanel') {
+                                e.currentTarget.style.backgroundColor = '#f5f5f5';
+                            }
+                        }}
+                        onMouseLeave={(e) => {
+                            if (location.pathname !== '/adminpanel') {
+                                e.currentTarget.style.backgroundColor = 'transparent';
+                            }
+                        }}
+                    >
+                        <span style={{ fontSize: '20px' }}><FaUserShield /></span>
+                        <span style={{ flex: 1 }}>Панель администратора</span>
+                    </Link>
+                )}
             </nav>
             
-            <div className="sidebar-nav-list bottom-nav"> 
+            {/* Нижняя секция */}
+            <div style={{ marginTop: 'auto', borderTop: '1px solid #eee', paddingTop: '16px' }}>
                 {isLoggedIn ? (
                     <>
-                        <Link to={'/settings'} className={`sidebar-nav-item ${location.pathname === '/settings' ? 'active' : ''}`}>
-                            <img src={rulesIcon} alt="rules" className="sidebar-icon" />
-                            Правила
-                        </Link>
-                        <div 
-                            className="sidebar-nav-item" 
-                            onClick={handleLogout} 
-                            style={{ color: 'red', fontWeight: 600, cursor: 'pointer' }}
+                        <Link
+                            to="/settings"
+                            style={getLinkStyle('/settings')}
+                            onMouseEnter={(e) => {
+                                if (location.pathname !== '/settings') {
+                                    e.currentTarget.style.backgroundColor = '#f5f5f5';
+                                }
+                            }}
+                            onMouseLeave={(e) => {
+                                if (location.pathname !== '/settings') {
+                                    e.currentTarget.style.backgroundColor = 'transparent';
+                                }
+                            }}
                         >
-                            <img src={exitIcon} alt="exit" className="sidebar-icon" />
-                            Выход
+                            <span style={{ fontSize: '20px' }}>⚙️</span>
+                            <span style={{ flex: 1 }}>Правила</span>
+                        </Link>
+                        
+                        <div
+                            onClick={handleLogout}
+                            style={{
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '12px',
+                                padding: '12px 16px',
+                                borderRadius: '12px',
+                                cursor: 'pointer',
+                                color: '#e74c3c',
+                                fontWeight: '500',
+                                transition: 'all 0.2s ease'
+                            }}
+                            onMouseEnter={(e) => {
+                                e.currentTarget.style.backgroundColor = '#fee';
+                            }}
+                            onMouseLeave={(e) => {
+                                e.currentTarget.style.backgroundColor = 'transparent';
+                            }}
+                        >
+                            <span style={{ fontSize: '20px' }}><FaSignOutAlt /></span>
+                            <span>Выход</span>
                         </div>
                     </>
                 ) : (
                     <>
-                        <Link to="/login" className="sidebar-nav-item">
-                            <FaSignInAlt className="sidebar-icon" />
-                            Вход
+                        <Link
+                            to="/login"
+                            style={getLinkStyle('/login')}
+                        >
+                            <span style={{ fontSize: '20px' }}><FaSignInAlt /></span>
+                            <span>Вход</span>
                         </Link>
-                        <Link to="/register" className="sidebar-nav-item">
-                            <FaUserPlus className="sidebar-icon" />
-                            Регистрация
+                        <Link
+                            to="/register"
+                            style={getLinkStyle('/register')}
+                        >
+                            <span style={{ fontSize: '20px' }}><FaUserPlus /></span>
+                            <span>Регистрация</span>
                         </Link>
                     </>
                 )}
             </div>
-        </aside>
+        </div>
     );
 };
 

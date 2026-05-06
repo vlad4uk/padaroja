@@ -10,8 +10,9 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/joho/godotenv"
 
+	"padaroja/internal/handlers/admin"
 	"padaroja/internal/handlers/auth"
-	"padaroja/internal/handlers/comment"
+	"padaroja/internal/handlers/comment" // ДОБАВИТЬ ЭТОТ ИМПОРТ
 	"padaroja/internal/handlers/favourite"
 	"padaroja/internal/handlers/follows"
 	"padaroja/internal/handlers/like"
@@ -93,6 +94,7 @@ func main() {
 		userRoutes.GET("/:userID/profile", middleware.OptionalAuthMiddleware(), profile.GetUserProfileByID)
 		userRoutes.GET("/:userID/posts", middleware.OptionalAuthMiddleware(), post.GetUserPostsByID)
 		userRoutes.GET("/search", middleware.OptionalAuthMiddleware(), profile.SearchUsers)
+		userRoutes.GET("/search/invite", middleware.AuthMiddleware(), profile.SearchUsersForInvite)
 
 		protectedUserRoutes := userRoutes.Group("")
 		protectedUserRoutes.Use(middleware.AuthMiddleware())
@@ -110,8 +112,28 @@ func main() {
 		}
 	}
 
+	// ========== ДОБАВИТЬ МАРШРУТЫ КОММЕНТАРИЕВ ==========
+	commentRoutes := api.Group("/comments")
+	{
+		// Публичные маршруты (чтение)
+		commentRoutes.GET("/post/:postID", comment.GetComments)
+		commentRoutes.GET("/:commentID/replies", comment.GetCommentReplies)
+		commentRoutes.GET("/:commentID/latest-reply", comment.GetLatestReply)
+
+		// Защищенные маршруты (создание, редактирование, удаление)
+		protectedCommentRoutes := commentRoutes.Group("")
+		protectedCommentRoutes.Use(middleware.AuthMiddleware())
+		{
+			protectedCommentRoutes.POST("/post/:postID", comment.CreateComment)
+			protectedCommentRoutes.PUT("/:commentID", comment.UpdateComment)
+			protectedCommentRoutes.DELETE("/:commentID", comment.DeleteComment)
+		}
+	}
+	// ===================================================
+
 	postRoutes := api.Group("/posts")
 	{
+		// SSE streams
 		postRoutes.GET("/stream", gin.WrapF(func(w http.ResponseWriter, r *http.Request) {
 			log.Println("SSE connection received for /stream")
 			hub.StreamAllPosts(w, r)
@@ -120,36 +142,36 @@ func main() {
 			log.Printf("SSE connection received for /stream/user with params: %v", r.URL.Query())
 			hub.StreamUserPosts(w, r)
 		}))
+
+		// Основные маршруты
 		postRoutes.GET("", middleware.OptionalAuthMiddleware(), post.GetPublicFeed)
-
 		postRoutes.GET("/:postID", middleware.OptionalAuthMiddleware(), post.GetPost)
-
+		postRoutes.GET("/:postID/collaborators/check", middleware.AuthMiddleware(), post.CheckCollaboratorStatus)
 		postRoutes.POST("", middleware.AuthMiddleware(), post.CreatePost)
 		postRoutes.GET("/search/settlements", post.SearchSettlements)
 		postRoutes.PUT("/:postID", middleware.AuthMiddleware(), post.UpdatePost)
 		postRoutes.DELETE("/:postID", middleware.AuthMiddleware(), post.DeletePost)
 		postRoutes.POST("/:postID/report", middleware.AuthMiddleware(), post.ReportPost)
-
 		postRoutes.PATCH("/:postID/comments", middleware.AuthMiddleware(), post.ToggleComments)
-	}
 
-	commentRoutes := api.Group("/comments")
-	{
-		commentRoutes.GET("/post/:postID", middleware.OptionalAuthMiddleware(), comment.GetComments)
-
-		commentRoutes.POST("/post/:postID", middleware.AuthMiddleware(), comment.CreateComment)
-		commentRoutes.GET("/:commentID/replies", middleware.OptionalAuthMiddleware(), comment.GetCommentReplies)
-		commentRoutes.GET("/:commentID/latest-reply", middleware.OptionalAuthMiddleware(), comment.GetLatestReply)
-		commentRoutes.PUT("/:commentID", middleware.AuthMiddleware(), comment.UpdateComment)
-		commentRoutes.DELETE("/:commentID", middleware.AuthMiddleware(), comment.DeleteComment)
+		// Маршруты для приглашений
+		postRoutes.GET("/invites/pending", middleware.AuthMiddleware(), post.GetPendingInvites)
+		postRoutes.PUT("/invites/:inviteID/accept", middleware.AuthMiddleware(), post.AcceptInvite)
+		postRoutes.PUT("/invites/:inviteID/decline", middleware.AuthMiddleware(), post.DeclineInvite)
+		// В main.go, в секции postRoutes добавьте:
+		postRoutes.GET("/invites/count", middleware.AuthMiddleware(), post.GetPendingInvitesCount)
+		postRoutes.GET("/invites/sent", middleware.AuthMiddleware(), post.GetSentInvites)
+		// Маршруты для управления соавторами
+		postRoutes.GET("/:postID/collaborators", middleware.AuthMiddleware(), post.GetCollaborators)
+		postRoutes.DELETE("/:postID/collaborators/:userID", middleware.AuthMiddleware(), post.RemoveCollaborator)
+		postRoutes.POST("/:postID/collaborators/invite", middleware.AuthMiddleware(), post.InviteCollaborator)
+		postRoutes.POST("/:postID/leave", middleware.AuthMiddleware(), post.LeaveCollaboration)
 	}
 
 	mapRoutes := api.Group("/map")
 	{
 		mapRoutes.GET("/user/:userID/data", maps.GetMapDataByUserID)
-
 		mapRoutes.GET("/user-data", middleware.AuthMiddleware(), maps.GetUserMapData)
-
 		mapRoutes.GET("/posts/all", maps.GetAllPostsMapData)
 	}
 
@@ -179,10 +201,7 @@ func main() {
 
 	likeRoutes := api.Group("/likes")
 	{
-		// Публичные маршруты
 		likeRoutes.GET("/count/:postID", middleware.OptionalAuthMiddleware(), like.GetPostLikesCount)
-
-		// Защищенные маршруты - ВАЖНО: определяем их на корневом уровне группы
 		likeRoutes.POST("/:postID", middleware.AuthMiddleware(), like.LikePost)
 		likeRoutes.DELETE("/:postID", middleware.AuthMiddleware(), like.UnlikePost)
 		likeRoutes.GET("", middleware.AuthMiddleware(), like.GetUserLikes)
@@ -191,12 +210,24 @@ func main() {
 
 	favouriteRoutes := api.Group("/favourites")
 	{
-		// Все маршруты избранного требуют авторизации
 		favouriteRoutes.POST("/:postID", middleware.AuthMiddleware(), favourite.AddToFavourites)
 		favouriteRoutes.DELETE("/:postID", middleware.AuthMiddleware(), favourite.RemoveFromFavourites)
 		favouriteRoutes.GET("", middleware.AuthMiddleware(), favourite.GetFavourites)
 		favouriteRoutes.GET("/check/:postID", middleware.AuthMiddleware(), favourite.CheckFavourite)
 		favouriteRoutes.GET("/check-multiple", middleware.AuthMiddleware(), favourite.CheckMultipleFavourites)
+	}
+
+	adminRoutes := api.Group("/admin")
+	adminRoutes.Use(middleware.AuthMiddleware())
+	{
+		adminRoutes.GET("/stats", admin.GetDashboardStats)
+		adminRoutes.GET("/users", admin.GetAllUsers)
+		adminRoutes.GET("/moderators", admin.GetModerators)
+		adminRoutes.GET("/users/search", admin.SearchUsersForAdmin)
+		adminRoutes.POST("/users/:userID/assign-moderator", admin.AssignModeratorByAdmin)
+		adminRoutes.POST("/users/:userID/remove-moderator", admin.RemoveModeratorByAdmin)
+		adminRoutes.POST("/users/:userID/block", admin.BlockUserByAdmin)
+		adminRoutes.POST("/users/:userID/unblock", admin.UnblockUserByAdmin)
 	}
 
 	log.Printf("Сервер запущен на порту %s в режиме %s", serverPort, env)

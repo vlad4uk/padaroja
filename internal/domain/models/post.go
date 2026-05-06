@@ -66,3 +66,31 @@ type Tags struct {
 	// Опционально: связь с постами через PostTag
 	Posts []Post `gorm:"many2many:post_tags;" json:"-"`
 }
+
+// PostCollaborator - таблица для соавторов
+type PostCollaborator struct {
+	ID       uint      `gorm:"primaryKey;autoIncrement" json:"id"`
+	PostID   uint      `gorm:"not null;index;constraint:OnDelete:CASCADE;" json:"post_id"`
+	UserID   int       `gorm:"not null;index" json:"user_id"`
+	Role     string    `gorm:"size:20;default:'editor';not null" json:"role"` // editor, viewer
+	JoinedAt time.Time `gorm:"default:CURRENT_TIMESTAMP" json:"joined_at"`
+
+	Post Post `gorm:"foreignKey:PostID" json:"-"`
+	User User `gorm:"foreignKey:UserID" json:"user"`
+}
+
+// CollaborationInvite - таблица для приглашений
+type CollaborationInvite struct {
+	ID          uint       `gorm:"primaryKey;autoIncrement" json:"id"`
+	PostID      uint       `gorm:"not null;index;constraint:OnDelete:CASCADE;" json:"post_id"`
+	InviterID   int        `gorm:"not null" json:"inviter_id"`
+	InviteeID   int        `gorm:"not null;index" json:"invitee_id"`
+	Role        string     `gorm:"size:20;default:'editor';not null" json:"role"`
+	Status      string     `gorm:"size:20;default:'pending';not null" json:"status"`
+	InvitedAt   time.Time  `gorm:"default:CURRENT_TIMESTAMP" json:"invited_at"`
+	RespondedAt *time.Time `json:"responded_at,omitempty"`
+
+	Post    Post `gorm:"foreignKey:PostID" json:"-"`
+	Inviter User `gorm:"foreignKey:InviterID" json:"inviter"`
+	Invitee User `gorm:"foreignKey:InviteeID" json:"invitee"`
+}

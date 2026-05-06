@@ -13,7 +13,7 @@
 
 .feed-content-area {
     flex: 1; /* Занимает всё свободное место */
-    padding: 20px 40px 20px 20px; 
+    padding: 20px; 
 }
 
 .feed-filters-area {
@@ -32,13 +32,14 @@
 .posts-grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr); /* Две колонки */
-    gap: 30px; 
+    gap: 15px; 
     width: 100%;
 }
 
 @media (max-width: 1200px) {
     .posts-grid {
         grid-template-columns: 1fr; /* На узких экранах 1 колонка */
+        gap: 15px;
     }
 }
 
@@ -353,26 +354,27 @@
 .posts-grid {
     display: grid;
     grid-template-columns: repeat(2, 1fr);
-    gap: 30px;
+    gap: 15px;
     width: 100%;
 }
 
 @media (max-width: 1200px) {
     .posts-grid {
         grid-template-columns: 1fr;
+        gap: 15px;
     }
 }
 
 /* Новая карточка поста с фото как фоном */
 .post-card-new {
     position: relative;
-    border-radius: 20px;
+    border-radius: 16px;
     background: #fff;
-    padding: 15px;
+    padding: 12px;
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    min-height: 300px;
+    min-height: 280px;
     background-size: cover;
     background-position: center;
     background-repeat: no-repeat;
@@ -581,7 +583,7 @@
 
 .feed-content-area {
     flex: 1;
-    padding: 20px 40px 20px 20px;
+    padding: 20px;
     min-height: 100vh;
 }
 
@@ -634,3 +636,4 @@
         border-top: 2px solid #696cff;
     }
 }
+

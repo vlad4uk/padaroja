@@ -22,11 +22,17 @@ import (
 
 type PostCreationRequest struct {
 	Title          string             `json:"title" binding:"required"`
-	SettlementID   uint               `json:"settlement_id" binding:"required"`   // Изменено: settlement_id
-	SettlementName string             `json:"settlement_name" binding:"required"` // Изменено: settlement_name
+	SettlementID   uint               `json:"settlement_id" binding:"required"`
+	SettlementName string             `json:"settlement_name" binding:"required"`
 	Tags           []string           `json:"tags"`
 	Paragraphs     []models.Paragraph `json:"paragraphs"`
 	Photos         []models.PostPhoto `json:"photos"`
+	Invites        []InviteRequest    `json:"invites"` // НОВОЕ
+}
+
+type InviteRequest struct {
+	UserID int    `json:"user_id" binding:"required"`
+	Role   string `json:"role" binding:"oneof=editor viewer"`
 }
 
 type PostResponse struct {
@@ -171,8 +177,8 @@ func CreatePost(c *gin.Context) {
 		return
 	}
 
-	log.Printf("Распарсенные данные: SettlementID=%d, SettlementName=%s",
-		input.SettlementID, input.SettlementName)
+	log.Printf("Распарсенные данные: SettlementID=%d, SettlementName=%s, Invites=%d",
+		input.SettlementID, input.SettlementName, len(input.Invites))
 
 	// Валидация
 	if input.SettlementID == 0 {
@@ -188,7 +194,7 @@ func CreatePost(c *gin.Context) {
 	// Очищаем название от лишних символов
 	input.SettlementName = utils.CleanSettlementName(input.SettlementName)
 
-	var newPost models.Post // Объявляем здесь, чтобы использовать после транзакции
+	var newPost models.Post
 
 	err := database.DB.Transaction(func(tx *gorm.DB) error {
 		// Проверяем существование settlement
@@ -200,13 +206,14 @@ func CreatePost(c *gin.Context) {
 
 		// Создаем пост с явным указанием likes_count = 0
 		newPost = models.Post{
-			UserID:         int(userID),
-			SettlementID:   input.SettlementID,
-			SettlementName: input.SettlementName,
-			Title:          input.Title,
-			IsApproved:     true,
-			CreatedAt:      time.Now(),
-			LikesCount:     0, // Явно устанавливаем 0
+			UserID:           int(userID),
+			SettlementID:     input.SettlementID,
+			SettlementName:   input.SettlementName,
+			Title:            input.Title,
+			IsApproved:       true,
+			CreatedAt:        time.Now(),
+			LikesCount:       0,
+			CommentsDisabled: false,
 		}
 
 		if result := tx.Create(&newPost); result.Error != nil {
@@ -262,6 +269,52 @@ func CreatePost(c *gin.Context) {
 			}
 		}
 
+		// НОВОЕ: Создание приглашений для соавторов
+		if len(input.Invites) > 0 {
+			for _, invite := range input.Invites {
+				// Проверяем, что приглашаемый существует
+				var invitee models.User
+				if err := tx.First(&invitee, invite.UserID).Error; err != nil {
+					log.Printf("Пользователь %d не найден", invite.UserID)
+					continue // пропускаем, но не прерываем транзакцию
+				}
+
+				// Нельзя пригласить самого себя
+				if invite.UserID == int(userID) {
+					log.Printf("Попытка пригласить самого себя, пропускаем")
+					continue
+				}
+
+				// Проверяем, не приглашён ли уже
+				var existingInvite models.CollaborationInvite
+				err := tx.Where("post_id = ? AND invitee_id = ? AND status != ?",
+					newPost.ID, invite.UserID, "declined").
+					First(&existingInvite).Error
+
+				if err == nil {
+					log.Printf("Пользователь %d уже приглашён в этот пост", invite.UserID)
+					continue
+				}
+
+				// Создаём приглашение
+				collabInvite := models.CollaborationInvite{
+					PostID:    newPost.ID,
+					InviterID: int(userID),
+					InviteeID: invite.UserID,
+					Role:      invite.Role,
+					Status:    "pending",
+					InvitedAt: time.Now(),
+				}
+
+				if err := tx.Create(&collabInvite).Error; err != nil {
+					log.Printf("Ошибка создания приглашения для пользователя %d: %v", invite.UserID, err)
+					return err
+				}
+
+				log.Printf("✅ Приглашение создано для пользователя %d в пост %d", invite.UserID, newPost.ID)
+			}
+		}
+
 		return nil
 	})
 
@@ -290,7 +343,7 @@ func CreatePost(c *gin.Context) {
 		"settlement_id":   newPost.SettlementID,
 		"tags":            input.Tags,
 		"photos":          newPost.Photos,
-		"likes_count":     0, // Явно указываем 0 в SSE сообщении
+		"likes_count":     0,
 		"user_name":       user.Username,
 		"user_avatar":     user.ImageUrl,
 	}
@@ -306,10 +359,7 @@ func CreatePost(c *gin.Context) {
 	// Отправляем через глобальный хаб (асинхронно)
 	go func() {
 		if sse.GlobalHub != nil {
-			// Всем подписчикам
 			sse.GlobalHub.BroadcastAll <- data
-
-			// Конкретному пользователю
 			sse.GlobalHub.BroadcastUser <- sse.UserMessage{
 				UserID: int(userID),
 				Data:   data,
@@ -789,14 +839,26 @@ func DeletePost(c *gin.Context) {
 			return err
 		}
 
+		// ========== НОВЫЙ КОД ДЛЯ КОЛЛАБОРАЦИЙ ==========
+		// Удаляем всех соавторов поста
+		if err := tx.Where("post_id = ?", post.ID).Delete(&models.PostCollaborator{}).Error; err != nil {
+			log.Printf("Ошибка при удалении соавторов: %v", err)
+			return err
+		}
+
+		// Удаляем все приглашения, связанные с постом
+		if err := tx.Where("post_id = ?", post.ID).Delete(&models.CollaborationInvite{}).Error; err != nil {
+			log.Printf("Ошибка при удалении приглашений: %v", err)
+			return err
+		}
+		// ==============================================
+
 		// Удаляем пост
 		fmt.Printf("DEBUG: Deleting post ID: %d\n", post.ID)
 		if err := tx.Delete(&post).Error; err != nil {
 			fmt.Printf("DEBUG: Error deleting post: %v\n", err)
 			return err
 		}
-
-		// Примечание: settlement не удаляется, так как может использоваться другими постами
 
 		return nil
 	})
@@ -810,6 +872,20 @@ func DeletePost(c *gin.Context) {
 		}
 		return
 	}
+
+	// Отправляем SSE уведомление об удалении
+	go func() {
+		notification := map[string]interface{}{
+			"type": "DELETE_POST",
+			"data": map[string]interface{}{
+				"postId": postID,
+			},
+		}
+		data, _ := json.Marshal(notification)
+		if sse.GlobalHub != nil {
+			sse.GlobalHub.BroadcastAll <- data
+		}
+	}()
 
 	c.JSON(http.StatusOK, gin.H{"message": "Post and associated data deleted successfully"})
 }

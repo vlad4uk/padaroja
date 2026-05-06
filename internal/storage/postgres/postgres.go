@@ -57,6 +57,9 @@ func ConnectDB() {
 		&models.Like{},
 		&models.Followers{},
 		&models.Comment{},
+		&models.PostCollaborator{},
+		&models.CollaborationInvite{},
+		&models.ModeratorAssignment{},
 	)
 	if err != nil {
 		log.Fatal("Failed to perform GORM AutoMigrate:", err)

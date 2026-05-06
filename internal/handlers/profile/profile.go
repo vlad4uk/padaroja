@@ -159,3 +159,63 @@ func GetUserProfileByID(c *gin.Context) {
 		"role_id":   user.RoleID,
 	})
 }
+
+// SearchUsersForInvite - поиск пользователей для приглашения в соавторы
+func SearchUsersForInvite(c *gin.Context) {
+	query := c.Query("q")
+	if len(query) < 2 {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Query too short, minimum 2 characters"})
+		return
+	}
+
+	currentUserIDValue, exists := c.Get("userID")
+	if !exists {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
+	currentUserID := int(currentUserIDValue.(uint))
+
+	var users []struct {
+		ID          int    `json:"id"`
+		Username    string `json:"username"`
+		ImageUrl    string `json:"image_url"`
+		IsFollowed  bool   `json:"is_followed"`
+	}
+
+	// Ищем среди всех пользователей, исключая текущего
+	// С сортировкой: сначала подписчики, потом остальные
+	err := database.DB.Table("users").
+		Select(`users.id, users.username, users.image_url,
+				CASE 
+					WHEN EXISTS (SELECT 1 FROM followers WHERE follower_id = ? AND followed_id = users.id) THEN true 
+					ELSE false 
+				END as is_followed`,
+			currentUserID).
+		Where("users.id != ?", currentUserID).
+		Where("users.username ILIKE ?", "%"+query+"%").
+		Order("is_followed DESC, users.username ASC").
+		Limit(15).
+		Scan(&users).Error
+
+	if err != nil {
+		fmt.Println("Database error searching users for invite:", err)
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Search failed"})
+		return
+	}
+
+	// Форматируем ответ
+	results := make([]gin.H, 0)
+	for _, u := range users {
+		results = append(results, gin.H{
+			"id":          u.ID,
+			"username":    u.Username,
+			"image_url":   u.ImageUrl,
+			"is_followed": u.IsFollowed,
+		})
+	}
+
+	c.JSON(http.StatusOK, gin.H{
+		"results": results,
+		"count":   len(results),
+	})
+}

@@ -17,7 +17,10 @@ import ModeratorPage from './pages/ModeratorPage.tsx';
 import FavouritesPage from '../src/components/FavouritesPage.tsx';
 import LikesPage from '../src/components/LikesPage.tsx';
 import RulesPage from './components/RulesPage.tsx';
-import AllPostsMapPage from './pages/AllPostsMapPage.tsx'; // Импортируем новую страницу
+import AllPostsMapPage from './pages/AllPostsMapPage.tsx';
+import CollaborationInvites from './components/CollaborationInvites.tsx';
+import PostCollaboratorsPage from './components/PostCollaboratorsPage.tsx';
+import AdminPanel from './pages/AdminPage.tsx';
 
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const { isLoggedIn, isLoading } = useAuth();
@@ -35,23 +38,27 @@ const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) =
   return <>{children}</>;
 };
 
+// Роут для модераторов (role_id = 2) и админов (role_id = 3)
 const ModeratorRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
     const { isLoggedIn, user, isLoading } = useAuth();
     
-    if (isLoading) {
-      return <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
-        <div>Загрузка...</div>
-      </div>;
-    }
-    
-    if (!isLoggedIn) {
-        return <Navigate to="/login" replace />;
-    }
-    
-    if (user?.role_id !== 2) {
+    if (isLoading) return <div>Загрузка...</div>;
+    if (!isLoggedIn) return <Navigate to="/login" replace />;
+    if (user?.role_id !== 2 && user?.role_id !== 3) {
         return <Navigate to="/" replace />;
     }
+    return <>{children}</>;
+};
 
+// Роут только для администраторов (role_id = 3)
+const AdminRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+    const { isLoggedIn, user, isLoading } = useAuth();
+    
+    if (isLoading) return <div>Загрузка...</div>;
+    if (!isLoggedIn) return <Navigate to="/login" replace />;
+    if (user?.role_id !== 3) {
+        return <Navigate to="/" replace />;
+    }
     return <>{children}</>;
 };
 
@@ -67,16 +74,19 @@ const App: React.FC = () => {
       <Suspense fallback={<LoadingSpinner />}>
         <Router>
           <Routes>
+            {/* Публичные маршруты */}
             <Route path="/" element={<FeedPage />} />
             <Route path="/search" element={<FeedPage />} />
             <Route path="/post/:id" element={<SinglePostPage />} />
             <Route path="/user/:userId" element={<MainLayout />} />
             <Route path="/login" element={<LoginPage />} />
             <Route path="/register" element={<RegisterPage />} />
+            <Route path="/settings" element={<RulesPage />} />
             
-            {/* Новая страница с картой всех постов */}
+            {/* Карта всех постов */}
             <Route path="/map/all" element={<AllPostsMapPage />} />
             
+            {/* Защищенные маршруты */}
             <Route 
               path="/profile" 
               element={
@@ -103,13 +113,7 @@ const App: React.FC = () => {
                 </ProtectedRoute>
               } 
             />
-
-            <Route path="/admin" element={
-              <ModeratorRoute>
-                <ModeratorPage />
-              </ModeratorRoute>
-            } />  
-          
+            
             <Route 
               path="/bookmarks" 
               element={
@@ -129,13 +133,42 @@ const App: React.FC = () => {
             />
 
             <Route 
-                path="/settings" 
+              path="/invites" 
+              element={
+                <ProtectedRoute>
+                  <CollaborationInvites />
+                </ProtectedRoute>
+              } 
+            />
+            
+            <Route 
+              path="/posts/:postId/collaborators" 
+              element={
+                <ProtectedRoute>
+                  <PostCollaboratorsPage />
+                </ProtectedRoute>
+              } 
+            />
+
+            {/* Маршрут для модераторов (role_id = 2) */}
+            <Route 
+                path="/admin" 
                 element={
-                    <RulesPage />
+                    <ModeratorRoute>
+                        <ModeratorPage />
+                    </ModeratorRoute>
                 } 
             />
 
-            
+            {/* Маршрут для администраторов (role_id = 3) */}
+            <Route 
+                path="/adminpanel" 
+                element={
+                    <AdminRoute>
+                        <AdminPanel />
+                    </AdminRoute>
+                } 
+            />
           </Routes>
         </Router>
       </Suspense>

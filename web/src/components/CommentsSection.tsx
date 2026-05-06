@@ -1,18 +1,16 @@
-// components/CommentsSection.tsx (частичное обновление)
+// components/CommentsSection.tsx (исправленный)
 import React, { useState, useEffect, useCallback, ReactElement } from 'react';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext.tsx';
 import { Comment, CommentsResponse, CreateCommentRequest } from '../types/comment';
-import { FaCommentSlash, FaReply, FaChevronDown, FaSpinner, FaTrash } from 'react-icons/fa';
-import CommentReportButton from '../components/CommentReportButton.tsx'; // Импортируем новый компонент
+import { FaCommentSlash, FaReply, FaChevronDown, FaSpinner, FaTrash, FaHeart } from 'react-icons/fa';
 import './CommentsSection.css';
 
 interface CommentsSectionProps {
   postId: number;
-  commentsDisabled?: boolean; // Добавляем пропс для статуса комментариев
+  commentsDisabled?: boolean;
 }
 
-// Вспомогательный тип для управления ответами
 interface ReplyState {
   replies: Comment[];
   loading: boolean;
@@ -34,7 +32,7 @@ const CommentsSection: React.FC<CommentsSectionProps> = ({
   const [submittingComment, setSubmittingComment] = useState(false);
   const [submittingReply, setSubmittingReply] = useState(false);
 
-  // Загрузка ВСЕХ комментариев (и корневых, и ответов)
+  // Загрузка ВСЕХ комментариев
   const fetchComments = useCallback(async () => {
     if (commentsDisabled) {
       setLoading(false);
@@ -44,22 +42,37 @@ const CommentsSection: React.FC<CommentsSectionProps> = ({
     try {
       setLoading(true);
       setError('');
-      const response = await axios.get<CommentsResponse>(
-        `/api/comments/post/${postId}?limit=100`, // Увеличиваем лимит
-        { withCredentials: true }
-      );
       
-      // 1. Фильтруем корневые комментарии (без parent_id)
-      const rootComments = response.data.comments.filter(comment => !comment.parent_id);
+      // Проверяем, существует ли эндпоинт, пробуем разные варианты
+      let response;
+      try {
+        response = await axios.get<CommentsResponse>(
+          `/api/comments/post/${postId}`,
+          { withCredentials: true }
+        );
+      } catch (err: any) {
+        if (err.response?.status === 404) {
+          // Пробуем альтернативный эндпоинт
+          response = await axios.get<CommentsResponse>(
+            `/api/posts/${postId}/comments`,
+            { withCredentials: true }
+          );
+        } else {
+          throw err;
+        }
+      }
+      
+      const allComments = response.data.comments || response.data || [];
+      
+      // Фильтруем корневые комментарии
+      const rootComments = allComments.filter((comment: Comment) => !comment.parent_id);
       setComments(rootComments);
       
-      // 2. Создаем map для группировки ответов по parent_id
+      // Группируем ответы
       const repliesByParentId: Record<number, Comment[]> = {};
       
-      // Проходим по всем комментариям
-      response.data.comments.forEach(comment => {
+      allComments.forEach((comment: Comment) => {
         if (comment.parent_id) {
-          // Это ответ - добавляем в соответствующую группу
           if (!repliesByParentId[comment.parent_id]) {
             repliesByParentId[comment.parent_id] = [];
           }
@@ -67,10 +80,10 @@ const CommentsSection: React.FC<CommentsSectionProps> = ({
         }
       });
       
-      // 3. Инициализируем состояния для всех корневых комментариев
+      // Инициализируем состояния
       const initialReplyStates: Record<number, ReplyState> = {};
       
-      rootComments.forEach(comment => {
+      rootComments.forEach((comment: Comment) => {
         initialReplyStates[comment.id] = {
           replies: repliesByParentId[comment.id] || [],
           loading: false,
@@ -78,15 +91,13 @@ const CommentsSection: React.FC<CommentsSectionProps> = ({
         };
       });
       
-      // 4. Также инициализируем для ответов, которые сами имеют ответы
+      // Для вложенных ответов
       Object.keys(repliesByParentId).forEach(parentIdStr => {
         const parentId = parseInt(parentIdStr);
         const replies = repliesByParentId[parentId];
         
-        // Проверяем, есть ли у ответов свои ответы
         replies.forEach(reply => {
           if (repliesByParentId[reply.id]) {
-            // Этот ответ сам имеет ответы
             initialReplyStates[reply.id] = {
               replies: repliesByParentId[reply.id] || [],
               loading: false,
@@ -100,13 +111,19 @@ const CommentsSection: React.FC<CommentsSectionProps> = ({
       
     } catch (err: any) {
       console.error('Ошибка загрузки комментариев:', err);
-      setError('Не удалось загрузить комментарии');
+      if (err.response?.status === 404) {
+        // Если эндпоинт не найден, просто показываем пустой список
+        setComments([]);
+        setError('');
+      } else {
+        setError('Не удалось загрузить комментарии');
+      }
     } finally {
       setLoading(false);
     }
   }, [postId, commentsDisabled]);
 
-  // Загрузка дополнительных ответов (если нужны)
+  // Загрузка ответов
   const fetchReplies = async (commentId: number) => {
     try {
       setReplyStates(prev => ({
@@ -117,17 +134,27 @@ const CommentsSection: React.FC<CommentsSectionProps> = ({
         }
       }));
       
-      const response = await axios.get(
-        `/api/comments/${commentId}/replies`,
-        { withCredentials: true }
-      );
+      let response;
+      try {
+        response = await axios.get(
+          `/api/comments/${commentId}/replies`,
+          { withCredentials: true }
+        );
+      } catch (err: any) {
+        if (err.response?.status === 404) {
+          response = await axios.get(
+            `/api/comments/${commentId}/children`,
+            { withCredentials: true }
+          );
+        } else {
+          throw err;
+        }
+      }
       
-      // Объединяем уже загруженные ответы с новыми
       setReplyStates(prev => {
         const existingReplies = prev[commentId]?.replies || [];
-        const newReplies = response.data.replies || [];
+        const newReplies = response.data.replies || response.data || [];
         
-        // Объединяем, убирая дубликаты
         const allReplies = [...existingReplies];
         newReplies.forEach((newReply: Comment) => {
           if (!allReplies.find(r => r.id === newReply.id)) {
@@ -178,13 +205,13 @@ const CommentsSection: React.FC<CommentsSectionProps> = ({
         { withCredentials: true }
       );
 
-      // Добавляем новый комментарий в начало списка
-      setComments(prev => [response.data.comment, ...prev]);
+      const newCommentObj = response.data.comment || response.data;
       
-      // Инициализируем состояние для ответов на этот комментарий
+      setComments(prev => [newCommentObj, ...prev]);
+      
       setReplyStates(prev => ({
         ...prev,
-        [response.data.comment.id]: {
+        [newCommentObj.id]: {
           replies: [],
           loading: false,
           expanded: false
@@ -196,6 +223,8 @@ const CommentsSection: React.FC<CommentsSectionProps> = ({
       console.error('Ошибка при создании комментария:', err);
       if (err.response?.status === 401) {
         alert('Необходимо авторизоваться для комментирования');
+      } else if (err.response?.status === 404) {
+        alert('Сервис комментариев временно недоступен');
       } else {
         alert('Ошибка при отправке комментария');
       }
@@ -204,7 +233,7 @@ const CommentsSection: React.FC<CommentsSectionProps> = ({
     }
   };
 
-  // Отправка ответа на комментарий
+  // Отправка ответа
   const handleSubmitReply = async (parentId: number, isReplyToReply = false) => {
     if (!replyContent.trim() || submittingReply || commentsDisabled) return;
 
@@ -221,7 +250,6 @@ const CommentsSection: React.FC<CommentsSectionProps> = ({
         { withCredentials: true }
       );
 
-      // Определяем, кому отвечаем
       const targetId = isReplyToReply ? findRootComment(parentId)?.id || parentId : parentId;
       
       if (targetId) {
@@ -231,8 +259,8 @@ const CommentsSection: React.FC<CommentsSectionProps> = ({
             ...prev,
             [targetId]: {
               ...prev[targetId],
-              replies: [...currentReplies, response.data.comment],
-              expanded: true // Автоматически раскрываем ответы
+              replies: [...currentReplies, response.data.comment || response.data],
+              expanded: true
             }
           };
         });
@@ -253,13 +281,10 @@ const CommentsSection: React.FC<CommentsSectionProps> = ({
     }
   };
 
-  // Поиск корневого комментария для ответа
   const findRootComment = (commentId: number): Comment | null => {
-    // Сначала проверяем корневые комментарии
     const rootComment = comments.find(comment => comment.id === commentId);
     if (rootComment) return rootComment;
 
-    // Затем проверяем все ответы
     for (const rootId in replyStates) {
       const replyState = replyStates[parseInt(rootId)];
       const reply = replyState.replies.find(reply => reply.id === commentId);
@@ -271,7 +296,6 @@ const CommentsSection: React.FC<CommentsSectionProps> = ({
     return null;
   };
 
-  // Удаление комментария или ответа
   const handleDelete = async (commentId: number, isReply = false, rootCommentId?: number) => {
     if (!window.confirm('Удалить комментарий?')) return;
 
@@ -282,7 +306,6 @@ const CommentsSection: React.FC<CommentsSectionProps> = ({
       );
       
       if (isReply && rootCommentId) {
-        // Удаляем ответ из списка
         setReplyStates(prev => ({
           ...prev,
           [rootCommentId]: {
@@ -291,9 +314,7 @@ const CommentsSection: React.FC<CommentsSectionProps> = ({
           }
         }));
       } else {
-        // Удаляем корневой комментарий
         setComments(prev => prev.filter(comment => comment.id !== commentId));
-        // Также удаляем его ответы из состояния
         const newReplyStates = { ...replyStates };
         delete newReplyStates[commentId];
         setReplyStates(newReplyStates);
@@ -303,7 +324,6 @@ const CommentsSection: React.FC<CommentsSectionProps> = ({
     }
   };
 
-  // Переключение отображения ответов
   const toggleReplies = (commentId: number) => {
     if (commentsDisabled) return;
     
@@ -320,7 +340,6 @@ const CommentsSection: React.FC<CommentsSectionProps> = ({
         }
       };
       
-      // Если нужно загрузить ответы и их еще нет
       if (shouldFetch && (!currentState?.replies || currentState.replies.length === 0)) {
         setTimeout(() => fetchReplies(commentId), 0);
       }
@@ -329,7 +348,6 @@ const CommentsSection: React.FC<CommentsSectionProps> = ({
     });
   };
 
-  // Форматирование даты
   const formatDate = (dateString: string): string => {
     const date = new Date(dateString);
     const now = new Date();
@@ -355,8 +373,21 @@ const CommentsSection: React.FC<CommentsSectionProps> = ({
     }
   };
 
-  // components/CommentsSection.tsx (обновлённый renderComment)
-const renderComment = (comment: Comment, isReply = false, rootCommentId?: number): ReactElement => {
+  const handleReportComment = async (commentId: number, reason: string) => {
+    try {
+      await axios.post(
+        `/api/mod/comments/${commentId}/complaint`,
+        { reason },
+        { withCredentials: true }
+      );
+      alert('Жалоба отправлена');
+    } catch (err: any) {
+      console.error('Ошибка при отправке жалобы:', err);
+      throw err;
+    }
+  };
+
+  const renderComment = (comment: Comment, isReply = false, rootCommentId?: number): ReactElement => {
     const replyState = replyStates[comment.id];
     const replies = replyState?.replies || [];
     const hasReplies = replies.length > 0;
@@ -365,191 +396,175 @@ const renderComment = (comment: Comment, isReply = false, rootCommentId?: number
     
     const actualRootCommentId = rootCommentId || (isReply ? findRootComment(comment.id)?.id : comment.id);
     const isAuthor = comment.user_id === user?.id;
-    const canDelete = isAuthor || user?.role_id === 2; // Автор или модератор
+    const canDelete = isAuthor || user?.role_id === 2;
 
     return (
-        <div key={comment.id} className={`comment-item ${isReply ? 'comment-reply' : ''}`}>
-            <div className="comment-avatar-container">
-                <img 
-                    src={comment.user.image_url || '/default-avatar.png'} 
-                    alt={comment.user.username}
-                    className="comment-avatar"
-                    onError={(e) => {
-                        (e.target as HTMLImageElement).src = '/default-avatar.png';
-                    }}
-                />
-            </div>
-            
-            <div className="comment-content-wrapper">
-                <div className="comment-header">
-                    <span className="comment-username">
-                        {comment.user.username}
-                        {user?.id === comment.user_id && (
-                            <span className="author-badge">Вы</span>
-                        )}
-                    </span>
-                    <span className="comment-date">{formatDate(comment.created_at)}</span>
-                    
-                    {!comment.is_approved && (
-                        <span className="comment-hidden-badge">[Скрыт модератором]</span>
-                    )}
-                </div>
-                
-                <div className="comment-text">
-                    {comment.is_approved ? comment.content : (
-                        <em style={{ color: '#999', fontStyle: 'italic' }}>
-                            Комментарий скрыт по решению модерации
-                        </em>
-                    )}
-                </div>
-                
-                {/* Кнопки действий */}
-                <div className="comment-actions">
-                    {/* Кнопка ответа (только если комментарий видим) */}
-                    {isLoggedIn && comment.is_approved && !commentsDisabled && (
-                        <button 
-                            className="reply-btn"
-                            onClick={() => {
-                                setReplyingTo(comment.id);
-                                setReplyContent(`@${comment.user.username} `);
-                            }}
-                        >
-                            <FaReply style={{ marginRight: '4px' }} />
-                            Ответить
-                        </button>
-                    )}
-                    
-                    {/* Кнопка удаления - только для своих комментариев или модераторов */}
-                    {canDelete && !commentsDisabled && (
-                        <button 
-                            className="delete-btn"
-                            onClick={() => handleDelete(comment.id, isReply, actualRootCommentId)}
-                        >
-                            <FaTrash style={{ marginRight: '4px' }} />
-                            Удалить
-                        </button>
-                    )}
-                    
-                    {/* Кнопка жалобы - для всех, кроме автора */}
-                    {isLoggedIn && !isAuthor && comment.is_approved && (
-                        <CommentReportButton
-                            commentID={comment.id}
-                            onReport={handleReportComment}
-                            disabled={submittingReply}
-                        />
-                    )}
-                    
-                    {/* Кнопка показа ответов - только если есть ответы */}
-                    {hasReplies && !commentsDisabled && (
-                        <button 
-                            className={`show-replies-btn ${isExpanded ? 'replies-expanded' : ''}`}
-                            onClick={() => toggleReplies(comment.id)}
-                            disabled={isLoading}
-                        >
-                            <FaChevronDown 
-                                style={{ 
-                                    marginRight: '4px',
-                                    transform: isExpanded ? 'rotate(180deg)' : 'none',
-                                    transition: 'transform 0.3s'
-                                }} 
-                            />
-                            {isLoading ? 'Загрузка...' : 
-                                isExpanded ? 'Скрыть ответы' : 'Показать ответы'
-                            }
-                            {` (${replies.length})`}
-                        </button>
-                    )}
-                </div>
-                
-                {/* Форма ответа */}
-                {replyingTo === comment.id && comment.is_approved && !commentsDisabled && (
-                    <div className="reply-form">
-                        <div className="reply-to-indicator">
-                            Ответ для <span className="reply-to-username">{comment.user.username}</span>
-                        </div>
-                        <div className="reply-input-wrapper">
-                            <input
-                                type="text"
-                                value={replyContent}
-                                onChange={(e) => setReplyContent(e.target.value)}
-                                placeholder="Ваш ответ..."
-                                className="reply-input-underlined"
-                                autoFocus
-                                disabled={submittingReply}
-                                onKeyDown={(e) => {
-                                    if (e.key === 'Enter' && !e.shiftKey) {
-                                        e.preventDefault();
-                                        handleSubmitReply(comment.id, isReply);
-                                    }
-                                }}
-                            />
-                            <div className="input-underline"></div>
-                        </div>
-                        <div className="reply-actions">
-                            <button 
-                                onClick={() => handleSubmitReply(comment.id, isReply)}
-                                disabled={!replyContent.trim() || submittingReply}
-                                className="submit-reply-btn"
-                            >
-                                {submittingReply ? (
-                                    <>
-                                        <FaSpinner className="spinner-icon" /> Отправка...
-                                    </>
-                                ) : 'Ответить'}
-                            </button>
-                            <button 
-                                onClick={() => {
-                                    setReplyingTo(null);
-                                    setReplyContent('');
-                                }}
-                                className="cancel-reply-btn"
-                                disabled={submittingReply}
-                            >
-                                Отмена
-                            </button>
-                        </div>
-                    </div>
-                )}
-                
-                {/* Отображение ответов */}
-                {isExpanded && !commentsDisabled && (
-                    <div className="replies-container">
-                        {isLoading ? (
-                            <div className="replies-loading">
-                                <div className="small-spinner"></div>
-                                <span>Загрузка ответов...</span>
-                            </div>
-                        ) : hasReplies ? (
-                            replies.map(reply => renderComment(reply, true, actualRootCommentId))
-                        ) : (
-                            <div className="no-replies">
-                                <FaCommentSlash style={{ marginRight: '8px' }} />
-                                <span>Пока нет ответов</span>
-                            </div>
-                        )}
-                    </div>
-                )}
-            </div>
+      <div key={comment.id} className={`comment-item ${isReply ? 'comment-reply' : ''}`}>
+        <div className="comment-avatar-container">
+          <img 
+            src={comment.user?.image_url || '/default-avatar.png'} 
+            alt={comment.user?.username || 'User'}
+            className="comment-avatar"
+            onError={(e) => {
+              (e.target as HTMLImageElement).src = '/default-avatar.png';
+            }}
+          />
         </div>
+        
+        <div className="comment-content-wrapper">
+          <div className="comment-header">
+            <span className="comment-username">
+              {comment.user?.username || 'Пользователь'}
+              {user?.id === comment.user_id && (
+                <span className="author-badge">Вы</span>
+              )}
+            </span>
+            <span className="comment-date">{formatDate(comment.created_at)}</span>
+            
+            {!comment.is_approved && (
+              <span className="comment-hidden-badge">[Скрыт модератором]</span>
+            )}
+          </div>
+          
+          <div className="comment-text">
+            {comment.is_approved ? comment.content : (
+              <em style={{ color: '#999', fontStyle: 'italic' }}>
+                Комментарий скрыт по решению модерации
+              </em>
+            )}
+          </div>
+          
+          <div className="comment-actions">
+            {isLoggedIn && comment.is_approved && !commentsDisabled && (
+              <button 
+                className="reply-btn"
+                onClick={() => {
+                  setReplyingTo(comment.id);
+                  setReplyContent(`@${comment.user?.username || ''} `);
+                }}
+              >
+                <FaReply style={{ marginRight: '4px' }} />
+                Ответить
+              </button>
+            )}
+            
+            {canDelete && !commentsDisabled && (
+              <button 
+                className="delete-btn"
+                onClick={() => handleDelete(comment.id, isReply, actualRootCommentId)}
+              >
+                <FaTrash style={{ marginRight: '4px' }} />
+                Удалить
+              </button>
+            )}
+            
+            {isLoggedIn && !isAuthor && comment.is_approved && (
+              <button 
+                className="report-btn"
+                onClick={() => {
+                  const reason = prompt('Укажите причину жалобы:');
+                  if (reason) {
+                    handleReportComment(comment.id, reason);
+                  }
+                }}
+              >
+                <FaHeart style={{ marginRight: '4px' }} />
+                Пожаловаться
+              </button>
+            )}
+            
+            {hasReplies && !commentsDisabled && (
+              <button 
+                className={`show-replies-btn ${isExpanded ? 'replies-expanded' : ''}`}
+                onClick={() => toggleReplies(comment.id)}
+                disabled={isLoading}
+              >
+                <FaChevronDown 
+                  style={{ 
+                    marginRight: '4px',
+                    transform: isExpanded ? 'rotate(180deg)' : 'none',
+                    transition: 'transform 0.3s'
+                  }} 
+                />
+                {isLoading ? 'Загрузка...' : 
+                  isExpanded ? 'Скрыть ответы' : 'Показать ответы'
+                }
+                {` (${replies.length})`}
+              </button>
+            )}
+          </div>
+          
+          {replyingTo === comment.id && comment.is_approved && !commentsDisabled && (
+            <div className="reply-form">
+              <div className="reply-to-indicator">
+                Ответ для <span className="reply-to-username">{comment.user?.username || 'пользователя'}</span>
+              </div>
+              <div className="reply-input-wrapper">
+                <input
+                  type="text"
+                  value={replyContent}
+                  onChange={(e) => setReplyContent(e.target.value)}
+                  placeholder="Ваш ответ..."
+                  className="reply-input-underlined"
+                  autoFocus
+                  disabled={submittingReply}
+                  onKeyDown={(e) => {
+                    if (e.key === 'Enter' && !e.shiftKey) {
+                      e.preventDefault();
+                      handleSubmitReply(comment.id, isReply);
+                    }
+                  }}
+                />
+                <div className="input-underline"></div>
+              </div>
+              <div className="reply-actions">
+                <button 
+                  onClick={() => handleSubmitReply(comment.id, isReply)}
+                  disabled={!replyContent.trim() || submittingReply}
+                  className="submit-reply-btn"
+                >
+                  {submittingReply ? (
+                    <>
+                      <FaSpinner className="spinner-icon" /> Отправка...
+                    </>
+                  ) : 'Ответить'}
+                </button>
+                <button 
+                  onClick={() => {
+                    setReplyingTo(null);
+                    setReplyContent('');
+                  }}
+                  className="cancel-reply-btn"
+                  disabled={submittingReply}
+                >
+                  Отмена
+                </button>
+              </div>
+            </div>
+          )}
+          
+          {isExpanded && !commentsDisabled && (
+            <div className="replies-container">
+              {isLoading ? (
+                <div className="replies-loading">
+                  <div className="small-spinner"></div>
+                  <span>Загрузка ответов...</span>
+                </div>
+              ) : hasReplies ? (
+                replies.map(reply => renderComment(reply, true, actualRootCommentId))
+              ) : (
+                <div className="no-replies">
+                  <FaCommentSlash style={{ marginRight: '8px' }} />
+                  <span>Пока нет ответов</span>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      </div>
     );
-};
+  };
 
-// Функция для отправки жалобы на комментарий (в родительском компоненте)
-const handleReportComment = async (commentId: number, reason: string) => {
-    try {
-        await axios.post(
-            `/api/mod/comments/${commentId}/complaint`,
-            { reason },
-            { withCredentials: true }
-        );
-    } catch (err: any) {
-        console.error('Ошибка при отправке жалобы на комментарий:', err);
-        throw err;
-    }
-};
-
-
-  // Обработка нажатия Enter в основном поле комментария
   const handleCommentInputKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === 'Enter' && !e.shiftKey) {
       e.preventDefault();
@@ -584,13 +599,12 @@ const handleReportComment = async (commentId: number, reason: string) => {
             </h3>
           </div>
 
-          {/* Форма нового комментария */}
           {isLoggedIn ? (
             <div className="new-comment-form">
               <div className="comment-form-header">
                 <img 
                   src={user?.image_url || '/default-avatar.png'} 
-                  alt={user?.username}
+                  alt={user?.username || 'User'}
                   className="current-user-avatar"
                   onError={(e) => {
                     (e.target as HTMLImageElement).src = '/default-avatar.png';
@@ -629,7 +643,6 @@ const handleReportComment = async (commentId: number, reason: string) => {
             </div>
           )}
 
-          {/* Список комментариев */}
           <div className="comments-list">
             {comments.length === 0 && !loading ? (
               <div className="no-comments">
@@ -641,7 +654,6 @@ const handleReportComment = async (commentId: number, reason: string) => {
             )}
           </div>
 
-          {/* Ошибка загрузки */}
           {error && (
             <div className="comments-error">
               <p>{error}</p>

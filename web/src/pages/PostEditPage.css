@@ -1,9 +1,9 @@
-/* src/pages/PostEditPage.css (ФИНАЛЬНАЯ ВЕРСИЯ) */
+/* src/pages/PostEditPage.css (ИСПРАВЛЕННАЯ ВЕРСИЯ) */
 
 .edit-post-container {
     padding: 40px;
     display: flex;
-    justify-content: center; /* Центрирует форму внутри main-content */
+    justify-content: center;
     align-items: flex-start;
     min-height: 100vh;
     background-color: #fff;
@@ -12,88 +12,88 @@
 
 .edit-form-wrapper {
     width: 100%;
-    max-width: 800px; /* Увеличена ширина формы для лучшего масштаба */
+    max-width: 800px;
     display: flex;
     flex-direction: column;
     align-items: center;
 }
 
 .edit-page-title {
-    font-size: 26px; /* Крупнее */
-    color: #333; 
+    font-size: 26px;
+    color: #333;
     margin-bottom: 40px;
     text-align: center;
     font-weight: 500;
 }
 
-/* --- Общие стили для полей ввода (Название, Место, Теги) --- */
-
+/* --- Общие стили для полей ввода --- */
 .input-wrapper {
     width: 100%;
     margin-bottom: 25px;
     position: relative;
-    max-width: 650px; /* Ограничиваем ширину полей, чтобы не были слишком широкими */
+    max-width: 650px;
 }
 
-/* Стилизация метки (Label) над полем */
 .input-label {
     position: absolute;
-    top: -10px; 
+    top: -10px;
     left: 20px;
     background: white;
     padding: 0 5px;
     font-size: 12px;
-    color: #8c57ff; 
+    color: #8c57ff;
     font-weight: 500;
     z-index: 1;
 }
 
-/* Основное поле ввода */
 .edit-input {
     width: 100%;
     padding: 15px 20px;
-    border: 1px solid #8c57ff; 
+    border: 1px solid #8c57ff;
     border-radius: 20px;
     outline: none;
-    font-size: 16px; /* Крупнее шрифт */
+    font-size: 16px;
     color: #333;
     box-sizing: border-box;
 }
-.edit-input::placeholder {
-    color: transparent; 
-}
 
+.edit-input::placeholder {
+    color: transparent;
+}
 
 /* --- Слайдер / Редактор слайда --- */
 .edit-slider-area {
     display: flex;
-    align-items: center;
+    align-items: stretch;
     width: 100%;
-    max-width: 650px; /* Ширина слайдерной области (чуть больше, чем поля) */
+    max-width: 650px;
     justify-content: center;
-    gap: 30px; 
+    gap: 15px;
     margin-bottom: 10px;
 }
 
-/* Стрелки навигации (крупные, как на скрине) */
+/* Стрелки навигации */
 .edit-nav-btn {
     background: none;
-    border: 2px solid #a5a6f6; 
+    border: 2px solid #a5a6f6;
     border-radius: 50%;
-    width: 60px; 
-    height: 60px;
-    min-width: 60px;
+    width: 45px;
+    height: 45px;
+    min-width: 45px;
     display: flex;
     align-items: center;
     justify-content: center;
     color: #8c57ff;
-    font-size: 28px;
+    font-size: 22px;
     cursor: pointer;
     transition: all 0.2s;
+    align-self: center;
 }
+
 .edit-nav-btn:hover {
     background: #f0ebff;
 }
+
 .edit-nav-btn:disabled {
     opacity: 0.3;
     cursor: default;
@@ -101,29 +101,30 @@
     color: #ccc;
 }
 
-/* Карточка слайда (большой блок Текст/Фото) */
+/* Карточка слайда */
 .edit-slide-card {
     width: 100%;
     flex-grow: 1;
     border: 1px solid #8c57ff;
     border-radius: 20px;
     padding: 20px;
-    height: 450px; /* Увеличиваем высоту */
+    min-height: 400px;
     display: flex;
     flex-direction: column;
     box-sizing: border-box;
     position: relative;
+    background: white;
 }
 
 /* Заголовок-метка "Текст" */
 .slide-text-label {
     position: absolute;
-    top: -10px; 
+    top: -10px;
     left: 20px;
     background: white;
     padding: 0 5px;
     font-size: 12px;
-    color: #8c57ff; 
+    color: #8c57ff;
     font-weight: 500;
     z-index: 1;
 }
@@ -131,24 +132,25 @@
 /* Текстовое поле */
 .edit-textarea {
     width: 100%;
-    flex-grow: 1; 
+    flex-grow: 1;
     border: none;
     outline: none;
     resize: none;
     font-family: inherit;
     font-size: 15px;
     color: #333;
-    padding-top: 10px;
+    padding: 10px 0;
     background: transparent;
+    min-height: 150px;
 }
 
 /* Зона Фото */
 .edit-photo-zone {
-    /* Эта зона теперь служит контейнером для плейсхолдера/превью фото */
-    margin-top: 15px; 
+    margin-top: 15px;
+    width: 100%;
 }
 
-/* Метка "Фото" (для плейсхолдера) */
+/* Метка "Фото" */
 .add-photo-label-inner {
     position: absolute;
     top: -10px;
@@ -163,24 +165,25 @@
 
 /* Иконка + внутри зоны фото */
 .plus-btn-photo {
-    width: 32px;
-    height: 32px;
+    width: 36px;
+    height: 36px;
     border: 1px solid #8c57ff;
     background: white;
     color: #8c57ff;
-    border-radius: 6px;
+    border-radius: 50%;
     display: flex;
     align-items: center;
     justify-content: center;
     cursor: pointer;
-    font-size: 18px;
+    font-size: 20px;
     transition: 0.2s;
     position: absolute;
     top: 50%;
     left: 50%;
     transform: translate(-50%, -50%);
-    z-index: 2; 
+    z-index: 2;
 }
+
 .plus-btn-photo:hover {
     background: #f0ebff;
 }
@@ -188,44 +191,56 @@
 /* Контейнер для фото/превью */
 .photo-container {
     width: 100%;
-    height: 150px; /* Увеличиваем высоту контейнера фото */
-    border-radius: 8px;
+    height: 180px;
+    border-radius: 12px;
     overflow: hidden;
     position: relative;
-    border: 1px dashed #ccc;
+    border: 1px dashed #8c57ff;
     cursor: pointer;
     margin-top: 10px;
+    background: #faf9ff;
 }
+
 .photo-container img {
     width: 100%;
     height: 100%;
     object-fit: cover;
 }
+
 .remove-img-btn {
     position: absolute;
-    top: 5px;
-    right: 5px;
+    top: 8px;
+    right: 8px;
     background: rgba(255, 77, 79, 0.9);
     color: white;
     border: none;
     border-radius: 50%;
-    width: 24px;
-    height: 24px;
+    width: 28px;
+    height: 28px;
     cursor: pointer;
     display: flex;
     align-items: center;
     justify-content: center;
-    font-size: 12px;
-    z-index: 3; 
+    transition: 0.2s;
+}
+
+.remove-img-btn:hover {
+    background: rgba(255, 77, 79, 1);
+    transform: scale(1.05);
 }
 
 .delete-slide-link {
-    color: #333; 
+    color: #999;
     cursor: pointer;
-    font-size: 14px;
+    font-size: 13px;
     text-decoration: underline;
     margin-top: 10px;
     display: inline-block;
+    transition: 0.2s;
+}
+
+.delete-slide-link:hover {
+    color: #8c57ff;
 }
 
 /* --- Кнопка "Добавить слайд" --- */
@@ -233,17 +248,19 @@
     display: flex;
     flex-direction: column;
     align-items: center;
-    margin-top: 25px; /* Увеличиваем отступ */
+    margin-top: 20px;
     margin-bottom: 30px;
 }
+
 .add-slide-label {
     font-size: 13px;
-    color: #333;
+    color: #666;
     margin-bottom: 8px;
 }
+
 .plus-btn-large {
-    width: 45px;
-    height: 45px;
+    width: 44px;
+    height: 44px;
     border: 1px solid #8c57ff;
     background: white;
     color: #8c57ff;
@@ -255,14 +272,21 @@
     font-size: 22px;
     transition: 0.2s;
 }
-.plus-btn-large:hover {
+
+.plus-btn-large:hover:not(:disabled) {
     background: #f0ebff;
+    transform: scale(1.05);
+}
+
+.plus-btn-large:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
 }
 
 /* --- Нижние кнопки действий --- */
 .edit-actions-footer {
     width: 100%;
-    max-width: 650px; /* Ограничиваем по ширине полей */
+    max-width: 650px;
     display: flex;
     justify-content: space-between;
     gap: 20px;
@@ -272,17 +296,20 @@
 .btn-delete-post {
     flex: 1;
     padding: 12px 0;
-    border: 1px solid #8c57ff;
+    border: 1px solid #dc3545;
     background: white;
-    color: #8c57ff;
-    border-radius: 30px; 
+    color: #dc3545;
+    border-radius: 30px;
     font-size: 16px;
     cursor: pointer;
     font-weight: 500;
     transition: 0.2s;
 }
+
 .btn-delete-post:hover {
-    background: #fbf8ff;
+    background: #fff5f5;
+    border-color: #c82333;
+    color: #c82333;
 }
 
 .btn-save-post {
@@ -291,16 +318,47 @@
     border: none;
     background: #8c57ff;
     color: white;
-    border-radius: 30px; 
+    border-radius: 30px;
     font-size: 16px;
     cursor: pointer;
     font-weight: 500;
     transition: 0.2s;
 }
-.btn-save-post:hover {
+
+.btn-save-post:hover:not(:disabled) {
     background: #7a46e6;
+    transform: translateY(-1px);
 }
+
 .btn-save-post:disabled {
     background: #ccc;
     cursor: not-allowed;
+    opacity: 0.7;
+}
+
+/* Адаптивность для мобильных устройств */
+@media (max-width: 768px) {
+    .edit-post-container {
+        padding: 20px;
+    }
+    
+    .edit-slider-area {
+        gap: 10px;
+    }
+    
+    .edit-nav-btn {
+        width: 40px;
+        height: 40px;
+        min-width: 40px;
+        font-size: 20px;
+    }
+    
+    .edit-slide-card {
+        padding: 16px;
+        min-height: 350px;
+    }
+    
+    .photo-container {
+        height: 150px;
+    }
 }

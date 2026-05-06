@@ -1,6 +1,6 @@
 import React, { ReactNode } from 'react';
-import Sidebar from '../components/Sidebar.tsx';
-import '../components/MainLayout.css'; 
+import Sidebar from './Sidebar.tsx';
+import './MainLayout.css'; 
 
 interface ContentLayoutProps {
     children: ReactNode; 

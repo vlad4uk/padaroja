@@ -322,5 +322,284 @@
     cursor: not-allowed;
 }
 
-/* Удаляем дублирующиеся стили для .search-box-container 
-   они теперь в отдельном файле SearchBox.css */
+/* --- Блок соавторов --- */
+.collaborators-section {
+    background: #f8f7ff;
+    border-radius: 16px;
+    padding: 15px;
+    margin-top: 5px;
+}
+
+.collaborators-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.collaborators-title {
+    font-size: 14px;
+    font-weight: 500;
+    color: #696cff;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.add-collaborator-btn {
+    background: none;
+    border: 1px solid #696cff;
+    border-radius: 20px;
+    padding: 5px 12px;
+    color: #696cff;
+    font-size: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.add-collaborator-btn:hover {
+    background: #696cff;
+    color: white;
+}
+
+.collaborators-list {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px;
+    margin-bottom: 10px;
+}
+
+.collaborator-chip {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: white;
+    border-radius: 30px;
+    padding: 4px 8px 4px 4px;
+    border: 1px solid #e0e0e0;
+    font-size: 13px;
+}
+
+.collaborator-chip img {
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.collaborator-chip .role-badge {
+    font-size: 12px;
+}
+
+.collaborator-chip .role-badge.editor {
+    color: #696cff;
+}
+
+.collaborator-chip .role-badge.viewer {
+    color: #ff8c42;
+}
+
+.collaborator-chip .status-badge {
+    font-size: 10px;
+    padding: 2px 6px;
+    border-radius: 12px;
+    background: #fff3cd;
+    color: #856404;
+}
+
+.remove-collaborator {
+    background: none;
+    border: none;
+    color: #ff6b6b;
+    cursor: pointer;
+    padding: 2px;
+    display: flex;
+    align-items: center;
+    opacity: 0.6;
+}
+
+.remove-collaborator:hover {
+    opacity: 1;
+}
+
+.collaborators-hint {
+    font-size: 11px;
+    color: #999;
+    margin: 8px 0 0 0;
+}
+
+/* --- Модальное окно приглашения --- */
+.collaborator-modal-overlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+}
+
+.collaborator-modal {
+    background: white;
+    border-radius: 20px;
+    width: 90%;
+    max-width: 450px;
+    max-height: 80vh;
+    display: flex;
+    flex-direction: column;
+    overflow: hidden;
+}
+
+.collaborator-modal-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 20px;
+    border-bottom: 1px solid #eee;
+}
+
+.collaborator-modal-header h3 {
+    margin: 0;
+    font-size: 18px;
+    color: #333;
+}
+
+.collaborator-modal-header .close-btn {
+    background: none;
+    border: none;
+    font-size: 20px;
+    cursor: pointer;
+    color: #999;
+}
+
+.collaborator-modal-body {
+    padding: 20px;
+    overflow-y: auto;
+}
+
+.role-selector {
+    margin-bottom: 15px;
+}
+
+.role-selector label {
+    font-size: 13px;
+    color: #666;
+    display: block;
+    margin-bottom: 8px;
+}
+
+.role-buttons {
+    display: flex;
+    gap: 10px;
+}
+
+.role-btn {
+    flex: 1;
+    padding: 8px;
+    border: 1px solid #ddd;
+    background: white;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.role-btn.active {
+    border-color: #696cff;
+    background: #f0f0ff;
+    color: #696cff;
+}
+
+.search-box {
+    position: relative;
+    margin-bottom: 15px;
+}
+
+.search-box .search-icon {
+    position: absolute;
+    left: 12px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #999;
+}
+
+.search-box input {
+    width: 100%;
+    padding: 12px 12px 12px 38px;
+    border: 1px solid #ddd;
+    border-radius: 30px;
+    outline: none;
+    font-size: 14px;
+}
+
+.search-box input:focus {
+    border-color: #696cff;
+}
+
+.search-results {
+    max-height: 250px;
+    overflow-y: auto;
+    margin-bottom: 15px;
+}
+
+.search-result-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: background 0.2s;
+}
+
+.search-result-item:hover {
+    background: #f5f5f5;
+}
+
+.search-result-item img {
+    width: 40px;
+    height: 40px;
+    border-radius: 50%;
+    object-fit: cover;
+}
+
+.search-result-item span {
+    flex: 1;
+    font-weight: 500;
+}
+
+.invite-btn {
+    background: #696cff;
+    color: white;
+    border: none;
+    padding: 6px 15px;
+    border-radius: 20px;
+    cursor: pointer;
+    font-size: 12px;
+}
+
+.invite-info {
+    background: #f0f7ff;
+    padding: 10px;
+    border-radius: 12px;
+    font-size: 12px;
+    color: #666;
+}
+
+.search-loading, .no-results {
+    text-align: center;
+    padding: 20px;
+    color: #999;
+}
+
+.follow-badge {
+    font-size: 10px;
+    background: #e0e0ff;
+    color: #696cff;
+    padding: 2px 8px;
+    border-radius: 12px;
+    margin-left: 8px;
+    white-space: nowrap;
+}

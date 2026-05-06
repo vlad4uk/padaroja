@@ -6,7 +6,7 @@ import './SinglePostPage.css';
 import PostActionsMenu from '../components/PostActionsMenu.tsx'; 
 import ReportModal from '../components/ReportModal.tsx';
 import { BsGlobeAmericas } from "react-icons/bs";
-import { FaRegBookmark, FaBookmark, FaAngleDoubleLeft, FaAngleDoubleRight, FaTimes, FaComment, FaCommentSlash } from 'react-icons/fa';
+import { FaRegBookmark, FaBookmark, FaAngleDoubleLeft, FaAngleDoubleRight, FaTimes, FaComment, FaCommentSlash, FaHeart, FaRegHeart } from 'react-icons/fa';
 import { useAuth } from '../context/AuthContext.tsx'; 
 import CommentsSection from '../components/CommentsSection.tsx';
 
@@ -22,18 +22,28 @@ interface PhotoData {
     order: number;
 }
 
+interface CollaboratorData {
+    id: number;
+    user_id: number;
+    username: string;
+    avatar: string;
+    role: string;
+    joined_at: string;
+}
+
 interface PostDetailData {
     id: string;
+    user_id: number;
     title: string;
     created_at: string;
-    settlement_name: string;      // Изменено: было place_name
-    settlement_id: number;        // Добавлено
+    settlement_name: string;
+    settlement_id: number;
     tags: string[] | null;
     likes_count: number;
     paragraphs: ParagraphData[] | null;
     photos: PhotoData[] | null;
-    user_id: number;
     comments_disabled: boolean;
+    is_collaborative?: boolean;
     author_info?: {
         username: string;
         image_url: string;
@@ -50,28 +60,29 @@ const SinglePostPage: React.FC = () => {
     const [error, setError] = useState('');
     const [currentSlide, setCurrentSlide] = useState(0);
 
-    // Стейты для лайков и избранного
     const [isLiked, setIsLiked] = useState(false);
     const [isFavourite, setIsFavourite] = useState(false);
     const [likesCount, setLikesCount] = useState(0);
     const [clickedPostId, setClickedPostId] = useState<number | null>(null);
     const [clickedLikePostId, setClickedLikePostId] = useState<number | null>(null);
+    const [isLikeAnimating, setIsLikeAnimating] = useState(false);
 
-    // Стейты для автора поста
     const [userAvatar, setUserAvatar] = useState<string>('');
     const [postUserName, setPostUserName] = useState<string>('');
 
-    // Стейты для модального окна жалобы
     const [isReportModalOpen, setReportModalOpen] = useState(false);
     const [reportPostId, setReportPostId] = useState<number | null>(null);
 
-    // Стейты для полноэкранного просмотра фото
     const [isImageModalOpen, setIsImageModalOpen] = useState(false);
     const [fullscreenImage, setFullscreenImage] = useState<string | null>(null);
     const [fullscreenImageAlt, setFullscreenImageAlt] = useState<string>('');
 
-    // Стейт для комментариев
     const [commentsDisabled, setCommentsDisabled] = useState(false);
+
+    const [collaborators, setCollaborators] = useState<CollaboratorData[]>([]);
+    const [isCollaborator, setIsCollaborator] = useState(false);
+    const [collaboratorRole, setCollaboratorRole] = useState<'editor' | 'viewer' | null>(null);
+    const [isCollaboratorMenuOpen, setIsCollaboratorMenuOpen] = useState(false);
 
     const paragraphs = post?.paragraphs || [];
     const photos = post?.photos || [];
@@ -83,7 +94,6 @@ const SinglePostPage: React.FC = () => {
     
     const postIdNum = post ? parseInt(post.id) : 0;
     
-    // Загрузка поста и статусов
     useEffect(() => {
         const fetchPost = async () => {
             try {
@@ -92,7 +102,7 @@ const SinglePostPage: React.FC = () => {
                 });
                 
                 if (response.data) {
-                    console.log('Post data:', response.data); // Для отладки
+                    console.log('Post data:', response.data);
                     setPost(response.data);
                     setLikesCount(response.data.likes_count || 0);
                     setCommentsDisabled(response.data.comments_disabled || false);
@@ -106,6 +116,12 @@ const SinglePostPage: React.FC = () => {
                     
                     await loadLikeStatus(parseInt(response.data.id));
                     await loadFavouriteStatus(parseInt(response.data.id));
+                    
+                    await fetchCollaborators(parseInt(response.data.id));
+                    
+                    if (isLoggedIn) {
+                        await checkCollaboratorStatus(parseInt(response.data.id));
+                    }
                 } else {
                     setError('Пост не найден.');
                 }
@@ -121,7 +137,7 @@ const SinglePostPage: React.FC = () => {
         if (id) {
             fetchPost();
         }
-    }, [id]);
+    }, [id, isLoggedIn]);
 
     const fetchAuthorInfo = useCallback(async (userId: number) => {
         try {
@@ -135,6 +151,32 @@ const SinglePostPage: React.FC = () => {
             console.error('Ошибка загрузки информации об авторе:', err);
         }
     }, []);
+
+    const fetchCollaborators = async (postId: number) => {
+        try {
+            const response = await axios.get(`/api/posts/${postId}/collaborators`, {
+                withCredentials: true
+            });
+            setCollaborators(response.data.collaborators || []);
+        } catch (error) {
+            console.error('Ошибка загрузки соавторов:', error);
+            setCollaborators([]);
+        }
+    };
+
+    const checkCollaboratorStatus = async (postId: number) => {
+        try {
+            const response = await axios.get(`/api/posts/${postId}/collaborators/check`, {
+                withCredentials: true
+            });
+            setIsCollaborator(response.data.is_collaborator);
+            setCollaboratorRole(response.data.role);
+        } catch (error) {
+            console.error('Ошибка проверки статуса соавтора:', error);
+            setIsCollaborator(false);
+            setCollaboratorRole(null);
+        }
+    };
 
     const loadLikeStatus = async (postId: number) => {
         if (!isLoggedIn) return;
@@ -184,6 +226,7 @@ const SinglePostPage: React.FC = () => {
         if (!post || clickedLikePostId === postIdNum) return;
         
         setClickedLikePostId(postIdNum);
+        setIsLikeAnimating(true);
         
         const wasLiked = isLiked;
         const newLikesCount = wasLiked ? likesCount - 1 : likesCount + 1;
@@ -210,7 +253,10 @@ const SinglePostPage: React.FC = () => {
                 navigate('/login');
             }
         } finally {
-            setTimeout(() => setClickedLikePostId(null), 300);
+            setTimeout(() => {
+                setClickedLikePostId(null);
+                setIsLikeAnimating(false);
+            }, 300);
         }
     };
 
@@ -308,6 +354,25 @@ const SinglePostPage: React.FC = () => {
         }
     };
 
+    const handleLeaveCollaboration = async (postId: number) => {
+        try {
+            await axios.post(`/api/posts/${postId}/leave`, {}, {
+                withCredentials: true
+            });
+            alert('Вы вышли из соавторов поста');
+            setIsCollaborator(false);
+            setCollaboratorRole(null);
+            window.location.reload();
+        } catch (error: any) {
+            console.error('Ошибка при выходе из соавторов:', error);
+            alert(error.response?.data?.error || 'Не удалось выйти из соавторов');
+        }
+    };
+
+    const handleManageCollaborators = (postId: number) => {
+        navigate(`/posts/${postId}/collaborators`);
+    };
+
     const handleNext = () => {
         if (currentSlide < maxSlides - 1) {
             setCurrentSlide(currentSlide + 1);
@@ -324,6 +389,11 @@ const SinglePostPage: React.FC = () => {
         if (post?.user_id) {
             navigate(`/user/${post.user_id}`);
         }
+    };
+
+    const handleCollaboratorClick = (userId: number) => {
+        navigate(`/user/${userId}`);
+        setIsCollaboratorMenuOpen(false);
     };
 
     const handleImageClick = (imageUrl: string) => {
@@ -371,52 +441,197 @@ const SinglePostPage: React.FC = () => {
                     <h1 className="sp-post-title">{post.title}</h1>
                     
                     <div className="sp-meta-info">
-                        {/* Аватар и имя автора */}
-                        <div 
-                            className="sp-author-info"
-                            onClick={handleAuthorClick}
-                            style={{ cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px' }}
-                        >
-                            <img 
-                                src={userAvatar || '/default-avatar.png'} 
-                                alt={postUserName || 'Автор'}
-                                className="sp-author-avatar"
-                                onError={(e) => {
-                                    (e.target as HTMLImageElement).src = '/default-avatar.png';
-                                }}
-                            />
-                            <span className="sp-author-name">{postUserName || 'Автор'}</span>
+                        <div className="sp-authors-stack">
+                            <div className="sp-avatars-stack">
+                                <img 
+                                    src={userAvatar || '/default-avatar.png'} 
+                                    alt={postUserName || 'Автор'}
+                                    className="sp-avatar-item"
+                                    onClick={handleAuthorClick}
+                                    onError={(e) => {
+                                        (e.target as HTMLImageElement).src = '/default-avatar.png';
+                                    }}
+                                />
+                                
+                                {collaborators.slice(0, 2).map(collab => (
+                                    <img 
+                                        key={collab.id}
+                                        src={collab.avatar || '/default-avatar.png'} 
+                                        alt={collab.username}
+                                        className="sp-avatar-item"
+                                        onClick={() => handleCollaboratorClick(collab.user_id)}
+                                        onError={(e) => {
+                                            (e.target as HTMLImageElement).src = '/default-avatar.png';
+                                        }}
+                                    />
+                                ))}
+                                
+                                {collaborators.length > 2 && (
+                                    <div 
+                                        className="sp-avatar-more"
+                                        onClick={() => setIsCollaboratorMenuOpen(!isCollaboratorMenuOpen)}
+                                    >
+                                        +{collaborators.length - 2}
+                                    </div>
+                                )}
+                            </div>
+                            
+                            <div className="sp-authors-names">
+                                <span className="sp-author-link" onClick={handleAuthorClick}>
+                                    {postUserName || 'Автор'}
+                                </span>
+                                
+                                {collaborators.length === 1 && (
+                                    <>
+                                        <span className="sp-author-separator">и</span>
+                                        <span 
+                                            className="sp-author-link" 
+                                            onClick={() => handleCollaboratorClick(collaborators[0].user_id)}
+                                        >
+                                            {collaborators[0].username}
+                                        </span>
+                                    </>
+                                )}
+                                
+                                {collaborators.length === 2 && (
+                                    <>
+                                        <span className="sp-author-separator">,</span>
+                                        <span 
+                                            className="sp-author-link" 
+                                            onClick={() => handleCollaboratorClick(collaborators[0].user_id)}
+                                        >
+                                            {collaborators[0].username}
+                                        </span>
+                                        <span className="sp-author-separator">и</span>
+                                        <span 
+                                            className="sp-author-link" 
+                                            onClick={() => handleCollaboratorClick(collaborators[1].user_id)}
+                                        >
+                                            {collaborators[1].username}
+                                        </span>
+                                    </>
+                                )}
+                                
+                                {collaborators.length > 2 && (
+                                    <>
+                                        <span className="sp-author-separator">,</span>
+                                        <span 
+                                            className="sp-author-link" 
+                                            onClick={() => handleCollaboratorClick(collaborators[0].user_id)}
+                                        >
+                                            {collaborators[0].username}
+                                        </span>
+                                        <span className="sp-author-separator">и</span>
+                                        <span 
+                                            className="sp-author-count" 
+                                            onClick={() => setIsCollaboratorMenuOpen(!isCollaboratorMenuOpen)}
+                                        >
+                                            ещё {collaborators.length - 1}
+                                        </span>
+                                    </>
+                                )}
+                            </div>
                         </div>
+
+                        {isCollaboratorMenuOpen && (
+                            <div className="collaborators-dropdown">
+                                <div className="collaborators-dropdown-header">
+                                    Все авторы
+                                </div>
+                                <div className="collaborators-dropdown-list">
+                                    <div 
+                                        className="collaborator-item"
+                                        onClick={handleAuthorClick}
+                                    >
+                                        <img 
+                                            src={userAvatar || '/default-avatar.png'} 
+                                            alt={postUserName || 'Автор'}
+                                            className="collaborator-avatar"
+                                            onError={(e) => {
+                                                (e.target as HTMLImageElement).src = '/default-avatar.png';
+                                            }}
+                                        />
+                                        <div className="collaborator-info">
+                                            <div className="collaborator-username">{postUserName || 'Автор'}</div>
+                                            <div className="collaborator-role collaborator-role-editor">👑 Владелец</div>
+                                        </div>
+                                    </div>
+                                    
+                                    {collaborators.length > 0 && (
+                                        <div className="collaborator-divider" />
+                                    )}
+                                    
+                                    {collaborators.map(collab => (
+                                        <div 
+                                            key={collab.id} 
+                                            className="collaborator-item"
+                                            onClick={() => handleCollaboratorClick(collab.user_id)}
+                                        >
+                                            <img 
+                                                src={collab.avatar || '/default-avatar.png'} 
+                                                alt={collab.username}
+                                                className="collaborator-avatar"
+                                                onError={(e) => {
+                                                    (e.target as HTMLImageElement).src = '/default-avatar.png';
+                                                }}
+                                            />
+                                            <div className="collaborator-info">
+                                                <div className="collaborator-username">{collab.username}</div>
+                                                <div className={`collaborator-role ${collab.role === 'editor' ? 'collaborator-role-editor' : 'collaborator-role-viewer'}`}>
+                                                    {collab.role === 'editor' ? '✏️ Редактор' : '👁️ Читатель'}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
                         
                         <span className="sp-date">
                             {new Date(post.created_at).toLocaleDateString()}
                         </span>
                         
-                        {/* ОТОБРАЖЕНИЕ НАСЕЛЕННОГО ПУНКТА - ИЗМЕНЕНО */}
                         <span className="sp-place-name">
                             <BsGlobeAmericas size={14}/> {post.settlement_name}
                         </span>
                         
-                        {/* Лайки */}
-                        <span 
-                            className="sp-likes-count"
+                        {/* Улучшенная кнопка лайка с визуальной обратной связью */}
+                        <button 
+                            className={`sp-like-button ${isLiked ? 'liked' : ''} ${isLikeAnimating ? 'animate' : ''}`}
                             onClick={toggleLike}
+                            disabled={clickedLikePostId === postIdNum}
                             style={{
+                                background: 'none',
+                                border: 'none',
                                 cursor: isLoggedIn && clickedLikePostId !== postIdNum ? 'pointer' : 'default',
-                                opacity: clickedLikePostId === postIdNum ? 0.6 : 1,
-                                display: 'flex',
+                                display: 'inline-flex',
                                 alignItems: 'center',
-                                gap: '5px'
+                                gap: '6px',
+                                padding: '4px 8px',
+                                borderRadius: '20px',
+                                transition: 'all 0.2s ease',
+                                fontSize: '15px'
                             }}
                         >
-                            <BsGlobeAmericas 
-                                size={14} 
-                                style={{ color: isLiked ? '#e74c3c' : '#666' }} 
-                            />
-                            {likesCount}
-                        </span>
+                            {isLiked ? (
+                                <FaHeart 
+                                    size={18} 
+                                    style={{ 
+                                        color: '#ff4757',
+                                        animation: isLikeAnimating ? 'heartBeat 0.3s ease' : 'none'
+                                    }} 
+                                />
+                            ) : (
+                                <FaRegHeart size={18} style={{ color: '#666' }} />
+                            )}
+                            <span style={{ 
+                                fontWeight: '500',
+                                color: isLiked ? '#ff4757' : '#666'
+                            }}>
+                                {likesCount}
+                            </span>
+                        </button>
                         
-                        {/* Закладка */}
                         <div 
                             onClick={toggleFavourite}
                             style={{
@@ -431,14 +646,12 @@ const SinglePostPage: React.FC = () => {
                             )}
                         </div>
                         
-                        {/* Теги */}
                         <span className="sp-tags">
                             {(post.tags ?? []).length > 0 
                                 ? ' #' + (post.tags ?? []).join(' #') 
                                 : ''}
                         </span>
 
-                        {/* Статус комментариев */}
                         <span className="sp-comments-status">
                             {commentsDisabled ? (
                                 <>
@@ -452,9 +665,24 @@ const SinglePostPage: React.FC = () => {
                                 </>
                             )}
                         </span>
+
+                        {isCollaborator && collaboratorRole && (
+                            <span className="sp-collaborator-badge" style={{
+                                fontSize: '12px',
+                                background: collaboratorRole === 'editor' ? '#e8f5e9' : '#fff3e0',
+                                color: collaboratorRole === 'editor' ? '#2e7d32' : '#ef6c00',
+                                padding: '4px 10px',
+                                borderRadius: '20px',
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: '5px'
+                            }}>
+                                {collaboratorRole === 'editor' ? '✏️' : '👁️'} 
+                                {collaboratorRole === 'editor' ? 'Редактор' : 'Читатель'}
+                            </span>
+                        )}
                     </div>
                     
-                    {/* Меню действий */}
                     {post.user_id && (
                         <div className="sp-author-actions">
                             <PostActionsMenu 
@@ -466,12 +694,15 @@ const SinglePostPage: React.FC = () => {
                                 onToggleComments={toggleComments}
                                 commentsDisabled={commentsDisabled}
                                 userRole={user?.role_id}
+                                isCollaborator={isCollaborator}
+                                collaboratorRole={collaboratorRole}
+                                onLeaveCollaboration={handleLeaveCollaboration}
+                                onManageCollaborators={handleManageCollaborators}
                             />
                         </div>
                     )}
                 </div>
 
-                {/* Слайдер с контентом */}
                 <div className="sp-content-slider">
                     <button className="sp-nav-arrow" onClick={handlePrev} disabled={currentSlide === 0}>
                         <FaAngleDoubleLeft />
@@ -509,7 +740,6 @@ const SinglePostPage: React.FC = () => {
                     </button>
                 </div>
 
-                {/* Комментарии */}
                 <div className="sp-comments-section-wrapper">
                     <CommentsSection 
                         postId={postIdNum} 
@@ -524,8 +754,6 @@ const SinglePostPage: React.FC = () => {
                 </div>
             </div>
             
-            {/* Модальное окно жалобы */}
-            {/* Модальное окно жалобы */}
             <ReportModal 
                 isOpen={isReportModalOpen}
                 onClose={() => setReportModalOpen(false)}
@@ -537,7 +765,6 @@ const SinglePostPage: React.FC = () => {
                 }}
             />
 
-            {/* Модальное окно для фото */}
             {isImageModalOpen && fullscreenImage && (
                 <div className="image-modal-overlay" onClick={closeImageModal}>
                     <div className="image-modal-content" onClick={(e) => e.stopPropagation()}>
