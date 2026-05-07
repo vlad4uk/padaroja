@@ -175,6 +175,12 @@ func main() {
 		mapRoutes.GET("/posts/all", maps.GetAllPostsMapData)
 	}
 
+	recommendationsRoutes := api.Group("/recommendations")
+	{
+		recommendationsRoutes.GET("/geo", middleware.AuthMiddleware(), post.GetGeoRecommendations)
+		recommendationsRoutes.GET("/follow", middleware.AuthMiddleware(), post.GetFollowRecommendations)
+	}
+
 	modRoutes := api.Group("/mod")
 	{
 		modRoutes.Use(middleware.AuthMiddleware())

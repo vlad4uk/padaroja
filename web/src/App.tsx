@@ -20,6 +20,7 @@ import RulesPage from './components/RulesPage.tsx';
 import AllPostsMapPage from './pages/AllPostsMapPage.tsx';
 import CollaborationInvites from './components/CollaborationInvites.tsx';
 import PostCollaboratorsPage from './components/PostCollaboratorsPage.tsx';
+import RecommendationsPage from './pages/RecommendationsPage.tsx';
 import AdminPanel from './pages/AdminPage.tsx';
 
 const ProtectedRoute: React.FC<{ children: React.ReactNode }> = ({ children }) => {
@@ -112,6 +113,15 @@ const App: React.FC = () => {
                   <PostCreatePage />
                 </ProtectedRoute>
               } 
+            />
+
+            <Route 
+                path="/recommendations" 
+                element={
+                    <ProtectedRoute>
+                        <RecommendationsPage />
+                    </ProtectedRoute>
+                } 
             />
             
             <Route 

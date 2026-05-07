@@ -34,7 +34,6 @@
 
 .admin-tab:hover {
     background-color: rgba(255, 255, 255, 0.1);
-    transform: translateY(-2px);
 }
 
 .admin-tab.active {
@@ -69,11 +68,6 @@
     gap: 20px;
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.07);
     transition: transform 0.2s, box-shadow 0.2s;
-}
-
-.stat-card:hover {
-    transform: translateY(-4px);
-    box-shadow: 0 8px 15px rgba(0, 0, 0, 0.1);
 }
 
 .stat-icon {
@@ -253,13 +247,12 @@
 }
 
 .role-user {
-    background: #e0f2fe;
-    color: #0369a1;
+    color: black;
 }
 
 .role-moderator {
-    background: #dcfce7;
-    color: #15803d;
+    background: #fef3c7;
+    color: #b45309;
 }
 
 .role-admin {
@@ -389,12 +382,6 @@ button:disabled {
     transition: all 0.2s;
 }
 
-.search-input:focus {
-    outline: none;
-    border-color: #8b5cf6;
-    box-shadow: 0 0 0 3px rgba(139, 92, 246, 0.1);
-}
-
 .search-button {
     padding: 12px 24px;
     background: #8b5cf6;
@@ -404,10 +391,6 @@ button:disabled {
     cursor: pointer;
     font-weight: 500;
     transition: background 0.2s;
-}
-
-.search-button:hover:not(:disabled) {
-    background: #7c3aed;
 }
 
 .search-error {

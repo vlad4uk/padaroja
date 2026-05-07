@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.tsx';
 import axios from 'axios';
+import { IoMdCompass } from 'react-icons/io';
+
 
 // Импорты иконок
 import { FaSearch, FaSignOutAlt, FaSignInAlt, FaUserPlus, FaHome, FaHeart, FaBookmark, FaPlusCircle, FaShieldAlt, FaMapMarkedAlt, FaBell, FaUserShield } from 'react-icons/fa';
@@ -87,6 +89,7 @@ const Sidebar: React.FC = () => {
         { path: '/subscriptions', label: 'Мне нравится', icon: <FaHeart />, authRequired: true },
         { path: '/bookmarks', label: 'Избранное', icon: <FaBookmark />, authRequired: true },
         { path: '/post/new', label: 'Создать Пост', icon: <FaPlusCircle />, authRequired: true },
+        { path: '/recommendations', label: 'Рекомендации', icon: <IoMdCompass />, authRequired: true },
     ];
     
     return (

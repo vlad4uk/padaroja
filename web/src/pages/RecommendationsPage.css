@@ -1,0 +1,54 @@
+/* RecommendationsPage.css */
+.rec-container {
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 20px;
+}
+
+.rec-header {
+    margin-bottom: 30px;
+    border-bottom: 1px solid #e0e0e0;
+}
+
+.rec-header h1 {
+    font-size: 24px;
+    margin-bottom: 20px;
+}
+
+.rec-tabs {
+    display: flex;
+    gap: 32px;
+    margin-bottom: -1px;
+}
+
+.rec-tab {
+    background: none;
+    border: none;
+    padding: 12px 0;
+    font-size: 16px;
+    font-weight: 500;
+    color: #666;
+    cursor: pointer;
+    position: relative;
+}
+
+.rec-tab:hover { color: #696cff; }
+.rec-tab.active { color: #696cff; }
+.rec-tab.active::after {
+    content: '';
+    position: absolute;
+    bottom: -1px;
+    left: 0;
+    right: 0;
+    height: 2px;
+    background: #696cff;
+}
+
+.rec-loading, .rec-error, .rec-empty { text-align: center; padding: 60px; }
+.loading-spinner { width: 40px; height: 40px; border: 3px solid #f3f3f3; border-top-color: #696cff; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto 20px; }
+@keyframes spin { to { transform: rotate(360deg); } }
+.hint { color: #999; font-size: 14px; margin-top: 8px; }
+
+/* Стили карточек уже есть в UserPostsFeed.css, они подхватятся автоматически */
+.posts-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; }
+@media (max-width: 768px) { .posts-grid { grid-template-columns: 1fr; } }

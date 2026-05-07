@@ -353,13 +353,13 @@ const PostCreatePage: React.FC = () => {
                                 className={`role-btn ${inviteRole === 'editor' ? 'active' : ''}`}
                                 onClick={() => setInviteRole('editor')}
                             >
-                                ✏️ Редактор
+                                Редактор
                             </button>
                             <button 
                                 className={`role-btn ${inviteRole === 'viewer' ? 'active' : ''}`}
                                 onClick={() => setInviteRole('viewer')}
                             >
-                                👁️ Читатель
+                                Читатель
                             </button>
                         </div>
                     </div>
@@ -399,7 +399,7 @@ const PostCreatePage: React.FC = () => {
                     </div>
                     
                     <div className="invite-info">
-                        <p>💡 Приглашённый пользователь получит уведомление и сможет принять или отклонить приглашение. Автором поста остаётесь вы.</p>
+                        <p>Приглашённый пользователь получит уведомление и сможет принять или отклонить приглашение. Автором поста остаётесь вы.</p>
                     </div>
                 </div>
             </div>
@@ -553,11 +553,7 @@ const PostCreatePage: React.FC = () => {
                             <div className="collaborators-list">
                                 {collaborators.map(collab => (
                                     <div key={collab.user_id} className="collaborator-chip">
-                                        <img src="/default-avatar.png" alt={collab.username} />
                                         <span>@{collab.username}</span>
-                                        <span className={`role-badge ${collab.role}`}>
-                                            {collab.role === 'editor' ? '✏️' : '👁️'}
-                                        </span>
                                         {collab.status === 'pending' && (
                                             <span className="status-badge pending">⏳ ожидает</span>
                                         )}
