@@ -1,175 +1,144 @@
 import React, { useState, useEffect } from 'react';
+import { useParams, useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { useNavigate } from 'react-router-dom';
-import { FaUserPlus, FaCheck, FaTimes, FaBell, FaPaperPlane, FaCheckCircle, FaTimesCircle, FaClock, FaEye } from 'react-icons/fa';
 import ContentLayout from './ContentLayout.tsx';
-import './CollaborationInvites.css';
+import { FaUserMinus, FaArrowLeft, FaCrown, FaUserEdit, FaUserCheck } from 'react-icons/fa';
+import './PostCollaboratorsPage.css';
 
-interface Invite {
+interface Collaborator {
     id: number;
-    post_id: number;
-    post_title: string;
-    inviter_id: number;
-    inviter_name: string;
-    inviter_avatar: string;
+    user_id: number;
+    username: string;
+    avatar: string;
     role: string;
-    invited_at: string;
+    joined_at: string;
 }
 
-interface SentInvite {
-    id: number;
-    post_id: number;
-    post_title: string;
-    invitee_id: number;
-    invitee_name: string;
-    invitee_avatar: string;
-    role: string;
-    status: 'pending' | 'accepted' | 'declined';
-    invited_at: string;
-    responded_at: string | null;
-}
-
-const CollaborationInvites: React.FC = () => {
-    const [activeTab, setActiveTab] = useState<'incoming' | 'outgoing'>('incoming');
-    const [incomingInvites, setIncomingInvites] = useState<Invite[]>([]);
-    const [outgoingInvites, setOutgoingInvites] = useState<SentInvite[]>([]);
-    const [loading, setLoading] = useState(true);
-    const [processingId, setProcessingId] = useState<number | null>(null);
+const PostCollaboratorsPage: React.FC = () => {
+    const { postId } = useParams<{ postId: string }>();
     const navigate = useNavigate();
-
-    const fetchIncomingInvites = async () => {
-        try {
-            const response = await axios.get('/api/posts/invites/pending', {
-                withCredentials: true
-            });
-            console.log('Incoming invites response:', response.data); // Добавьте лог для отладки
-            setIncomingInvites(response.data.invites || []);
-        } catch (error) {
-            console.error('Ошибка загрузки входящих приглашений:', error);
-        }
-    };
-
-    const fetchOutgoingInvites = async () => {
-        try {
-            const response = await axios.get('/api/posts/invites/sent', {
-                withCredentials: true
-            });
-            setOutgoingInvites(response.data.invites || []);
-        } catch (error) {
-            console.error('Ошибка загрузки исходящих приглашений:', error);
-        }
-    };
-
-    const fetchAllData = async () => {
-        setLoading(true);
-        await Promise.all([fetchIncomingInvites(), fetchOutgoingInvites()]);
-        setLoading(false);
-    };
-
-    const acceptInvite = async (inviteId: number, postId: number) => {
-        setProcessingId(inviteId);
-        try {
-            await axios.put(`/api/posts/invites/${inviteId}/accept`, {}, {
-                withCredentials: true
-            });
-            setIncomingInvites(prev => prev.filter(i => i.id !== inviteId));
-            alert('Приглашение принято! Теперь вы соавтор этого поста.');
-            navigate(`/post/${postId}`);
-        } catch (error: any) {
-            console.error('Ошибка при принятии приглашения:', error);
-            alert(error.response?.data?.error || 'Не удалось принять приглашение');
-        } finally {
-            setProcessingId(null);
-        }
-    };
-
-    const declineInvite = async (inviteId: number) => {
-        setProcessingId(inviteId);
-        try {
-            await axios.put(`/api/posts/invites/${inviteId}/decline`, {}, {
-                withCredentials: true
-            });
-            setIncomingInvites(prev => prev.filter(i => i.id !== inviteId));
-            alert('Приглашение отклонено');
-        } catch (error: any) {
-            console.error('Ошибка при отклонении приглашения:', error);
-            alert(error.response?.data?.error || 'Не удалось отклонить приглашение');
-        } finally {
-            setProcessingId(null);
-        }
-    };
+    const [collaborators, setCollaborators] = useState<Collaborator[]>([]);
+    const [postTitle, setPostTitle] = useState('');
+    const [postAuthorId, setPostAuthorId] = useState<number | null>(null); // ← добавляем ID автора
+    const [postAuthorName, setPostAuthorName] = useState('');
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState('');
+    const [currentUserId, setCurrentUserId] = useState<number | null>(null);
 
     useEffect(() => {
-        fetchAllData();
+        fetchCurrentUser();
+        fetchCollaborators();
+    }, [postId]);
 
-        const token = localStorage.getItem('token');
-        if (!token) return;
-
-        const eventSource = new EventSource(`/api/posts/stream/user?token=${token}`);
-        
-        eventSource.onmessage = (event) => {
-            try {
-                const data = JSON.parse(event.data);
-                console.log('SSE received:', data);
-                
-                if (data.type === 'INVITE_RESPONSE') {
-                    setOutgoingInvites(prev => prev.map(invite => 
-                        invite.id === data.data.invite_id 
-                            ? { 
-                                ...invite, 
-                                status: data.data.status,
-                                responded_at: data.data.responded_at 
-                              }
-                            : invite
-                    ));
-                    
-                    const message = data.data.status === 'accepted' 
-                        ? `✅ ${data.data.username} принял(а) ваше приглашение в пост "${data.data.post_title}"`
-                        : `❌ ${data.data.username} отклонил(а) ваше приглашение в пост "${data.data.post_title}"`;
-                    alert(message);
-                }
-            } catch (error) {
-                console.error('Error parsing SSE message:', error);
+    const fetchCurrentUser = async () => {
+        try {
+            const response = await axios.get('/api/user/profile', {
+                withCredentials: true
+            });
+            setCurrentUserId(response.data.id);
+        } catch (error) {
+            console.error('Ошибка загрузки текущего пользователя:', error);
+            // Пробуем получить из localStorage как запасной вариант
+            const savedId = localStorage.getItem('userId');
+            if (savedId) {
+                setCurrentUserId(parseInt(savedId));
             }
-        };
-        
-        eventSource.onerror = (error) => {
-            console.error('SSE error:', error);
-        };
-        
-        return () => {
-            eventSource.close();
-        };
-    }, []);
-
-    const getStatusIcon = (status: string) => {
-        switch (status) {
-            case 'accepted':
-                return <FaCheckCircle style={{ color: '#4caf50' }} />;
-            case 'declined':
-                return <FaTimesCircle style={{ color: '#f44336' }} />;
-            default:
-                return <FaClock style={{ color: '#ff9800' }} />;
         }
     };
 
-    const getStatusText = (status: string) => {
-        switch (status) {
-            case 'accepted':
-                return 'Принято';
-            case 'declined':
-                return 'Отклонено';
-            default:
-                return 'Ожидает ответа';
+    const fetchCollaborators = async () => {
+        setLoading(true);
+        try {
+            const response = await axios.get(`/api/posts/${postId}/collaborators`, {
+                withCredentials: true
+            });
+            setCollaborators(response.data.collaborators || []);
+            setPostTitle(response.data.post_title || '');
+            setPostAuthorId(response.data.post_author_id || null); // ← получаем ID автора
+            setPostAuthorName(response.data.post_author || '');
+        } catch (error: any) {
+            console.error('Ошибка загрузки соавторов:', error);
+            setError(error.response?.data?.error || 'Не удалось загрузить список соавторов');
+        } finally {
+            setLoading(false);
         }
     };
+
+    const removeCollaborator = async (userId: number, username: string) => {
+        if (!confirm(`Удалить @${username} из соавторов?`)) return;
+        
+        try {
+            await axios.delete(`/api/posts/${postId}/collaborators/${userId}`, {
+                withCredentials: true
+            });
+            setCollaborators(prev => prev.filter(c => c.user_id !== userId));
+            alert('Соавтор удалён');
+        } catch (error: any) {
+            console.error('Ошибка удаления:', error);
+            alert(error.response?.data?.error || 'Не удалось удалить соавтора');
+        }
+    };
+
+    const getRoleIcon = (role: string) => {
+        if (role === 'editor') {
+            return <FaUserEdit style={{ color: '#2e7d32' }} />;
+        }
+        return <FaUserCheck style={{ color: '#ef6c00' }} />;
+    };
+
+    const getRoleText = (role: string) => {
+        if (role === 'editor') {
+            return '✏️ Редактор';
+        }
+        return '👁️ Читатель';
+    };
+
+    const BackButton = () => (
+        <button 
+            onClick={() => navigate(-1)}
+            style={{
+                background: 'none',
+                border: 'none',
+                cursor: 'pointer',
+                fontSize: '16px',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                color: '#696cff',
+                padding: '8px 12px',
+                borderRadius: '8px',
+                marginBottom: '20px',
+                transition: 'background-color 0.2s'
+            }}
+            onMouseEnter={(e) => e.currentTarget.style.backgroundColor = '#f0f0f0'}
+            onMouseLeave={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+        >
+            <FaArrowLeft /> Назад
+        </button>
+    );
+
+    // ✅ ПРАВИЛЬНАЯ проверка: является ли текущий пользователь владельцем поста
+    const isOwner = currentUserId !== null && currentUserId === postAuthorId;
 
     if (loading) {
         return (
             <ContentLayout>
-                <div className="invites-loading">
-                    <FaBell className="loading-icon" />
-                    <span>Загрузка приглашений...</span>
+                <div className="posts-feed-loading">
+                    <div className="loading-spinner"></div>
+                    <p>Загрузка соавторов...</p>
+                </div>
+            </ContentLayout>
+        );
+    }
+
+    if (error) {
+        return (
+            <ContentLayout>
+                <div className="posts-feed-error">
+                    <p>{error}</p>
+                    <button onClick={fetchCollaborators} className="retry-button">
+                        Попробовать снова
+                    </button>
                 </div>
             </ContentLayout>
         );
@@ -178,221 +147,229 @@ const CollaborationInvites: React.FC = () => {
     return (
         <ContentLayout>
             <div style={{ padding: '20px' }}>
+                <BackButton />
+                
                 <h1 style={{ 
-                    marginBottom: '20px', 
+                    marginBottom: '12px', 
                     color: '#333',
                     fontSize: '24px',
                     fontWeight: '600'
                 }}>
-                    Приглашения
+                    Управление соавторами
                 </h1>
-
-                <div style={{ 
-                    display: 'flex', 
-                    gap: '10px', 
-                    marginBottom: '20px',
-                    borderBottom: '1px solid #eee',
-                    justifyContent: 'flex-start'
+                
+                {postTitle && (
+                    <p style={{ 
+                        marginBottom: '24px', 
+                        color: '#666',
+                        fontSize: '14px'
+                    }}>
+                        Пост: <strong>{postTitle}</strong>
+                        {postAuthorName && <span> • автор: @{postAuthorName}</span>}
+                    </p>
+                )}
+                
+                {/* Владелец */}
+                <div style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '15px',
+                    padding: '16px 20px',
+                    backgroundColor: '#f8f9ff',
+                    borderRadius: '12px',
+                    marginBottom: '24px',
+                    border: '1px solid #e8e8ff'
                 }}>
-                    <button
-                        onClick={() => setActiveTab('incoming')}
+                    <img 
+                        src={localStorage.getItem('avatar') || '/default-avatar.png'} 
+                        alt="Owner"
                         style={{
-                            padding: '10px 20px',
-                            border: 'none',
-                            background: 'none',
-                            cursor: 'pointer',
-                            fontSize: '16px',
-                            fontWeight: activeTab === 'incoming' ? '600' : '400',
-                            color: activeTab === 'incoming' ? '#696cff' : '#666',
-                            borderBottom: activeTab === 'incoming' ? '2px solid #696cff' : 'none',
-                            transition: 'none'
+                            width: '52px',
+                            height: '52px',
+                            borderRadius: '50%',
+                            objectFit: 'cover',
+                            border: '2px solid #696cff'
                         }}
-                    >
-                        <FaUserPlus style={{ marginRight: '8px' }} />
-                        Входящие ({incomingInvites.length})
-                    </button>
-                    <button
-                        onClick={() => setActiveTab('outgoing')}
-                        style={{
-                            padding: '10px 20px',
-                            border: 'none',
-                            background: 'none',
-                            cursor: 'pointer',
-                            fontSize: '16px',
-                            fontWeight: activeTab === 'outgoing' ? '600' : '400',
-                            color: activeTab === 'outgoing' ? '#696cff' : '#666',
-                            borderBottom: activeTab === 'outgoing' ? '2px solid #696cff' : 'none',
-                            transition: 'none'
+                        onError={(e) => {
+                            e.currentTarget.src = '/default-avatar.png';
                         }}
-                    >
-                        <FaPaperPlane style={{ marginRight: '8px' }} />
-                        Исходящие
-                    </button>
+                    />
+                    <div style={{ flex: 1 }}>
+                        <div style={{ fontWeight: 700, fontSize: '16px', marginBottom: '4px' }}>
+                            {postAuthorName || localStorage.getItem('username') || 'Владелец'}
+                        </div>
+                        <div style={{ fontSize: '13px', color: '#696cff' }}>
+                            <FaCrown style={{ marginRight: '4px' }} /> Владелец поста
+                        </div>
+                    </div>
                 </div>
-
-                <div style={{ display: 'flex', justifyContent: 'center' }}>
-                    {activeTab === 'incoming' && (
-                        <>
-                            {incomingInvites.length === 0 ? (
-                                <div className="invites-empty" style={{ width: '100%', maxWidth: '600px' }}>
-                                    <FaUserPlus className="empty-icon" />
-                                    <p>Нет входящих приглашений</p>
-                                    <span className="empty-hint">
-                                        Когда вас пригласят в пост, уведомления появятся здесь
-                                    </span>
-                                </div>
-                            ) : (
-                                <div className="invites-container" style={{ maxWidth: '600px', width: '100%' }}>
-                                    <div className="invites-list">
-                                        {incomingInvites.map(invite => (
-                                            <div key={invite.id} className="invite-card">
-                                                <div className="invite-header">
-                                                    <img 
-                                                        src={invite.inviter_avatar || '/default-avatar.png'} 
-                                                        alt={invite.inviter_name}
-                                                        className="inviter-avatar"
-                                                        onError={(e) => {
-                                                            e.currentTarget.src = '/default-avatar.png';
-                                                        }}
-                                                    />
-                                                    <div className="invite-info">
-                                                        <span className="inviter-name">@{invite.inviter_name}</span>
-                                                        <span className="invite-action">приглашает вас в пост</span>
-                                                    </div>
-                                                </div>
-                                                
-                                                <div className="invite-post">
-                                                    <h4 className="post-title">{invite.post_title}</h4>
-                                                    <span className={`invite-role-badge ${invite.role}`}>
-                                                        {invite.role === 'editor' ? '✏️ Редактор' : '👁️ Читатель'}
-                                                    </span>
-                                                </div>
-                                                
-                                                <div className="invite-date" style={{ marginTop: '10px' }}>
-                                                    📅 {new Date(invite.invited_at).toLocaleDateString('ru-RU')}
-                                                </div>
-                                                
-                                                <div className="invite-actions">
-                                                    <button 
-                                                        className="accept-btn"
-                                                        onClick={() => acceptInvite(invite.id, invite.post_id)}
-                                                        disabled={processingId === invite.id}
-                                                    >
-                                                        <FaCheck />
-                                                        {processingId === invite.id ? 'Обработка...' : 'Принять'}
-                                                    </button>
-                                                    <button 
-                                                        className="decline-btn"
-                                                        onClick={() => declineInvite(invite.id)}
-                                                        disabled={processingId === invite.id}
-                                                    >
-                                                        <FaTimes />
-                                                        Отклонить
-                                                    </button>
-                                                    {/* Кнопка просмотра поста */}
-                                                    <button 
-                                                        className="view-post-btn"
-                                                        onClick={() => navigate(`/post/${invite.post_id}`)}
-                                                        style={{
-                                                            flex: 1,
-                                                            display: 'flex',
-                                                            alignItems: 'center',
-                                                            justifyContent: 'center',
-                                                            gap: '8px',
-                                                            padding: '10px',
-                                                            border: '1px solid #696cff',
-                                                            borderRadius: '30px',
-                                                            cursor: 'pointer',
-                                                            fontWeight: '500',
-                                                            background: 'white',
-                                                            color: '#696cff'
-                                                        }}
-                                                    >
-                                                        <FaEye />
-                                                        Просмотр поста
-                                                    </button>
-                                                </div>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </div>
-                            )}
-                        </>
+                
+                {/* Заголовок списка соавторов */}
+                <div style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    margin: '24px 0 16px 0'
+                }}>
+                    <h3 style={{ 
+                        fontSize: '18px', 
+                        color: '#555',
+                        margin: 0
+                    }}>
+                        Соавторы ({collaborators.length})
+                    </h3>
+                    {collaborators.length > 0 && (
+                        <span style={{
+                            fontSize: '13px',
+                            color: '#999',
+                            background: '#f5f5f5',
+                            padding: '4px 10px',
+                            borderRadius: '20px'
+                        }}>
+                            Всего: {collaborators.length}
+                        </span>
                     )}
-
-                    {activeTab === 'outgoing' && (
-                        <>
-                            {outgoingInvites.length === 0 ? (
-                                <div className="invites-empty" style={{ width: '100%', maxWidth: '600px' }}>
-                                    <FaPaperPlane className="empty-icon" />
-                                    <p>Нет исходящих приглашений</p>
-                                    <span className="empty-hint">
-                                        Когда вы пригласите кого-то в пост, приглашения появятся здесь
-                                    </span>
-                                </div>
-                            ) : (
-                                <div className="invites-container" style={{ maxWidth: '600px', width: '100%' }}>
-                                    <div className="invites-list">
-                                        {outgoingInvites.map(invite => (
-                                            <div key={invite.id} className="invite-card">
-                                                <div className="invite-header">
-                                                    <img 
-                                                        src={invite.invitee_avatar || '/default-avatar.png'} 
-                                                        alt={invite.invitee_name}
-                                                        className="inviter-avatar"
-                                                        onError={(e) => {
-                                                            e.currentTarget.src = '/default-avatar.png';
-                                                        }}
-                                                    />
-                                                    <div className="invite-info">
-                                                        <span className="inviter-name">@{invite.invitee_name}</span>
-                                                        <span className="invite-action">
-                                                            {invite.status === 'pending' ? 'приглашение отправлено' :
-                                                             invite.status === 'accepted' ? 'принял приглашение' : 'отклонил приглашение'}
-                                                        </span>
-                                                    </div>
-                                                    <div style={{ marginLeft: 'auto' }}>
-                                                        {getStatusIcon(invite.status)}
-                                                    </div>
-                                                </div>
-                                                
-                                                <div className="invite-post">
-                                                    <h4 className="post-title">{invite.post_title}</h4>
-                                                    <span className={`invite-role-badge ${invite.role}`}>
-                                                        {invite.role === 'editor' ? '✏️ Редактор' : '👁️ Читатель'}
-                                                    </span>
-                                                </div>
-                                                
-                                                <div className="invite-date" style={{ marginTop: '10px' }}>
-                                                    <div>📅 Отправлено: {new Date(invite.invited_at).toLocaleDateString('ru-RU')}</div>
-                                                    {invite.responded_at && (
-                                                        <div style={{ marginTop: '5px', fontSize: '12px', color: '#666' }}>
-                                                            📅 Ответ: {new Date(invite.responded_at).toLocaleDateString('ru-RU')}
-                                                        </div>
-                                                    )}
-                                                </div>
-                                                
-                                                <div style={{ 
-                                                    marginTop: '10px',
-                                                    padding: '8px 12px',
-                                                    borderRadius: '8px',
-                                                    backgroundColor: 
-                                                        invite.status === 'accepted' ? '#e8f5e9' :
-                                                        invite.status === 'declined' ? '#ffebee' : '#fff3e0',
-                                                    color:
-                                                        invite.status === 'accepted' ? '#2e7d32' :
-                                                        invite.status === 'declined' ? '#c62828' : '#ed6c02',
-                                                    fontSize: '14px',
-                                                    fontWeight: '500'
-                                                }}>
-                                                    {getStatusText(invite.status)}
-                                                </div>
-                                            </div>
-                                        ))}
+                </div>
+                
+                {/* Список соавторов */}
+                {collaborators.length === 0 ? (
+                    <div className="posts-feed-empty">
+                        <p style={{ fontSize: '16px', margin: 0 }}>
+                            У этого поста пока нет соавторов
+                        </p>
+                        <p style={{ fontSize: '13px', color: '#999', marginTop: '8px' }}>
+                            Приглашайте друзей для совместного редактирования
+                        </p>
+                    </div>
+                ) : (
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                        {collaborators.map(collab => (
+                            <div 
+                                key={collab.id}
+                                style={{
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    gap: '15px',
+                                    padding: '16px 20px',
+                                    backgroundColor: '#fff',
+                                    borderRadius: '12px',
+                                    border: '1px solid #eee',
+                                    transition: 'all 0.2s ease'
+                                }}
+                                onMouseEnter={(e) => {
+                                    e.currentTarget.style.backgroundColor = '#fafafa';
+                                    e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.05)';
+                                }}
+                                onMouseLeave={(e) => {
+                                    e.currentTarget.style.backgroundColor = '#fff';
+                                    e.currentTarget.style.boxShadow = 'none';
+                                }}
+                            >
+                                <img 
+                                    src={collab.avatar || '/default-avatar.png'} 
+                                    alt={collab.username}
+                                    style={{
+                                        width: '52px',
+                                        height: '52px',
+                                        borderRadius: '50%',
+                                        objectFit: 'cover',
+                                        border: '1px solid #e0e0e0'
+                                    }}
+                                    onError={(e) => {
+                                        e.currentTarget.src = '/default-avatar.png';
+                                    }}
+                                />
+                                
+                                <div style={{ flex: 1 }}>
+                                    <div style={{ 
+                                        fontWeight: 700, 
+                                        fontSize: '16px', 
+                                        marginBottom: '6px',
+                                        display: 'flex',
+                                        alignItems: 'center',
+                                        gap: '8px',
+                                        flexWrap: 'wrap'
+                                    }}>
+                                        @{collab.username}
+                                        <span style={{
+                                            display: 'inline-flex',
+                                            alignItems: 'center',
+                                            gap: '6px',
+                                            fontSize: '12px',
+                                            padding: '4px 10px',
+                                            borderRadius: '20px',
+                                            background: collab.role === 'editor' ? '#e8f5e9' : '#fff3e0',
+                                            color: collab.role === 'editor' ? '#2e7d32' : '#ef6c00'
+                                        }}>
+                                            {getRoleIcon(collab.role)}
+                                            {getRoleText(collab.role)}
+                                        </span>
+                                    </div>
+                                    <div style={{ fontSize: '12px', color: '#999' }}>
+                                        Присоединился: {new Date(collab.joined_at).toLocaleDateString('ru-RU')}
                                     </div>
                                 </div>
-                            )}
-                        </>
+                                
+                                {/* ✅ Кнопка удаления показывается только для владельца */}
+                                {isOwner && (
+                                    <button
+                                        onClick={() => removeCollaborator(collab.user_id, collab.username)}
+                                        style={{
+                                            background: 'none',
+                                            border: 'none',
+                                            cursor: 'pointer',
+                                            color: '#e74c3c',
+                                            padding: '8px 16px',
+                                            borderRadius: '8px',
+                                            display: 'flex',
+                                            alignItems: 'center',
+                                            gap: '8px',
+                                            fontSize: '14px',
+                                            fontWeight: 500,
+                                            transition: 'all 0.2s'
+                                        }}
+                                        onMouseEnter={(e) => {
+                                            e.currentTarget.style.backgroundColor = '#fee';
+                                            e.currentTarget.style.color = '#c0392b';
+                                        }}
+                                        onMouseLeave={(e) => {
+                                            e.currentTarget.style.backgroundColor = 'transparent';
+                                            e.currentTarget.style.color = '#e74c3c';
+                                        }}
+                                    >
+                                        <FaUserMinus /> Удалить
+                                    </button>
+                                )}
+                                
+                                {/* Если не владелец, показываем заглушку */}
+                                {!isOwner && (
+                                    <div style={{
+                                        fontSize: '12px',
+                                        color: '#999',
+                                        padding: '8px 16px'
+                                    }}>
+                                        Только для владельца
+                                    </div>
+                                )}
+                            </div>
+                        ))}
+                    </div>
+                )}
+                
+                {/* Отладка: показываем информацию о правах */}
+                <div style={{
+                    marginTop: '24px',
+                    padding: '12px',
+                    backgroundColor: '#f5f5f5',
+                    borderRadius: '8px',
+                    fontSize: '12px',
+                    color: '#666',
+                    textAlign: 'center'
+                }}>
+                    {currentUserId ? (
+                        <span>Ваш ID: {currentUserId} | ID автора: {postAuthorId} | {isOwner ? '✓ Вы владелец' : '✗ Вы не владелец'}</span>
+                    ) : (
+                        <span>Загрузка информации о пользователе...</span>
                     )}
                 </div>
             </div>
@@ -400,4 +377,4 @@ const CollaborationInvites: React.FC = () => {
     );
 };
 
-export default CollaborationInvites;
+export default PostCollaboratorsPage;

@@ -402,13 +402,14 @@ func InviteCollaborator(c *gin.Context) {
 		return
 	}
 
-	var input InviteCollaboratorRequest
+	var input struct {
+		UserID int `json:"user_id" binding:"required"`
+	}
 	if err := c.ShouldBindJSON(&input); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
 		return
 	}
 
-	// Проверяем, что пост существует и текущий пользователь - владелец
 	var post models.Post
 	if err := database.DB.First(&post, postID).Error; err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Post not found"})
@@ -420,20 +421,17 @@ func InviteCollaborator(c *gin.Context) {
 		return
 	}
 
-	// Проверяем, что приглашаемый существует
 	var invitee models.User
 	if err := database.DB.First(&invitee, input.UserID).Error; err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
 		return
 	}
 
-	// Нельзя пригласить самого себя
 	if input.UserID == currentID {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Cannot invite yourself"})
 		return
 	}
 
-	// Проверяем, не является ли уже соавтором
 	var existingCollab models.PostCollaborator
 	err = database.DB.Where("post_id = ? AND user_id = ?", postID, input.UserID).First(&existingCollab).Error
 	if err == nil {
@@ -441,7 +439,6 @@ func InviteCollaborator(c *gin.Context) {
 		return
 	}
 
-	// Проверяем, нет ли уже ожидающего приглашения
 	var existingInvite models.CollaborationInvite
 	err = database.DB.Where("post_id = ? AND invitee_id = ? AND status = ?",
 		postID, input.UserID, "pending").First(&existingInvite).Error
@@ -450,12 +447,12 @@ func InviteCollaborator(c *gin.Context) {
 		return
 	}
 
-	// Создаём новое приглашение
+	// Всегда создаём с ролью editor
 	invite := models.CollaborationInvite{
 		PostID:    uint(postID),
 		InviterID: currentID,
 		InviteeID: input.UserID,
-		Role:      input.Role,
+		Role:      "editor",
 		Status:    "pending",
 		InvitedAt: time.Now(),
 	}
@@ -537,7 +534,6 @@ func CheckCollaboratorStatus(c *gin.Context) {
 		return
 	}
 
-	// Проверяем, является ли пользователь владельцем
 	var post models.Post
 	if err := database.DB.First(&post, postID).Error; err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Post not found"})
@@ -553,7 +549,6 @@ func CheckCollaboratorStatus(c *gin.Context) {
 		return
 	}
 
-	// Проверяем, является ли соавтором
 	var collaborator models.PostCollaborator
 	err = database.DB.Where("post_id = ? AND user_id = ?", postID, currentID).First(&collaborator).Error
 	if err != nil {

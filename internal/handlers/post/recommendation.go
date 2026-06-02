@@ -143,54 +143,40 @@ func GetFollowRecommendations(c *gin.Context) {
 		Count(&followCount)
 
 	if followCount == 0 {
-		// Если нет подписок, показываем популярные посты (исключая свои)
-		database.DB.Preload("User", func(db *gorm.DB) *gorm.DB {
-			return db.Select("id, username, image_url")
-		}).
-			Preload("Settlement").
-			Preload("Photos", func(db *gorm.DB) *gorm.DB {
-				return db.Where("is_approved = true").Order("\"order\" ASC")
-			}).
-			Preload("Tags").
-			Where("is_approved = true").
-			Where("user_id != ?", userID).
-			Where("id NOT IN (?)",
-				database.DB.Table("posts").Select("id").Where("user_id = ?", userID),
-			).
-			Order("likes_count DESC").
-			Limit(limit).
-			Find(&posts)
-	} else {
-		// Основной запрос - посты от подписок
-		err := database.DB.Preload("User", func(db *gorm.DB) *gorm.DB {
-			return db.Select("id, username, image_url, bio")
-		}).
-			Preload("Settlement").
-			Preload("Photos", func(db *gorm.DB) *gorm.DB {
-				return db.Where("is_approved = true").Order("\"order\" ASC")
-			}).
-			Preload("Tags").
-			Joins("JOIN followers ON followers.followed_id = posts.user_id").
-			Where("followers.follower_id = ?", userID).
-			Where("posts.is_approved = true").
-			Where("posts.user_id != ?", userID).
-			Where("posts.id NOT IN (?)",
-				database.DB.Table("likes").Select("post_id").Where("user_id = ?", userID),
-			).
-			Where("posts.id NOT IN (?)",
-				database.DB.Table("favourites").Select("post_id").Where("user_id = ?", userID),
-			).
-			Where("posts.id NOT IN (?)",
-				database.DB.Table("posts").Select("id").Where("user_id = ?", userID),
-			).
-			Order("posts.created_at DESC").
-			Limit(limit).
-			Find(&posts).Error
+		// Если нет подписок, возвращаем пустой результат
+		c.JSON(http.StatusOK, gin.H{"posts": []PostRecommendationResponse{}, "type": "follow"})
+		return
+	}
 
-		if err != nil {
-			c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
-			return
-		}
+	// Основной запрос - посты от подписок
+	err := database.DB.Preload("User", func(db *gorm.DB) *gorm.DB {
+		return db.Select("id, username, image_url, bio")
+	}).
+		Preload("Settlement").
+		Preload("Photos", func(db *gorm.DB) *gorm.DB {
+			return db.Where("is_approved = true").Order("\"order\" ASC")
+		}).
+		Preload("Tags").
+		Joins("JOIN followers ON followers.followed_id = posts.user_id").
+		Where("followers.follower_id = ?", userID).
+		Where("posts.is_approved = true").
+		Where("posts.user_id != ?", userID).
+		Where("posts.id NOT IN (?)",
+			database.DB.Table("likes").Select("post_id").Where("user_id = ?", userID),
+		).
+		Where("posts.id NOT IN (?)",
+			database.DB.Table("favourites").Select("post_id").Where("user_id = ?", userID),
+		).
+		Where("posts.id NOT IN (?)",
+			database.DB.Table("posts").Select("id").Where("user_id = ?", userID),
+		).
+		Order("posts.created_at DESC").
+		Limit(limit).
+		Find(&posts).Error
+
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": err.Error()})
+		return
 	}
 
 	// Форматируем ответ

@@ -38,7 +38,6 @@ const RightFilters: React.FC<RightFiltersProps> = ({
     };
 
     const handleUserClick = (userId: number) => {
-        // ИСПРАВЛЕНО: меняем /profile/ на /user/
         navigate(`/user/${userId}`);
     };
 
@@ -69,13 +68,6 @@ const RightFilters: React.FC<RightFiltersProps> = ({
     useEffect(() => {
         fetchTopUsers();
     }, []);
-
-    const getRankClass = (index: number): string => {
-        if (index === 0) return 'gold';
-        if (index === 1) return 'silver';
-        if (index === 2) return 'bronze';
-        return '';
-    };
 
     return (
         <aside className="right-filters-sidebar">
@@ -114,51 +106,22 @@ const RightFilters: React.FC<RightFiltersProps> = ({
                 />
             </div>
 
-            {/* Сортировка */}
+            {/* Сортировка - выпадающий список */}
             <div className="right-sort-block">
                 <span className="tags-title">Сортировка</span>
-                <div className="tags-line"></div>
                 
-                <div className="right-sort-options">
-                    <label className="right-sort-option">
-                        <input 
-                            type="radio" 
-                            name="sort" 
-                            value="popular"
-                            checked={sortBy === 'popular'}
-                            onChange={(e) => setSortBy(e.target.value)}
-                            className="right-sort-radio"
-                        />
-                        <span className="right-sort-label">Популярные</span>
-                    </label>
-                    
-                    <label className="right-sort-option">
-                        <input 
-                            type="radio" 
-                            name="sort" 
-                            value="new"
-                            checked={sortBy === 'new'}
-                            onChange={(e) => setSortBy(e.target.value)}
-                            className="right-sort-radio"
-                        />
-                        <span className="right-sort-label">Новые</span>
-                    </label>
-                    
-                    <label className="right-sort-option">
-                        <input 
-                            type="radio" 
-                            name="sort" 
-                            value="trending"
-                            checked={sortBy === 'trending'}
-                            onChange={(e) => setSortBy(e.target.value)}
-                            className="right-sort-radio"
-                        />
-                        <span className="right-sort-label">Актуальные</span>
-                    </label>
-                </div>
+                <select 
+                    className="right-sort-select"
+                    value={sortBy}
+                    onChange={(e) => setSortBy(e.target.value)}
+                >
+                    <option value="popular">Популярные</option>
+                    <option value="new">Новые</option>
+                    <option value="trending">Актуальные</option>
+                </select>
             </div>
 
-            {/* Кнопка "Посмотреть на карте" - оптимизированные отступы */}
+            {/* Кнопка "Посмотреть на карте" - без стилей при наведении и нажатии */}
             <div className="right-map-button-wrapper">
                 <button
                     onClick={handleViewOnMap}
@@ -169,11 +132,11 @@ const RightFilters: React.FC<RightFiltersProps> = ({
                 </button>
             </div>
 
-            {/* Топ растущих пользователей за неделю */}
+            {/* Топ растущих пользователей за неделю - упрощенная версия */}
             <div className="top-users-block">
                 <div className="top-users-header">
                     <div className="top-users-title">
-                        Растущие звезды
+                        Популярные пользователи
                     </div>
                     <div className="top-users-subtitle">
                         Активность за последнюю неделю
@@ -201,7 +164,7 @@ const RightFilters: React.FC<RightFiltersProps> = ({
 
                 {!topUsersLoading && !topUsersError && topUsers.length > 0 && (
                     <div className="top-users-list">
-                        {topUsers.slice(0, 5).map((user, index) => (
+                        {topUsers.slice(0, 5).map((user) => (
                             <div 
                                 key={user.id} 
                                 className="top-user-card"
@@ -217,11 +180,6 @@ const RightFilters: React.FC<RightFiltersProps> = ({
                                 />
                                 <div className="top-user-info">
                                     <div className="top-user-name">{user.username}</div>
-                                </div>
-                                <div className="top-user-stats">
-                                    <span className="top-user-growth-score">
-                                        +{user.growth_score}
-                                    </span>
                                 </div>
                             </div>
                         ))}

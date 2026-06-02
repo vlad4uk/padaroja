@@ -1,5 +1,7 @@
+// pages/RegisterPage.tsx
 import React, { useState } from 'react';
 import axios from 'axios';
+import toast from 'react-hot-toast';
 import AuthLayout from '../components/AuthLayout.tsx';
 import AuthIllustration from '../components/AuthIllustration.tsx';
 import loginImage from '../assets/stork.png';
@@ -10,21 +12,55 @@ const RegisterPage: React.FC = () => {
   const [username, setUsername] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
-  const [agreed, setAgreed] = useState(false);
-  const [error, setError] = useState('');
-  const [message, setMessage] = useState('');
+  const [confirmPassword, setConfirmPassword] = useState('');
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setError('');
-    setMessage('');
     setLoading(true);
 
-    if (!agreed) {
-        setError('You must agree to the terms and privacy policy.');
-        setLoading(false);
-        return;
+    // Валидация с всплывающими сообщениями
+    if (!username.trim()) {
+      toast.error('Пожалуйста, введите имя пользователя');
+      setLoading(false);
+      return;
+    }
+
+    if (username.length < 3) {
+      toast.error('Имя пользователя должно содержать минимум 3 символа');
+      setLoading(false);
+      return;
+    }
+
+    if (!email.trim()) {
+      toast.error('Пожалуйста, введите email');
+      setLoading(false);
+      return;
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+      toast.error('Пожалуйста, введите корректный email адрес');
+      setLoading(false);
+      return;
+    }
+
+    if (!password) {
+      toast.error('Пожалуйста, введите пароль');
+      setLoading(false);
+      return;
+    }
+
+    if (password.length < 6) {
+      toast.error('Пароль должен содержать минимум 6 символов');
+      setLoading(false);
+      return;
+    }
+
+    if (password !== confirmPassword) {
+      toast.error('Пароли не совпадают');
+      setLoading(false);
+      return;
     }
 
     try {
@@ -38,43 +74,51 @@ const RegisterPage: React.FC = () => {
       );
 
       console.log('Registration successful:', response.data);
-      setMessage(response.data.message || 'Registration successful! Now you can log in.');
       
+      toast.success('Регистрация успешна! Теперь вы можете войти в систему');
+      
+      // Очищаем форму
       setUsername('');
       setEmail('');
       setPassword('');
-      setAgreed(false);
+      setConfirmPassword('');
+
+      // Перенаправляем на страницу входа через 2 секунды
+      setTimeout(() => {
+        window.location.href = '/login';
+      }, 2000);
 
     } catch (err) {
       if (axios.isAxiosError(err) && err.response) {
-        setError(err.response.data.error || 'Registration failed');
+        const errorMessage = err.response.data.error;
+        
+        if (errorMessage.includes('already exists')) {
+          toast.error('Пользователь с таким email или именем уже существует');
+        } else {
+          toast.error(errorMessage || 'Ошибка регистрации. Попробуйте еще раз');
+        }
       } else {
-        setError('An unexpected error occurred. Check server connection.');
+        toast.error('Ошибка соединения с сервером. Проверьте подключение к интернету');
       }
     } finally {
       setLoading(false);
     }
   };
 
-  const RegisterIllustration = () => (
-    <div style={{ textAlign: 'center' }}>
-      
-    </div>
-  );
-
   return (
-     <AuthLayout illustration={
+    <AuthLayout illustration={
         <AuthIllustration 
           imageSrc={loginImage} 
-          altText="Login Illustration" 
+          altText="Register Illustration" 
         />
       }>
       <h1 className="auth-title">Начни приключения здесь!</h1>
 
       <form onSubmit={handleSubmit}>
-        {/* Поле Username */}
         <div className="form-field-group">
-          <label htmlFor="username" className="form-label">Имя</label>
+          <label htmlFor="username" className="form-label">
+            Имя <span style={{ color: '#f44336' }}>*</span>
+          </label>
           <input 
             type="text" 
             id="username" 
@@ -82,13 +126,14 @@ const RegisterPage: React.FC = () => {
             placeholder="Введите свое имя" 
             value={username}
             onChange={(e) => setUsername(e.target.value)}
-            required
           />
+          <small style={{ fontSize: '0.75rem', color: '#666' }}>Минимум 3 символа</small>
         </div>
 
-        {/* Поле Email */}
         <div className="form-field-group">
-          <label htmlFor="email" className="form-label">Почта</label>
+          <label htmlFor="email" className="form-label">
+            Почта <span style={{ color: '#f44336' }}>*</span>
+          </label>
           <input 
             type="email" 
             id="email" 
@@ -96,13 +141,13 @@ const RegisterPage: React.FC = () => {
             placeholder="Введите свою почту" 
             value={email}
             onChange={(e) => setEmail(e.target.value)}
-            required
           />
         </div>
 
-        {/* Поле Password */}
         <div className="form-field-group">
-          <label htmlFor="password" className="form-label">Пароль</label>
+          <label htmlFor="password" className="form-label">
+            Пароль <span style={{ color: '#f44336' }}>*</span>
+          </label>
           <input 
             type="password" 
             id="password" 
@@ -110,35 +155,31 @@ const RegisterPage: React.FC = () => {
             placeholder="············"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
-            required
+          />
+          <small style={{ fontSize: '0.75rem', color: '#666' }}>Минимум 6 символов</small>
+        </div>
+
+        <div className="form-field-group">
+          <label htmlFor="confirmPassword" className="form-label">
+            Подтверждение пароля <span style={{ color: '#f44336' }}>*</span>
+          </label>
+          <input 
+            type="password" 
+            id="confirmPassword" 
+            className="form-input" 
+            placeholder="············"
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
           />
         </div>
 
-        {/* Checkbox "I agree" */}
-        <div style={{ display: 'flex', alignItems: 'center', marginBottom: '16px' }}>
-          <label style={{ fontSize: '0.875rem', color: '#3f4254', display: 'flex', alignItems: 'center' }}>
-            <input 
-                type="checkbox" 
-                style={{ marginRight: '8px' }} 
-                checked={agreed} 
-                onChange={(e) => setAgreed(e.target.checked)} 
-                required 
-            />
-            Я согласен с <a href="/terms" style={{ color: '#696cff', textDecoration: 'none', marginLeft: '4px', fontWeight: 500 }}>политикой конфиденциальности и условиями</a>
-          </label>
-        </div>
-
-        {/* Отображение ошибки/успеха */}
-        {error && <p style={{ color: 'red', textAlign: 'center', fontSize: '0.875rem', marginBottom: '10px' }}>{error}</p>}
-        {message && <p style={{ color: 'green', textAlign: 'center', fontSize: '0.875rem', marginBottom: '10px' }}>{message}</p>}
-
-        <button type="submit" className="primary-button" disabled={loading || !agreed}>
-          {loading ? 'Signing Up...' : 'Зарегистрироваться'}
+        <button type="submit" className="primary-button" disabled={loading}>
+          {loading ? 'Регистрация...' : 'Зарегистрироваться'}
         </button>
       </form>
 
       <p style={{ textAlign: 'center', fontSize: '0.9rem', marginTop: '20px' }}>
-          У вас уже есть учетная запись? <a href="/login" style={{ color: '#696cff', textDecoration: 'none', fontWeight: 500 }}>Войдите в</a>
+          У вас уже есть учетная запись? <a href="/login" style={{ color: '#696cff', textDecoration: 'none', fontWeight: 500 }}>Войдите</a>
       </p>
     </AuthLayout>
   );

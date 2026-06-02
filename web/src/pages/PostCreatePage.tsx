@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import toast from 'react-hot-toast';
 import ContentLayout from '../components/ContentLayout.tsx';
 import SearchBox from '../components/SearchBox.tsx';
 import './PostCreatePage.css';
@@ -26,7 +27,6 @@ interface SettlementResult {
 interface CollaboratorInvite {
     username: string;
     user_id: number;
-    role: string;
     status: 'pending' | 'accepted' | 'declined';
 }
 
@@ -54,20 +54,15 @@ const PostCreatePage: React.FC = () => {
     ]);
     const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
 
-    // Стейты для соавторов
     const [collaborators, setCollaborators] = useState<CollaboratorInvite[]>([]);
     const [isCollaboratorSearchOpen, setIsCollaboratorSearchOpen] = useState(false);
     const [collaboratorSearchInput, setCollaboratorSearchInput] = useState('');
     const [collaboratorSearchResults, setCollaboratorSearchResults] = useState<SearchUserResult[]>([]);
     const [isSearchingCollaborators, setIsSearchingCollaborators] = useState(false);
-    const [inviteRole, setInviteRole] = useState<'editor' | 'viewer'>('editor');
     
-    // Ref для debounce
     const searchTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-
     const fileInputRef = useRef<HTMLInputElement>(null);
 
-    // Очистка таймера при размонтировании
     useEffect(() => {
         return () => {
             if (searchTimeoutRef.current) {
@@ -96,16 +91,17 @@ const PostCreatePage: React.FC = () => {
 
     const handleAddSlide = () => {
         if (slides.length >= MAX_SLIDES) {
-            alert(`Достигнут лимит слайдов: ${MAX_SLIDES}`);
+            toast.error(`Достигнут лимит слайдов: ${MAX_SLIDES}`);
             return;
         }
         setSlides(prev => [...prev, { id: Date.now(), text: '', imageUrl: '', isLoadingImage: false }]);
         setCurrentSlideIndex(slides.length); 
+        toast.success('Слайд добавлен');
     };
     
     const handleRemoveSlide = () => {
         if (slides.length === 1) {
-            alert("Нельзя удалить единственный слайд!");
+            toast.error("Нельзя удалить единственный слайд!");
             return;
         }
         if (!window.confirm("Вы уверены, что хотите удалить этот слайд?")) return;
@@ -115,6 +111,7 @@ const PostCreatePage: React.FC = () => {
             setCurrentSlideIndex(prevIdx => (prevIdx >= newSlides.length ? newSlides.length - 1 : prevIdx));
             return newSlides;
         });
+        toast.success('Слайд удален');
     };
 
     const updateCurrentSlide = (key: keyof SlideData, value: any) => {
@@ -137,9 +134,10 @@ const PostCreatePage: React.FC = () => {
             try {
                 const url = await uploadImage(file);
                 updateCurrentSlide('imageUrl', url);
+                toast.success('Фото успешно загружено');
             } catch (error) {
                 console.error("Ошибка загрузки фото:", error);
-                alert("Не удалось загрузить фото");
+                toast.error("Не удалось загрузить фото");
             } finally {
                 updateCurrentSlide('isLoadingImage', false);
                 if (fileInputRef.current) fileInputRef.current.value = '';
@@ -150,9 +148,9 @@ const PostCreatePage: React.FC = () => {
     const handleRemoveImage = (e: React.MouseEvent) => { 
         e.stopPropagation(); 
         updateCurrentSlide('imageUrl', ''); 
+        toast.success('Фото удалено');
     };
 
-    // Функция выполнения поиска
     const performSearch = async (query: string) => {
         if (query.length < 2) return;
         
@@ -165,22 +163,20 @@ const PostCreatePage: React.FC = () => {
             setCollaboratorSearchResults(response.data.results || []);
         } catch (error) {
             console.error('Ошибка поиска пользователей:', error);
+            toast.error('Ошибка поиска пользователей');
             setCollaboratorSearchResults([]);
         } finally {
             setIsSearchingCollaborators(false);
         }
     };
 
-    // Обработчик ввода с debounce
     const handleCollaboratorSearch = (value: string) => {
         setCollaboratorSearchInput(value);
         
-        // Очищаем предыдущий таймер
         if (searchTimeoutRef.current) {
             clearTimeout(searchTimeoutRef.current);
         }
         
-        // Устанавливаем новый таймер
         searchTimeoutRef.current = setTimeout(() => {
             if (value.length >= 2) {
                 performSearch(value);
@@ -190,63 +186,57 @@ const PostCreatePage: React.FC = () => {
         }, 500);
     };
 
-    // Отправка приглашения
     const inviteCollaborator = (userId: number, username: string) => {
-        // Проверяем, не приглашён ли уже
         if (collaborators.some(c => c.user_id === userId)) {
-            alert('Этот пользователь уже приглашён');
+            toast.error('Этот пользователь уже приглашён');
             return;
         }
         
-        // Добавляем в локальный список со статусом pending
         setCollaborators(prev => [...prev, {
             username: username,
             user_id: userId,
-            role: inviteRole,
             status: 'pending'
         }]);
         
-        // Закрываем модалку и очищаем
+        toast.success(`Пользователь @${username} приглашён`);
+        
         setIsCollaboratorSearchOpen(false);
         setCollaboratorSearchInput('');
         setCollaboratorSearchResults([]);
     };
 
-    // Удаление приглашённого
     const removeCollaboratorInvite = (userId: number) => {
         setCollaborators(prev => prev.filter(c => c.user_id !== userId));
+        toast.success('Приглашение отменено');
     };
 
     const handlePublish = async () => {
         if (!isLoggedIn) {
-            alert('Для публикации необходимо войти в систему.');
+            toast.error('Для публикации необходимо войти в систему.');
             navigate('/login');
             return;
         }
         
         if (!title.trim()) {
-            alert('Введите название поста');
+            toast.error('Введите название поста');
             return;
         }
         
         if (!selectedSettlement) {
-            alert('Выберите населенный пункт из списка');
+            toast.error('Выберите населенный пункт из списка');
             return;
         }
 
         console.log('Selected settlement:', selectedSettlement);
-        console.log('Settlement input:', settlementInput);
         
         setIsPublishing(true);
 
-        // Обработка тегов
         const parsedTags = tags
             .split(/\s+/)
             .map(t => t.startsWith('#') ? t.substring(1) : t)
             .filter(t => t.trim() !== "")
             .map(t => t.toLowerCase());
 
-        // Подготовка параграфов
         const paragraphs = slides
             .map((slide, index) => ({
                 content: slide.text,
@@ -254,7 +244,6 @@ const PostCreatePage: React.FC = () => {
             }))
             .filter(p => p.content.trim() !== "");
 
-        // Подготовка фото
         const photos = slides
             .filter(slide => slide.imageUrl)
             .map((slide, index) => ({
@@ -263,7 +252,6 @@ const PostCreatePage: React.FC = () => {
                 is_approved: true
             }));
 
-        // Подготовка данных поста с приглашениями
         const postData = {
             title: title,
             settlement_id: Number(selectedSettlement.id),
@@ -272,12 +260,11 @@ const PostCreatePage: React.FC = () => {
             paragraphs: paragraphs,
             photos: photos,
             invites: collaborators.map(c => ({
-                user_id: c.user_id,
-                role: c.role
+                user_id: c.user_id
             }))
         };
 
-        console.log('Sending post data (final):', JSON.stringify(postData, null, 2));
+        console.log('Sending post data:', JSON.stringify(postData, null, 2));
 
         try {
             const response = await axios.post('/api/posts', postData, {
@@ -292,7 +279,7 @@ const PostCreatePage: React.FC = () => {
                 const message = inviteCount > 0 
                     ? `Публикация успешно создана! Приглашения отправлены ${inviteCount} пользователям.`
                     : 'Публикация успешно создана!';
-                alert(message);
+                toast.success(message);
                 navigate('/profile');
             }
         } catch (error: any) {
@@ -309,10 +296,10 @@ const PostCreatePage: React.FC = () => {
             }
             
             if (error.response && error.response.status === 401) {
-                alert('Вы не авторизованы. Перенаправление на страницу входа.');
+                toast.error('Вы не авторизованы. Перенаправление на страницу входа.');
                 navigate('/login');
             } else {
-                alert('Ошибка при создании поста: ' + errorMessage);
+                toast.error('Ошибка при создании поста: ' + errorMessage);
             }
         } finally {
             setIsPublishing(false);
@@ -323,7 +310,6 @@ const PostCreatePage: React.FC = () => {
     const isMaxSlidesReached = slides.length >= MAX_SLIDES;
     const isOnlyOneSlide = slides.length === 1;
 
-    // Модальное окно поиска соавторов
     const CollaboratorSearchModal = () => (
         <div className="collaborator-modal-overlay" onClick={() => {
             setIsCollaboratorSearchOpen(false);
@@ -346,24 +332,6 @@ const PostCreatePage: React.FC = () => {
                 </div>
                 
                 <div className="collaborator-modal-body">
-                    <div className="role-selector">
-                        <label>Роль приглашённого:</label>
-                        <div className="role-buttons">
-                            <button 
-                                className={`role-btn ${inviteRole === 'editor' ? 'active' : ''}`}
-                                onClick={() => setInviteRole('editor')}
-                            >
-                                Редактор
-                            </button>
-                            <button 
-                                className={`role-btn ${inviteRole === 'viewer' ? 'active' : ''}`}
-                                onClick={() => setInviteRole('viewer')}
-                            >
-                                Читатель
-                            </button>
-                        </div>
-                    </div>
-                    
                     <div className="search-box">
                         <FaSearch className="search-icon" />
                         <input
@@ -399,7 +367,7 @@ const PostCreatePage: React.FC = () => {
                     </div>
                     
                     <div className="invite-info">
-                        <p>Приглашённый пользователь получит уведомление и сможет принять или отклонить приглашение. Автором поста остаётесь вы.</p>
+                        <p>Приглашённый пользователь получит уведомление и сможет принять или отклонить приглашение. Все приглашённые получают права редактора.</p>
                     </div>
                 </div>
             </div>
@@ -412,7 +380,6 @@ const PostCreatePage: React.FC = () => {
                 <div className="create-post-form">
                     <h2 className="form-title">Создание публикации</h2>
 
-                    {/* Название поста */}
                     <input 
                         type="text" 
                         className="custom-input" 
@@ -421,14 +388,12 @@ const PostCreatePage: React.FC = () => {
                         onChange={(e) => setTitle(e.target.value)} 
                     />
 
-                    {/* Поиск населенного пункта */}
                     <SearchBox 
                         onSelect={handleSettlementSelect}
                         placeholder="Введите населенный пункт..."
                         initialValue={settlementInput}
                     />
 
-                    {/* Слайдер область */}
                     <div className="slide-container">
                         <button 
                             className="nav-arrow" 
@@ -438,13 +403,11 @@ const PostCreatePage: React.FC = () => {
                             <FaAngleDoubleLeft />
                         </button>
 
-                        {/* Карточка текущего слайда */}
                         <div className="slide-content-box">
                             <div className="slide-counter">
                                 {currentSlideIndex + 1} / {slides.length}
                             </div>
                             
-                            {/* Текстовая область слайда */}
                             <div className="text-area-wrapper">
                                 <textarea 
                                     className="slide-textarea" 
@@ -454,7 +417,6 @@ const PostCreatePage: React.FC = () => {
                                 />
                             </div>
                             
-                            {/* Блок для фото */}
                             <div className="slide-action-area">
                                 <div className="add-photo-btn-container">
                                     <span className="photo-label">Фото</span>
@@ -504,7 +466,6 @@ const PostCreatePage: React.FC = () => {
                         </button>
                     </div>
 
-                    {/* Кнопки управления слайдами */}
                     <div className="slide-actions-bottom">
                         <div 
                             className={`add-slide-action ${isMaxSlidesReached ? 'disabled' : ''}`} 
@@ -525,7 +486,6 @@ const PostCreatePage: React.FC = () => {
                         <p className="limit-message">Лимит слайдов ({MAX_SLIDES}) достигнут.</p>
                     )}
 
-                    {/* Теги */}
                     <input 
                         type="text" 
                         className="custom-input" 
@@ -535,7 +495,6 @@ const PostCreatePage: React.FC = () => {
                         style={{ marginTop: '10px' }}
                     />
 
-                    {/* Блок соавторов */}
                     <div className="collaborators-section">
                         <div className="collaborators-header">
                             <span className="collaborators-title">
@@ -570,11 +529,10 @@ const PostCreatePage: React.FC = () => {
                         
                         <p className="collaborators-hint">
                             Соавторы смогут добавлять контент в пост после принятия приглашения.
-                            Автором поста остаётесь вы.
+                            Все приглашённые получают права редактора.
                         </p>
                     </div>
 
-                    {/* Кнопка публикации */}
                     <button 
                         className="publish-btn" 
                         onClick={handlePublish} 
@@ -585,7 +543,6 @@ const PostCreatePage: React.FC = () => {
                 </div>
             </div>
 
-            {/* Модальное окно приглашения соавторов */}
             {isCollaboratorSearchOpen && <CollaboratorSearchModal />}
         </ContentLayout>
     );

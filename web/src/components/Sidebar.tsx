@@ -84,7 +84,7 @@ const Sidebar: React.FC = () => {
     // Элементы меню
     const mainNavItems = [
         { path: '/profile', label: 'Профиль', icon: <FaHome />, authRequired: true },
-        { path: '/search', label: 'Поиск', icon: <FaSearch />, authRequired: false },
+        { path: '/search', label: 'Лента', icon: <FaSearch />, authRequired: false },
         { path: '/map/all', label: 'Карта мест', icon: <FaMapMarkedAlt />, authRequired: false },
         { path: '/subscriptions', label: 'Мне нравится', icon: <FaHeart />, authRequired: true },
         { path: '/bookmarks', label: 'Избранное', icon: <FaBookmark />, authRequired: true },
@@ -106,8 +106,10 @@ const Sidebar: React.FC = () => {
         }}>
             {/* Логотип */}
             <div style={{
-                fontSize: '28px',
-                fontWeight: 'bold',
+                fontSize: '32px',
+                fontWeight: 700,
+                fontFamily: 'Rubik, sans-serif',
+                // fontStyle: 'italic',
                 color: '#696cff',
                 marginBottom: '30px',
                 padding: '0 16px'

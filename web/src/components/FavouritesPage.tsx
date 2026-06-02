@@ -12,7 +12,7 @@ const FavouritesPage: React.FC = () => {
                     fontSize: '24px',
                     fontWeight: '600'
                 }}>
-                    Закладки
+                    Избранное
                 </h1>
                 <PostFeed 
                     isFavourites={true}

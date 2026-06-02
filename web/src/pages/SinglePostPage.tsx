@@ -578,7 +578,7 @@ const SinglePostPage: React.FC = () => {
                                             <div className="collaborator-info">
                                                 <div className="collaborator-username">{collab.username}</div>
                                                 <div className={`collaborator-role ${collab.role === 'editor' ? 'collaborator-role-editor' : 'collaborator-role-viewer'}`}>
-                                                    {collab.role === 'editor' ? '✏️ Редактор' : '👁️ Читатель'}
+                                                    {collab.role === 'editor' ? 'Редактор' : 'Читатель'}
                                                 </div>
                                             </div>
                                         </div>
@@ -677,7 +677,7 @@ const SinglePostPage: React.FC = () => {
                                 alignItems: 'center',
                                 gap: '5px'
                             }}>
-                                {collaboratorRole === 'editor' ? '✏️' : '👁️'} 
+                                {collaboratorRole === 'editor' ? '' : ''} 
                                 {collaboratorRole === 'editor' ? 'Редактор' : 'Читатель'}
                             </span>
                         )}

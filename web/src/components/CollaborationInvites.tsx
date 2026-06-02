@@ -18,7 +18,6 @@ interface Invite {
     inviter_id: number;
     inviter_name: string;
     inviter_avatar: string;
-    role: string;
     invited_at: string;
 }
 
@@ -29,7 +28,6 @@ interface SentInvite {
     invitee_id: number;
     invitee_name: string;
     invitee_avatar: string;
-    role: string;
     status: 'pending' | 'accepted' | 'declined';
     invited_at: string;
     responded_at: string | null;
@@ -104,7 +102,6 @@ const CollaborationInvites: React.FC = () => {
         }
     };
 
-    // SSE для обновления статусов исходящих приглашений в реальном времени
     useEffect(() => {
         fetchAllData();
 
@@ -119,7 +116,6 @@ const CollaborationInvites: React.FC = () => {
                 console.log('SSE received:', data);
                 
                 if (data.type === 'INVITE_RESPONSE') {
-                    // Обновляем статус в исходящих приглашениях
                     setOutgoingInvites(prev => prev.map(invite => 
                         invite.id === data.data.invite_id 
                             ? { 
@@ -130,7 +126,6 @@ const CollaborationInvites: React.FC = () => {
                             : invite
                     ));
                     
-                    // Показываем уведомление
                     const message = data.data.status === 'accepted' 
                         ? `✅ ${data.data.username} принял(а) ваше приглашение в пост "${data.data.post_title}"`
                         : `❌ ${data.data.username} отклонил(а) ваше приглашение в пост "${data.data.post_title}"`;
@@ -195,7 +190,6 @@ const CollaborationInvites: React.FC = () => {
                     Приглашения
                 </h1>
 
-                {/* Вкладки - прижаты к левому краю */}
                 <div style={{ 
                     display: 'flex', 
                     gap: '10px', 
@@ -214,10 +208,8 @@ const CollaborationInvites: React.FC = () => {
                             fontWeight: activeTab === 'incoming' ? '600' : '400',
                             color: activeTab === 'incoming' ? '#696cff' : '#666',
                             borderBottom: activeTab === 'incoming' ? '2px solid #696cff' : 'none',
-                            transition: 'none'
                         }}
                     >
-                        <FaUserPlus style={{ marginRight: '8px' }} />
                         Входящие ({incomingInvites.length})
                     </button>
                     <button
@@ -231,22 +223,17 @@ const CollaborationInvites: React.FC = () => {
                             fontWeight: activeTab === 'outgoing' ? '600' : '400',
                             color: activeTab === 'outgoing' ? '#696cff' : '#666',
                             borderBottom: activeTab === 'outgoing' ? '2px solid #696cff' : 'none',
-                            transition: 'none'
                         }}
                     >
-                        <FaPaperPlane style={{ marginRight: '8px' }} />
                         Исходящие
                     </button>
                 </div>
 
-                {/* Центрируем контент */}
                 <div style={{ display: 'flex', justifyContent: 'center' }}>
-                    {/* Входящие приглашения */}
                     {activeTab === 'incoming' && (
                         <>
                             {incomingInvites.length === 0 ? (
                                 <div className="invites-empty" style={{ width: '100%', maxWidth: '600px' }}>
-                                    <FaUserPlus className="empty-icon" />
                                     <p>Нет входящих приглашений</p>
                                     <span className="empty-hint">
                                         Когда вас пригласят в пост, уведомления появятся здесь
@@ -256,7 +243,7 @@ const CollaborationInvites: React.FC = () => {
                                 <div className="invites-container" style={{ maxWidth: '600px', width: '100%' }}>
                                     <div className="invites-list">
                                         {incomingInvites.map(invite => (
-                                            <div key={invite.id} className="invite-card" style={{ transition: 'none' }}>
+                                            <div key={invite.id} className="invite-card">
                                                 <div className="invite-header">
                                                     <img 
                                                         src={invite.inviter_avatar || '/default-avatar.png'} 
@@ -268,11 +255,10 @@ const CollaborationInvites: React.FC = () => {
                                                     />
                                                     <div className="invite-info">
                                                         <span className="inviter-name">@{invite.inviter_name}</span>
-                                                        <span className="invite-action">приглашает вас в пост</span>
+                                                        <span className="invite-action">приглашает вас в пост (редактор)</span>
                                                     </div>
                                                 </div>
                                                 
-                                                {/* Превью поста */}
                                                 <div className="invite-post-preview">
                                                     <div className="post-preview-content">
                                                         {invite.post_preview?.photo && (
@@ -294,27 +280,21 @@ const CollaborationInvites: React.FC = () => {
                                                             )}
                                                             <div className="post-meta">
                                                                 {invite.post_preview?.settlement_name && (
-                                                                    <span className="post-location">
-                                                                        📍 {invite.post_preview.settlement_name}
-                                                                    </span>
+                                                                    <span>📍 {invite.post_preview.settlement_name}</span>
                                                                 )}
                                                                 {invite.post_preview?.created_at && (
-                                                                    <span className="post-date">
-                                                                        📅 {new Date(invite.post_preview.created_at).toLocaleDateString('ru-RU')}
-                                                                    </span>
+                                                                    <span>📅 {new Date(invite.post_preview.created_at).toLocaleDateString('ru-RU')}</span>
                                                                 )}
                                                             </div>
                                                         </div>
                                                     </div>
                                                     <div className="post-role-badge">
-                                                        <span className={`invite-role-badge ${invite.role}`}>
-                                                            {invite.role === 'editor' ? '✏️ Редактор' : '👁️ Читатель'}
-                                                        </span>
+                                                        <span className="invite-role-badge editor">Редактор</span>
                                                     </div>
                                                 </div>
                                                 
                                                 <div className="invite-date" style={{ marginTop: '10px' }}>
-                                                    📅 Приглашение отправлено: {new Date(invite.invited_at).toLocaleDateString('ru-RU')}
+                                                    📅 {new Date(invite.invited_at).toLocaleDateString('ru-RU')}
                                                 </div>
                                                 
                                                 <div className="invite-actions">
@@ -350,12 +330,10 @@ const CollaborationInvites: React.FC = () => {
                         </>
                     )}
 
-                    {/* Исходящие приглашения */}
                     {activeTab === 'outgoing' && (
                         <>
                             {outgoingInvites.length === 0 ? (
                                 <div className="invites-empty" style={{ width: '100%', maxWidth: '600px' }}>
-                                    <FaPaperPlane className="empty-icon" />
                                     <p>Нет исходящих приглашений</p>
                                     <span className="empty-hint">
                                         Когда вы пригласите кого-то в пост, приглашения появятся здесь
@@ -365,7 +343,7 @@ const CollaborationInvites: React.FC = () => {
                                 <div className="invites-container" style={{ maxWidth: '600px', width: '100%' }}>
                                     <div className="invites-list">
                                         {outgoingInvites.map(invite => (
-                                            <div key={invite.id} className="invite-card" style={{ transition: 'none' }}>
+                                            <div key={invite.id} className="invite-card">
                                                 <div className="invite-header">
                                                     <img 
                                                         src={invite.invitee_avatar || '/default-avatar.png'} 
@@ -378,7 +356,7 @@ const CollaborationInvites: React.FC = () => {
                                                     <div className="invite-info">
                                                         <span className="inviter-name">@{invite.invitee_name}</span>
                                                         <span className="invite-action">
-                                                            {invite.status === 'pending' ? 'приглашение отправлено' :
+                                                            {invite.status === 'pending' ? 'приглашение отправлено (редактор)' :
                                                              invite.status === 'accepted' ? 'принял приглашение' : 'отклонил приглашение'}
                                                         </span>
                                                     </div>
@@ -389,9 +367,7 @@ const CollaborationInvites: React.FC = () => {
                                                 
                                                 <div className="invite-post">
                                                     <h4 className="post-title">{invite.post_title}</h4>
-                                                    <span className={`invite-role-badge ${invite.role}`}>
-                                                        {invite.role === 'editor' ? '✏️ Редактор' : '👁️ Читатель'}
-                                                    </span>
+                                                    <span className="invite-role-badge editor">Редактор</span>
                                                 </div>
                                                 
                                                 <div className="invite-date" style={{ marginTop: '10px' }}>

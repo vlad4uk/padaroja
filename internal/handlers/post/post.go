@@ -31,8 +31,7 @@ type PostCreationRequest struct {
 }
 
 type InviteRequest struct {
-	UserID int    `json:"user_id" binding:"required"`
-	Role   string `json:"role" binding:"oneof=editor viewer"`
+	UserID int `json:"user_id" binding:"required"`
 }
 
 type PostResponse struct {
@@ -269,23 +268,19 @@ func CreatePost(c *gin.Context) {
 			}
 		}
 
-		// НОВОЕ: Создание приглашений для соавторов
 		if len(input.Invites) > 0 {
 			for _, invite := range input.Invites {
-				// Проверяем, что приглашаемый существует
 				var invitee models.User
 				if err := tx.First(&invitee, invite.UserID).Error; err != nil {
 					log.Printf("Пользователь %d не найден", invite.UserID)
-					continue // пропускаем, но не прерываем транзакцию
+					continue
 				}
 
-				// Нельзя пригласить самого себя
 				if invite.UserID == int(userID) {
 					log.Printf("Попытка пригласить самого себя, пропускаем")
 					continue
 				}
 
-				// Проверяем, не приглашён ли уже
 				var existingInvite models.CollaborationInvite
 				err := tx.Where("post_id = ? AND invitee_id = ? AND status != ?",
 					newPost.ID, invite.UserID, "declined").
@@ -296,12 +291,12 @@ func CreatePost(c *gin.Context) {
 					continue
 				}
 
-				// Создаём приглашение
+				// Всегда создаём с ролью editor
 				collabInvite := models.CollaborationInvite{
 					PostID:    newPost.ID,
 					InviterID: int(userID),
 					InviteeID: invite.UserID,
-					Role:      invite.Role,
+					Role:      "editor",
 					Status:    "pending",
 					InvitedAt: time.Now(),
 				}
@@ -554,6 +549,32 @@ func GetPost(c *gin.Context) {
 		return
 	}
 
+	// Проверка прав доступа для неодобренных постов
+	if !post.IsApproved {
+		userID, isLoggedIn := getUserIDFromContext(c)
+
+		if !isLoggedIn {
+			c.JSON(http.StatusForbidden, gin.H{"error": "Post not available"})
+			return
+		}
+
+		isOwner := post.UserID == int(userID)
+		isCollaborator := false
+
+		if !isOwner {
+			var count int64
+			database.DB.Model(&models.PostCollaborator{}).
+				Where("post_id = ? AND user_id = ?", post.ID, userID).
+				Count(&count)
+			isCollaborator = count > 0
+		}
+
+		if !isOwner && !isCollaborator {
+			c.JSON(http.StatusForbidden, gin.H{"error": "You don't have access to this post"})
+			return
+		}
+	}
+
 	var tags []string
 	database.DB.Table("tags").
 		Joins("JOIN post_tags ON post_tags.tag_id = tags.id").
@@ -708,11 +729,31 @@ func UpdatePost(c *gin.Context) {
 
 	err = database.DB.Transaction(func(tx *gorm.DB) error {
 		var post models.Post
-		if err := tx.First(&post, "id = ? AND user_id = ?", postID, userID).Error; err != nil {
+		if err := tx.First(&post, "id = ?", postID).Error; err != nil {
 			return err
 		}
 
-		// Если меняется settlement, проверяем его существование и корректируем название
+		isOwner := post.UserID == int(userID)
+		isEditor := false
+
+		if !isOwner {
+			var collaborator models.PostCollaborator
+			err := tx.Where("post_id = ? AND user_id = ? AND role = ?", postID, userID, "editor").First(&collaborator).Error
+			if err == nil {
+				isEditor = true
+				log.Printf("✅ Пользователь %d является соавтором (editor) поста %d", userID, postID)
+			} else {
+				log.Printf("❌ Пользователь %d НЕ является соавтором: %v", userID, err)
+			}
+		}
+
+		if !isOwner && !isEditor {
+			log.Printf("❌ Доступ запрещен: user=%d, isOwner=%v, isEditor=%v", userID, isOwner, isEditor)
+			return fmt.Errorf("no permission to edit this post")
+		}
+
+		log.Printf("✅ Разрешение на редактирование: user=%d, isOwner=%v, isEditor=%v", userID, isOwner, isEditor)
+
 		if input.SettlementID != 0 {
 			correctedName, err := validateSettlement(tx, input.SettlementID, input.SettlementName)
 			if err != nil {
@@ -730,7 +771,6 @@ func UpdatePost(c *gin.Context) {
 			return err
 		}
 
-		// Обновляем параграфы
 		if len(input.Paragraphs) > 0 {
 			tx.Where("post_id = ?", post.ID).Delete(&models.Paragraph{})
 			for i := range input.Paragraphs {
@@ -742,7 +782,6 @@ func UpdatePost(c *gin.Context) {
 			}
 		}
 
-		// Обновляем фото
 		if len(input.Photos) > 0 {
 			tx.Where("post_id = ?", post.ID).Delete(&models.PostPhoto{})
 			for i := range input.Photos {
@@ -755,7 +794,6 @@ func UpdatePost(c *gin.Context) {
 			}
 		}
 
-		// Обновляем теги
 		if len(input.Tags) > 0 {
 			tx.Where("post_id = ?", post.ID).Delete(&models.PostTag{})
 			for _, tagName := range input.Tags {

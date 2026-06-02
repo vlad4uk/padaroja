@@ -50,9 +50,8 @@ type Settlement struct {
 }
 
 type PostTag struct {
-	ID     uint `gorm:"primaryKey;autoIncrement" json:"id"`
 	PostID uint `gorm:"not null;index;column:post_id" json:"post_id"` // Явно указываем column:post_id
-	TagID  uint `gorm:"not null;index;column:tag_id" json:"tag_id"`   // Явно указываем column:tag_id
+	TagID  uint `gorm:"not null;index;column:tags_id" json:"tag_id"`  // Явно указываем column:tag_id
 
 	Post Post `gorm:"foreignKey:PostID" json:"-"`
 	Tag  Tags `gorm:"foreignKey:TagID" json:"-"`

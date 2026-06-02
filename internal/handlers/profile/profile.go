@@ -176,10 +176,10 @@ func SearchUsersForInvite(c *gin.Context) {
 	currentUserID := int(currentUserIDValue.(uint))
 
 	var users []struct {
-		ID          int    `json:"id"`
-		Username    string `json:"username"`
-		ImageUrl    string `json:"image_url"`
-		IsFollowed  bool   `json:"is_followed"`
+		ID         int    `json:"id"`
+		Username   string `json:"username"`
+		ImageUrl   string `json:"image_url"`
+		IsFollowed bool   `json:"is_followed"`
 	}
 
 	// Ищем среди всех пользователей, исключая текущего

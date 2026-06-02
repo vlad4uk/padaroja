@@ -1,7 +1,7 @@
 import React, { useState, ChangeEvent } from 'react';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext.tsx';
-import avatar from '../assets/bird04.png';
+import avatar from '../assets/null-user-avatar.jpg';
 
 import { uploadImage } from '../firebase/uploadImage.js'; 
 

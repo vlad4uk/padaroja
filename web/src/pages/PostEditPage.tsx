@@ -1,11 +1,12 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import axios from 'axios';
+import toast from 'react-hot-toast';
 import ContentLayout from '../components/ContentLayout.tsx';
-import SearchBox from '../components/SearchBox.tsx'; // Добавляем SearchBox
-import './PostEditPage.css'; 
+import SearchBox from '../components/SearchBox.tsx';
+import './PostCreatePage.css'; // Используем те же стили, что и при создании
 import { uploadImage } from '../firebase/uploadImage'; 
-import { FaPlus, FaAngleDoubleLeft, FaAngleDoubleRight, FaTimes } from 'react-icons/fa';
+import { FaPlus, FaAngleDoubleLeft, FaAngleDoubleRight, FaTimes, FaTrashAlt } from 'react-icons/fa';
 import { useAuth } from '../context/AuthContext.tsx';
 
 interface SlideData {
@@ -23,12 +24,18 @@ interface SettlementResult {
     longitude?: number;
 }
 
+interface CollaboratorStatus {
+    is_collaborator: boolean;
+    is_owner: boolean;
+    role: string | null;
+}
+
 const MAX_SLIDES = 20;
 
 const PostEditPage: React.FC = () => {
     const { id } = useParams<{ id: string }>();
     const navigate = useNavigate();
-    const { isLoggedIn } = useAuth(); 
+    const { isLoggedIn, user } = useAuth(); 
 
     const [title, setTitle] = useState('');
     const [selectedSettlement, setSelectedSettlement] = useState<SettlementResult | null>(null);
@@ -36,12 +43,53 @@ const PostEditPage: React.FC = () => {
     const [tags, setTags] = useState('');
     const [loading, setLoading] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
+    const [canEdit, setCanEdit] = useState(false);
+    const [isOwner, setIsOwner] = useState(false);
 
     const [slides, setSlides] = useState<SlideData[]>([]);
     const [currentSlideIndex, setCurrentSlideIndex] = useState(0);
 
     const fileInputRef = useRef<HTMLInputElement>(null);
 
+    // Проверка прав доступа
+    useEffect(() => {
+        const checkCollaboratorStatus = async () => {
+            if (!id || !isLoggedIn) return;
+            
+            try {
+                const response = await axios.get(`/api/posts/${id}/collaborators/check`, {
+                    withCredentials: true
+                });
+                const data: CollaboratorStatus = response.data;
+                
+                console.log('Collaborator status:', data);
+                
+                if (data.is_owner) {
+                    setCanEdit(true);
+                    setIsOwner(true);
+                    console.log('User is owner, can edit');
+                } else if (data.is_collaborator && data.role === 'editor') {
+                    setCanEdit(true);
+                    setIsOwner(false);
+                    console.log('User is editor collaborator, can edit');
+                } else {
+                    setCanEdit(false);
+                    setIsOwner(false);
+                    console.log('User cannot edit, role:', data.role);
+                    toast.error('У вас нет прав на редактирование этого поста');
+                    navigate(`/post/${id}`);
+                }
+            } catch (error) {
+                console.error('Ошибка проверки прав:', error);
+                toast.error('Ошибка при проверке прав доступа');
+                setCanEdit(false);
+            }
+        };
+        
+        checkCollaboratorStatus();
+    }, [id, isLoggedIn, navigate]);
+
+    // Загрузка данных поста
     useEffect(() => {
         const fetchPostData = async () => {
             try {
@@ -50,7 +98,6 @@ const PostEditPage: React.FC = () => {
 
                 setTitle(data.title);
                 
-                // Устанавливаем данные о населенном пункте
                 if (data.settlement_id && data.settlement_name) {
                     setSelectedSettlement({
                         id: data.settlement_id,
@@ -60,10 +107,8 @@ const PostEditPage: React.FC = () => {
                     setSettlementInput(data.settlement_name);
                 }
 
-                // Обработка тегов
                 setTags(data.tags ? data.tags.map((t: string) => `#${t}`).join(' ') : '');
 
-                // Загрузка слайдов
                 const loadedSlides: SlideData[] = [];
                 const paragraphs = data.paragraphs || [];
                 const photos = data.photos || [];
@@ -85,54 +130,80 @@ const PostEditPage: React.FC = () => {
                 }
 
                 setSlides(loadedSlides);
+                setCurrentSlideIndex(0);
 
             } catch (error) {
                 console.error("Ошибка загрузки:", error);
-                alert("Не удалось загрузить пост.");
+                toast.error("Не удалось загрузить пост.");
                 navigate('/profile');
             } finally {
                 setLoading(false);
             }
         };
 
-        if (isLoggedIn && id) {
+        if (isLoggedIn && id && canEdit) {
             fetchPostData();
+        } else if (isLoggedIn && id && !canEdit) {
+            setLoading(false);
         }
-    }, [id, isLoggedIn, navigate]);
+    }, [id, isLoggedIn, navigate, canEdit]);
 
     const handleSettlementSelect = (result: SettlementResult) => {
-        console.log('Settlement selected for edit:', result);
         setSelectedSettlement(result);
         setSettlementInput(result.name);
     };
 
-    const handleNextSlide = () => currentSlideIndex < slides.length - 1 && setCurrentSlideIndex(prev => prev + 1);
-    const handlePrevSlide = () => currentSlideIndex > 0 && setCurrentSlideIndex(prev => prev - 1);
+    const handleNextSlide = () => {
+        if (currentSlideIndex < slides.length - 1) {
+            setCurrentSlideIndex(prev => prev + 1);
+        }
+    };
+    
+    const handlePrevSlide = () => {
+        if (currentSlideIndex > 0) {
+            setCurrentSlideIndex(prev => prev - 1);
+        }
+    };
 
     const handleAddSlide = () => {
-        if (slides.length >= MAX_SLIDES) return;
+        if (slides.length >= MAX_SLIDES) {
+            toast.error(`Достигнут лимит слайдов: ${MAX_SLIDES}`);
+            return;
+        }
         setSlides(prev => [...prev, { id: Date.now(), text: '', imageUrl: '', isLoadingImage: false }]);
-        setCurrentSlideIndex(slides.length); 
+        setCurrentSlideIndex(slides.length);
+        toast.success('Слайд добавлен');
     };
     
     const handleRemoveSlide = () => {
-        if (slides.length === 1) return;
+        if (slides.length === 1) {
+            toast.error("Нельзя удалить единственный слайд!");
+            return;
+        }
+        if (!window.confirm("Вы уверены, что хотите удалить этот слайд?")) return;
+
         setSlides(prev => {
             const newSlides = prev.filter((_, index) => index !== currentSlideIndex);
             setCurrentSlideIndex(prevIdx => (prevIdx >= newSlides.length ? newSlides.length - 1 : prevIdx));
             return newSlides;
         });
+        toast.success('Слайд удален');
     };
 
     const updateCurrentSlide = (key: keyof SlideData, value: any) => {
         setSlides(prev => {
             const newSlides = [...prev];
-            newSlides[currentSlideIndex] = { ...newSlides[currentSlideIndex], [key]: value };
+            if (newSlides[currentSlideIndex]) {
+                newSlides[currentSlideIndex] = { ...newSlides[currentSlideIndex], [key]: value };
+            }
             return newSlides;
         });
     };
 
-    const triggerFileSelect = (e: React.MouseEvent) => { e.preventDefault(); fileInputRef.current?.click(); };
+    const triggerFileSelect = (e: React.MouseEvent) => { 
+        e.preventDefault(); 
+        fileInputRef.current?.click(); 
+    };
 
     const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
         if (e.target.files && e.target.files[0]) {
@@ -141,25 +212,31 @@ const PostEditPage: React.FC = () => {
             try {
                 const url = await uploadImage(file);
                 updateCurrentSlide('imageUrl', url);
+                toast.success('Фото успешно обновлено');
             } catch (error) {
-                alert("Ошибка загрузки фото");
+                console.error("Ошибка загрузки фото:", error);
+                toast.error("Не удалось загрузить фото");
             } finally {
                 updateCurrentSlide('isLoadingImage', false);
-                 if (fileInputRef.current) fileInputRef.current.value = '';
+                if (fileInputRef.current) fileInputRef.current.value = '';
             }
         }
     };
 
-    const handleRemoveImage = (e: React.MouseEvent) => { e.stopPropagation(); updateCurrentSlide('imageUrl', ''); };
+    const handleRemoveImage = (e: React.MouseEvent) => { 
+        e.stopPropagation(); 
+        updateCurrentSlide('imageUrl', ''); 
+        toast.success('Фото удалено');
+    };
 
     const handleUpdate = async () => {
         if (!title.trim()) {
-            alert('Введите название поста');
+            toast.error('Введите название поста');
             return;
         }
         
         if (!selectedSettlement) {
-            alert('Выберите населенный пункт');
+            toast.error('Выберите населенный пункт из списка');
             return;
         }
         
@@ -204,27 +281,32 @@ const PostEditPage: React.FC = () => {
                     'Content-Type': 'application/json'
                 }
             });
-            alert('Публикация обновлена!');
+            toast.success('Публикация обновлена!');
             navigate(`/post/${id}`);
         } catch (error: any) {
             console.error('Ошибка обновления:', error);
             const errorMessage = error.response?.data?.details || error.response?.data?.error || 'Ошибка при обновлении';
-            alert(errorMessage);
+            toast.error(errorMessage);
         } finally {
             setIsSaving(false);
         }
     };
 
     const handleDelete = async () => {
+        if (!isOwner) {
+            toast.error('Только автор поста может удалить его');
+            return;
+        }
+        
         if (!window.confirm("Вы уверены, что хотите удалить этот пост безвозвратно?")) return;
         
         try {
             await axios.delete(`/api/posts/${id}`, { withCredentials: true });
-            alert('Пост удален.');
+            toast.success('Пост успешно удален');
             navigate('/profile');
         } catch (error) {
             console.error(error);
-            alert('Ошибка при удалении.');
+            toast.error('Ошибка при удалении поста');
         }
     };
 
@@ -234,114 +316,185 @@ const PostEditPage: React.FC = () => {
         </ContentLayout>
     );
 
+    if (!canEdit) {
+        return (
+            <ContentLayout>
+                <div style={{padding: 50, textAlign: 'center'}}>
+                    <p>У вас нет прав на редактирование этого поста.</p>
+                    <button onClick={() => navigate(`/post/${id}`)}>Вернуться к посту</button>
+                </div>
+            </ContentLayout>
+        );
+    }
+
+    if (slides.length === 0) {
+        return (
+            <ContentLayout>
+                <div style={{padding: 50, textAlign: 'center'}}>Загрузка слайдов...</div>
+            </ContentLayout>
+        );
+    }
+
     const currentSlide = slides[currentSlideIndex];
+    const isMaxSlidesReached = slides.length >= MAX_SLIDES;
+    const isOnlyOneSlide = slides.length === 1;
 
     return (
         <ContentLayout>
-            <div className="edit-post-container">
-                <div className="edit-form-wrapper">
-                    <h2 className="edit-page-title">Изменение публикации</h2>
+            <div className="create-post-container">
+                <div className="create-post-form">
+                    <h2 className="form-title">
+                        {!isOwner ? 'Редактирование поста (соавтор)' : 'Редактирование публикации'}
+                    </h2>
 
-                    {/* Поле Название */}
-                    <div className="input-wrapper">
-                        <span className="input-label">Название</span>
-                        <input 
-                            type="text" 
-                            className="edit-input" 
-                            value={title} 
-                            onChange={(e) => setTitle(e.target.value)} 
-                        />
-                    </div>
+                    <input 
+                        type="text" 
+                        className="custom-input" 
+                        placeholder="Название" 
+                        value={title} 
+                        onChange={(e) => setTitle(e.target.value)} 
+                    />
 
-                    {/* Поле Место с поиском */}
-                    <div className="input-wrapper">
-                        <span className="input-label">Место</span>
-                        <SearchBox 
-                            onSelect={handleSettlementSelect}
-                            placeholder="Введите населенный пункт..."
-                            initialValue={settlementInput}
-                        />
-                    </div>
+                    <SearchBox 
+                        onSelect={handleSettlementSelect}
+                        placeholder="Введите населенный пункт..."
+                        initialValue={settlementInput}
+                    />
 
-                    {/* Слайдер / Редактор слайда */}
-                    <div className="edit-slider-area">
-                        <button className="edit-nav-btn left" onClick={handlePrevSlide} disabled={currentSlideIndex === 0}>
+                    <div className="slide-container">
+                        <button 
+                            className="nav-arrow" 
+                            onClick={handlePrevSlide} 
+                            disabled={currentSlideIndex === 0}
+                        >
                             <FaAngleDoubleLeft />
                         </button>
 
-                        <div className="edit-slide-card">
-                            {/* Область Текста */}
-                            <div className="input-wrapper" style={{ flexGrow: 1, marginBottom: 0, position: 'relative' }}>
-                                <span className="slide-text-label">Текст</span>
+                        <div className="slide-content-box">
+                            <div className="slide-counter">
+                                {currentSlideIndex + 1} / {slides.length}
+                            </div>
+                            
+                            <div className="text-area-wrapper">
                                 <textarea 
-                                    className="edit-textarea" 
+                                    className="slide-textarea" 
+                                    placeholder="Текст слайда"
                                     value={currentSlide.text}
                                     onChange={(e) => updateCurrentSlide('text', e.target.value)}
-                                    placeholder={slides.length > 1 ? "Введите текст слайда" : "Введите основной текст публикации"}
                                 />
                             </div>
                             
-                            {/* Область Фото */}
-                            <div className="edit-photo-zone">
-                                <div className="input-wrapper" style={{ margin: 0, position: 'relative' }}>
-                                    {currentSlide.imageUrl ? (
-                                        <div className="photo-container" onClick={triggerFileSelect}>
-                                            <img src={currentSlide.imageUrl} alt="preview" />
-                                            <button className="remove-img-btn" onClick={handleRemoveImage}><FaTimes size={12}/></button>
-                                        </div>
-                                    ) : (
-                                        <div className="photo-container" onClick={triggerFileSelect} style={{ border: '1px dashed #8c57ff', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                                            <span className="add-photo-label-inner">Фото</span>
-                                            <button className="plus-btn-photo" disabled={currentSlide.isLoadingImage}>
-                                                {currentSlide.isLoadingImage ? '...' : <FaPlus />}
-                                            </button>
-                                        </div>
-                                    )}
-                                    <input type="file" ref={fileInputRef} hidden accept="image/*" onChange={handleImageChange} />
+                            <div className="slide-action-area">
+                                <div className="add-photo-btn-container">
+                                    <span className="photo-label">Фото</span>
+                                    <button 
+                                        className="add-photo-btn" 
+                                        onClick={triggerFileSelect} 
+                                        disabled={currentSlide.isLoadingImage}
+                                    >
+                                        <FaPlus />
+                                    </button>
+                                    <input 
+                                        type="file" 
+                                        ref={fileInputRef} 
+                                        style={{ display: 'none' }} 
+                                        accept="image/*" 
+                                        onChange={handleImageChange} 
+                                    />
                                 </div>
+
+                                {currentSlide.imageUrl && (
+                                    <div className="image-preview-area">
+                                        <img 
+                                            src={currentSlide.imageUrl} 
+                                            alt="Slide preview" 
+                                            className="slide-image-preview" 
+                                        />
+                                        <button 
+                                            className="remove-image-btn" 
+                                            onClick={handleRemoveImage}
+                                        >
+                                            <FaTimes />
+                                        </button>
+                                    </div>
+                                )}
+                                {currentSlide.isLoadingImage && !currentSlide.imageUrl && (
+                                    <p className="loading-message">Загрузка фото...</p>
+                                )}
                             </div>
-                            
-                            {/* Кнопка удаления слайда */}
-                            {slides.length > 1 && (
-                                <div style={{textAlign: 'center', marginTop: '10px'}}>
-                                     <span className="delete-slide-link" onClick={handleRemoveSlide}>Удалить слайд</span>
-                                </div>
-                            )}
                         </div>
 
-                        <button className="edit-nav-btn right" onClick={handleNextSlide} disabled={currentSlideIndex === slides.length - 1}>
+                        <button 
+                            className="nav-arrow" 
+                            onClick={handleNextSlide} 
+                            disabled={currentSlideIndex === slides.length - 1}
+                        >
                             <FaAngleDoubleRight />
                         </button>
                     </div>
 
-                    {/* Кнопка Добавить слайд */}
-                    <div className="add-slide-center">
-                         <span className="add-slide-label">Добавить слайд</span>
-                         <button className="plus-btn-large" onClick={handleAddSlide} disabled={slides.length >= MAX_SLIDES}>
-                            <FaPlus />
-                         </button>
-                    </div>
+                    <div className="slide-actions-bottom">
+                        <div 
+                            className={`add-slide-action ${isMaxSlidesReached ? 'disabled' : ''}`} 
+                            onClick={isMaxSlidesReached ? undefined : handleAddSlide}
+                        >
+                            <div className="add-slide-icon-box"><FaPlus /></div>
+                            <span className="add-slide-text">Добавить слайд</span>
+                        </div>
 
-                    {/* Поле Теги */}
-                    <div className="input-wrapper">
-                        <span className="input-label">Теги</span>
-                        <input 
-                            type="text" 
-                            className="edit-input" 
-                            value={tags} 
-                            onChange={(e) => setTags(e.target.value)} 
-                            placeholder="#тег1 #тег2"
-                        />
+                        {!isOnlyOneSlide && (
+                            <div className="remove-slide-action" onClick={handleRemoveSlide}>
+                                <div className="remove-slide-icon-box"><FaTrashAlt /></div>
+                                <span className="remove-slide-text">Удалить слайд</span>
+                            </div>
+                        )}
                     </div>
+                    {isMaxSlidesReached && (
+                        <p className="limit-message">Лимит слайдов ({MAX_SLIDES}) достигнут.</p>
+                    )}
 
-                    {/* Нижние кнопки действий */}
-                    <div className="edit-actions-footer">
-                        <button className="btn-delete-post" onClick={handleDelete}>Удалить пост</button>
-                        <button className="btn-save-post" onClick={handleUpdate} disabled={isSaving}>
-                            {isSaving ? 'Применяется...' : 'Применить'}
+                    <input 
+                        type="text" 
+                        className="custom-input" 
+                        placeholder="Теги (через пробел, например: #фуд #отдых)" 
+                        value={tags} 
+                        onChange={(e) => setTags(e.target.value)} 
+                        style={{ marginTop: '10px' }}
+                    />
+
+                    {/* Блок с кнопками Удалить/Сохранить */}
+                    <div style={{ display: 'flex', gap: '15px', marginTop: '20px' }}>
+                        {isOwner && (
+                            <button 
+                                className="btn-delete-post" 
+                                onClick={handleDelete}
+                                style={{
+                                    flex: 1,
+                                    padding: '15px',
+                                    background: 'white',
+                                    color: 'black',
+                                    border: '1px solid black',
+                                    borderRadius: '30px',
+                                    fontSize: '16px',
+                                    fontWeight: '600',
+                                    cursor: 'pointer',
+                                    transition: 'background 0.3s'
+                                }}
+                                onMouseEnter={(e) => e.currentTarget.style.background = '#e04444'}
+                                onMouseLeave={(e) => e.currentTarget.style.background = '#ff5757'}
+                            >
+                                Удалить пост
+                            </button>
+                        )}
+                        <button 
+                            className="publish-btn" 
+                            onClick={handleUpdate} 
+                            disabled={isSaving}
+                            style={{ marginTop: 0, flex: isOwner ? 1 : 1 }}
+                        >
+                            {isSaving ? 'Сохранение...' : 'Сохранить изменения'}
                         </button>
                     </div>
-
                 </div>
             </div>
         </ContentLayout>
