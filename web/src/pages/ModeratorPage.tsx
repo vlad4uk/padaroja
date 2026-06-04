@@ -5,7 +5,7 @@ import axios from 'axios';
 import ContentLayout from '../components/ContentLayout.tsx';
 import './ModeratorPage.css';
 import { FaFileAlt, FaComment, FaEye, FaEyeSlash } from 'react-icons/fa';
-
+import toast from 'react-hot-toast';
 interface Complaint {
     id: string;
     type: 'POST' | 'COMMENT';
@@ -94,7 +94,7 @@ const ModeratorPage: React.FC = () => {
             await fetchComplaints();
         } catch (err) {
             console.error('Ошибка обновления статуса жалобы:', err);
-            alert('Не удалось обновить статус жалобы');
+            toast.error('Не удалось обновить статус жалобы');
         }
     };
 
@@ -105,10 +105,10 @@ const ModeratorPage: React.FC = () => {
         try {
             await axios.put(`/api/mod/posts/${postId}/visibility`, { is_approved: newStatus }, { withCredentials: true });
             await fetchComplaints();
-            alert(`Пост успешно ${action}`);
+            toast.success(`Пост успешно ${action}`);
         } catch (err: any) {
             console.error('Ошибка изменения видимости поста:', err);
-            alert(err.response?.data?.error || 'Не удалось изменить видимость поста');
+            toast.error(err.response?.data?.error || 'Не удалось изменить видимость поста');
         }
     };
 
@@ -120,42 +120,40 @@ const ModeratorPage: React.FC = () => {
             setVisibilityLoading(prev => ({ ...prev, [`comment_${commentId}`]: true }));
             await axios.put(`/api/mod/comments/${commentId}/visibility`, { is_approved: newStatus }, { withCredentials: true });
             await fetchComplaints();
-            alert(`Комментарий успешно ${action}`);
+            toast.success(`Комментарий успешно ${action}`);
         } catch (err: any) {
             console.error('Ошибка изменения видимости комментария:', err);
-            alert(err.response?.data?.error || 'Не удалось изменить видимость комментария');
+            toast.error(err.response?.data?.error || 'Не удалось изменить видимость комментария');
         } finally {
             setVisibilityLoading(prev => ({ ...prev, [`comment_${commentId}`]: false }));
         }
     };
 
     const blockUser = async (userId: number, username: string) => {
-        if (!window.confirm(`Вы уверены, что хотите заблокировать пользователя "${username}"?`)) return;
-        
+
         try {
             setBlockLoading(userId);
             await axios.post(`/api/mod/users/${userId}/block`, {}, { withCredentials: true });
-            alert(`Пользователь "${username}" успешно заблокирован!`);
+            toast.success(`Пользователь "${username}" успешно заблокирован!`);
             await fetchUsersWithComplaints();
         } catch (err: any) {
             console.error('Ошибка блокировки пользователя:', err);
-            alert(err.response?.data?.error || 'Не удалось заблокировать пользователя');
+            toast.error(err.response?.data?.error || 'Не удалось заблокировать пользователя');
         } finally {
             setBlockLoading(null);
         }
     };
 
     const unblockUser = async (userId: number, username: string) => {
-        if (!window.confirm(`Вы уверены, что хотите разблокировать пользователя "${username}"?`)) return;
-        
+
         try {
             setUnblockLoading(userId);
             await axios.post(`/api/mod/users/${userId}/unblock`, {}, { withCredentials: true });
-            alert(`Пользователь "${username}" успешно разблокирован!`);
+            toast.success(`Пользователь "${username}" успешно разблокирован!`);
             await fetchUsersWithComplaints();
         } catch (err: any) {
             console.error('Ошибка разблокировки пользователя:', err);
-            alert(err.response?.data?.error || 'Не удалось разблокировать пользователя');
+            toast.error(err.response?.data?.error || 'Не удалось разблокировать пользователя');
         } finally {
             setUnblockLoading(null);
         }

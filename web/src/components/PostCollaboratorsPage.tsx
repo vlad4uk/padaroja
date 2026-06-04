@@ -65,7 +65,6 @@ const PostCollaboratorsPage: React.FC = () => {
     };
 
     const removeCollaborator = async (userId: number, username: string) => {
-        if (!confirm(`Удалить @${username} из соавторов?`)) return;
         
         try {
             await axios.delete(`/api/posts/${postId}/collaborators/${userId}`, {
@@ -77,20 +76,6 @@ const PostCollaboratorsPage: React.FC = () => {
             console.error('Ошибка удаления:', error);
             alert(error.response?.data?.error || 'Не удалось удалить соавтора');
         }
-    };
-
-    const getRoleIcon = (role: string) => {
-        if (role === 'editor') {
-            return <FaUserEdit style={{ color: '#2e7d32' }} />;
-        }
-        return <FaUserCheck style={{ color: '#ef6c00' }} />;
-    };
-
-    const getRoleText = (role: string) => {
-        if (role === 'editor') {
-            return '✏️ Редактор';
-        }
-        return '👁️ Читатель';
     };
 
     const BackButton = () => (
@@ -117,7 +102,6 @@ const PostCollaboratorsPage: React.FC = () => {
         </button>
     );
 
-    // ✅ ПРАВИЛЬНАЯ проверка: является ли текущий пользователь владельцем поста
     const isOwner = currentUserId !== null && currentUserId === postAuthorId;
 
     if (loading) {
@@ -301,8 +285,6 @@ const PostCollaboratorsPage: React.FC = () => {
                                             background: collab.role === 'editor' ? '#e8f5e9' : '#fff3e0',
                                             color: collab.role === 'editor' ? '#2e7d32' : '#ef6c00'
                                         }}>
-                                            {getRoleIcon(collab.role)}
-                                            {getRoleText(collab.role)}
                                         </span>
                                     </div>
                                     <div style={{ fontSize: '12px', color: '#999' }}>

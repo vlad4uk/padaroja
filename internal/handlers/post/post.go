@@ -471,6 +471,7 @@ func GetUserPosts(c *gin.Context) {
 		Preload("Photos").
 		Preload("Paragraphs").
 		Preload("Settlement").
+		Preload("Tags").
 		Find(&posts)
 
 	if result.Error != nil {
@@ -536,6 +537,7 @@ func GetPost(c *gin.Context) {
 		Preload("Photos", func(db *gorm.DB) *gorm.DB {
 			return db.Order("\"order\" ASC")
 		}).
+		Preload("Tags").
 		First(&post)
 
 	if result.Error != nil {
@@ -659,6 +661,7 @@ func GetPublicFeed(c *gin.Context) {
 			return db.Order("paragraphs.order ASC")
 		}).
 		Preload("Photos").
+		Preload("Tags").
 		Order("created_at desc").
 		Find(&posts)
 
@@ -1020,6 +1023,7 @@ func GetUserPostsByID(c *gin.Context) {
 		Preload("Photos").
 		Preload("Paragraphs").
 		Preload("Settlement").
+		Preload("Tags").
 		Find(&posts)
 
 	if result.Error != nil {

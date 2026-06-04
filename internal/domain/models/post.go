@@ -18,7 +18,7 @@ type Post struct {
 	Paragraphs []Paragraph `gorm:"foreignKey:PostID" json:"paragraphs"`
 	Photos     []PostPhoto `gorm:"foreignKey:PostID" json:"photos"`
 	Comments   []Comment   `gorm:"foreignKey:PostID" json:"comments,omitempty"`
-	Tags       []Tags      `gorm:"many2many:post_tags;" json:"tags,omitempty"`
+	Tags       []Tags      `gorm:"many2many:post_tags;joinForeignKey:post_id;joinReferences:tags_id" json:"tags,omitempty"`
 }
 
 type Paragraph struct {
@@ -51,7 +51,7 @@ type Settlement struct {
 
 type PostTag struct {
 	PostID uint `gorm:"not null;index;column:post_id" json:"post_id"` // Явно указываем column:post_id
-	TagID  uint `gorm:"not null;index;column:tags_id" json:"tag_id"`  // Явно указываем column:tag_id
+	TagID  uint `gorm:"not null;index;column:tag_id" json:"tag_id"`   // Явно указываем column:tag_id
 
 	Post Post `gorm:"foreignKey:PostID" json:"-"`
 	Tag  Tags `gorm:"foreignKey:TagID" json:"-"`

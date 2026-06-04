@@ -3,6 +3,7 @@ import { FaEdit, FaTrash, FaFlag, FaEllipsisV, FaComment, FaCommentSlash, FaSign
 import { useAuth } from '../context/AuthContext.tsx';
 import ReportModal from './ReportModal.tsx';
 import axios from 'axios';
+import toast from 'react-hot-toast';
 
 interface PostActionsMenuProps {
     postID: number;
@@ -70,16 +71,13 @@ const PostActionsMenu: React.FC<PostActionsMenuProps> = ({
     };
 
     const handleLeaveCollaboration = async () => {
-        if (!window.confirm('Вы уверены, что хотите выйти из соавторов этого поста? Вы больше не сможете его редактировать.')) {
-            return;
-        }
         
         setIsLeaving(true);
         try {
             await axios.post(`/api/posts/${postID}/leave`, {}, {
                 withCredentials: true
             });
-            alert('Вы вышли из соавторов поста');
+            toast.success('Вы вышли из соавторов поста');
             if (onLeaveCollaboration) {
                 onLeaveCollaboration(postID);
             }
@@ -87,7 +85,7 @@ const PostActionsMenu: React.FC<PostActionsMenuProps> = ({
             window.location.reload();
         } catch (error: any) {
             console.error('Ошибка при выходе из соавторов:', error);
-            alert(error.response?.data?.error || 'Не удалось выйти из соавторов');
+             toast.error(error.response?.data?.error || 'Не удалось выйти из соавторов');
         } finally {
             setIsLeaving(false);
             setIsOpen(false);

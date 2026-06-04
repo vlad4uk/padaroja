@@ -4,6 +4,7 @@ import { useNavigate } from 'react-router-dom';
 import { FaUserPlus, FaCheck, FaTimes, FaBell, FaPaperPlane, FaCheckCircle, FaTimesCircle, FaClock, FaEye } from 'react-icons/fa';
 import ContentLayout from './ContentLayout.tsx';
 import './CollaborationInvites.css';
+import toast from 'react-hot-toast';
 
 interface Invite {
     id: number;
@@ -76,11 +77,11 @@ const CollaborationInvites: React.FC = () => {
                 withCredentials: true
             });
             setIncomingInvites(prev => prev.filter(i => i.id !== inviteId));
-            alert('Приглашение принято! Теперь вы соавтор этого поста.');
+            toast.success('Приглашение принято! Теперь вы соавтор этого поста.');
             navigate(`/post/${postId}`);
         } catch (error: any) {
             console.error('Ошибка при принятии приглашения:', error);
-            alert(error.response?.data?.error || 'Не удалось принять приглашение');
+            toast.error(error.response?.data?.error || 'Не удалось принять приглашение');
         } finally {
             setProcessingId(null);
         }
@@ -93,10 +94,10 @@ const CollaborationInvites: React.FC = () => {
                 withCredentials: true
             });
             setIncomingInvites(prev => prev.filter(i => i.id !== inviteId));
-            alert('Приглашение отклонено');
+            toast.error('Приглашение отклонено');
         } catch (error: any) {
             console.error('Ошибка при отклонении приглашения:', error);
-            alert(error.response?.data?.error || 'Не удалось отклонить приглашение');
+            toast.error(error.response?.data?.error || 'Не удалось отклонить приглашение');;
         } finally {
             setProcessingId(null);
         }
@@ -129,7 +130,12 @@ const CollaborationInvites: React.FC = () => {
                     const message = data.data.status === 'accepted' 
                         ? `✅ ${data.data.username} принял(а) ваше приглашение в пост "${data.data.post_title}"`
                         : `❌ ${data.data.username} отклонил(а) ваше приглашение в пост "${data.data.post_title}"`;
-                    alert(message);
+                    
+                        if (data.data.status === 'accepted') {
+                        toast.success(message);
+                        } else {
+                            toast.error(message);
+                        }
                 }
             } catch (error) {
                 console.error('Error parsing SSE message:', error);
@@ -255,7 +261,7 @@ const CollaborationInvites: React.FC = () => {
                                                     />
                                                     <div className="invite-info">
                                                         <span className="inviter-name">@{invite.inviter_name}</span>
-                                                        <span className="invite-action">приглашает вас в пост (редактор)</span>
+                                                        <span className="invite-action">приглашает вас в пост</span>
                                                     </div>
                                                 </div>
                                                 
@@ -275,12 +281,9 @@ const CollaborationInvites: React.FC = () => {
                                                         )}
                                                         <div className="post-preview-info">
                                                             <h4 className="post-title">{invite.post_title}</h4>
-                                                            {invite.post_preview?.text && (
-                                                                <p className="post-preview-text">{invite.post_preview.text}</p>
-                                                            )}
                                                             <div className="post-meta">
                                                                 {invite.post_preview?.settlement_name && (
-                                                                    <span>📍 {invite.post_preview.settlement_name}</span>
+                                                                    <span>{invite.post_preview.settlement_name}</span>
                                                                 )}
                                                                 {invite.post_preview?.created_at && (
                                                                     <span>📅 {new Date(invite.post_preview.created_at).toLocaleDateString('ru-RU')}</span>
@@ -288,13 +291,6 @@ const CollaborationInvites: React.FC = () => {
                                                             </div>
                                                         </div>
                                                     </div>
-                                                    <div className="post-role-badge">
-                                                        <span className="invite-role-badge editor">Редактор</span>
-                                                    </div>
-                                                </div>
-                                                
-                                                <div className="invite-date" style={{ marginTop: '10px' }}>
-                                                    📅 {new Date(invite.invited_at).toLocaleDateString('ru-RU')}
                                                 </div>
                                                 
                                                 <div className="invite-actions">
@@ -356,7 +352,7 @@ const CollaborationInvites: React.FC = () => {
                                                     <div className="invite-info">
                                                         <span className="inviter-name">@{invite.invitee_name}</span>
                                                         <span className="invite-action">
-                                                            {invite.status === 'pending' ? 'приглашение отправлено (редактор)' :
+                                                            {invite.status === 'pending' ? 'приглашение отправлено' :
                                                              invite.status === 'accepted' ? 'принял приглашение' : 'отклонил приглашение'}
                                                         </span>
                                                     </div>
@@ -367,7 +363,6 @@ const CollaborationInvites: React.FC = () => {
                                                 
                                                 <div className="invite-post">
                                                     <h4 className="post-title">{invite.post_title}</h4>
-                                                    <span className="invite-role-badge editor">Редактор</span>
                                                 </div>
                                                 
                                                 <div className="invite-date" style={{ marginTop: '10px' }}>

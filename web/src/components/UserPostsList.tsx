@@ -7,6 +7,7 @@ import { useNavigate, useParams } from 'react-router-dom';
 import PostActionsMenu from './PostActionsMenu.tsx';
 import ReportModal from './ReportModal.tsx';
 import { useAuth } from '../context/AuthContext.tsx';
+import toast from 'react-hot-toast';
 
 // Интерфейсы
 interface PostData {
@@ -432,8 +433,8 @@ const UserPostsList: React.FC<UserPostsListProps> = ({ targetUserId }) => {
             if (err.response?.status === 401) {
                 navigate('/login');
             } else {
-                alert('Не удалось обновить закладку. Пожалуйста, попробуйте позже.');
-            }
+                toast.error('Не удалось обновить закладку. Пожалуйста, попробуйте позже.');
+        }
         } finally {
             setProcessingFavourite(prev => {
                 const newSet = new Set(prev);
@@ -524,7 +525,7 @@ const UserPostsList: React.FC<UserPostsListProps> = ({ targetUserId }) => {
             if (err.response?.status === 401) {
                 navigate('/login');
             } else {
-                alert('Не удалось обновить лайк. Пожалуйста, попробуйте позже.');
+                toast.error('Не удалось обновить лайк. Пожалуйста, попробуйте позже.');
             }
         } finally {
             setProcessingLike(prev => {
@@ -549,7 +550,6 @@ const UserPostsList: React.FC<UserPostsListProps> = ({ targetUserId }) => {
     }, [navigate]);
 
     const handleDelete = useCallback(async (id: number) => {
-        if (!window.confirm('Вы уверены, что хотите удалить этот пост?')) return;
 
         try {
             await axios.delete(`/api/posts/${id}`, {
@@ -570,7 +570,7 @@ const UserPostsList: React.FC<UserPostsListProps> = ({ targetUserId }) => {
             });
         } catch (err) {
             console.error('Ошибка при удалении поста:', err);
-            alert('Не удалось удалить пост. Пожалуйста, попробуйте позже.');
+           toast.error('Не удалось удалить пост. Пожалуйста, попробуйте позже.');
         }
     }, []);
 
@@ -590,19 +590,19 @@ const UserPostsList: React.FC<UserPostsListProps> = ({ targetUserId }) => {
                     timeout: 5000
                 }
             );
-            alert('Жалоба успешно отправлена. Спасибо за помощь!');
+            toast.success('Жалоба успешно отправлена. Спасибо за помощь!');
             setReportModalOpen(false);
             setReportPostId(null);
         } catch (err: any) {
             console.error('Ошибка при отправке жалобы:', err);
 
             if (err.response?.status === 401) {
-                alert('Необходимо авторизоваться для отправки жалобы');
+                toast.error('Необходимо авторизоваться для отправки жалобы');
                 navigate('/login');
             } else if (err.response?.status === 400) {
-                alert('Вы уже отправляли жалобу на этот пост');
+                toast.error('Вы уже отправляли жалобу на этот пост');
             } else {
-                alert('Не удалось отправить жалобу. Пожалуйста, попробуйте позже.');
+                toast.error('Не удалось отправить жалобу. Пожалуйста, попробуйте позже.');
             }
         }
     }, [reportPostId, navigate]);

@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { FaFlag } from 'react-icons/fa';
 import ReportModal from './ReportModal.tsx';
+import toast from 'react-hot-toast';
 
 interface CommentReportButtonProps {
     commentID: number;
@@ -20,10 +21,10 @@ const CommentReportButton: React.FC<CommentReportButtonProps> = ({
         setIsReporting(true);
         try {
             await onReport(commentID, reason);
-            alert('Жалоба на комментарий отправлена модераторам');
+            toast.success('Жалоба на комментарий отправлена модераторам');
         } catch (error: any) {
             console.error('Ошибка при отправке жалобы:', error);
-            alert(error.response?.data?.error || 'Ошибка при отправке жалобы');
+            toast.error(error.response?.data?.error || 'Ошибка при отправке жалобы');
         } finally {
             setIsReporting(false);
         }

@@ -6,6 +6,7 @@ import { BsGlobeAmericas } from "react-icons/bs";
 import { useNavigate } from 'react-router-dom';
 import PostActionsMenu from './PostActionsMenu.tsx';
 import { useAuth } from '../context/AuthContext.tsx';
+import toast from 'react-hot-toast';
 
 interface PostData {
     id: number;
@@ -408,7 +409,7 @@ const PostFeed: React.FC<PostFeedProps> = ({
             if (err.response?.status === 401) {
                 navigate('/login');
             } else {
-                alert('Не удалось обновить закладку. Пожалуйста, попробуйте позже.');
+                toast.error('Не удалось обновить закладку. Пожалуйста, попробуйте позже.');
             }
         } finally {
             setProcessingFavourite(prev => {
@@ -534,7 +535,7 @@ const PostFeed: React.FC<PostFeedProps> = ({
             if (err.response?.status === 401) {
                 navigate('/login');
             } else if (err.response?.status !== 409) {
-                alert('Не удалось обновить лайк. Пожалуйста, попробуйте позже.');
+                toast.error('Не удалось обновить лайк. Пожалуйста, попробуйте позже.');
             }
         } finally {
             setProcessingLike(prev => {
@@ -559,7 +560,6 @@ const PostFeed: React.FC<PostFeedProps> = ({
     }, [navigate]);
 
     const handleDelete = useCallback(async (id: number) => {
-        if (!window.confirm('Вы уверены, что хотите удалить этот пост?')) return;
 
         try {
             await axios.delete(`/api/posts/${id}`, {
@@ -580,7 +580,7 @@ const PostFeed: React.FC<PostFeedProps> = ({
             });
         } catch (err) {
             console.error('Ошибка при удалении поста:', err);
-            alert('Не удалось удалить пост. Пожалуйста, попробуйте позже.');
+            toast.error('Не удалось удалить пост. Пожалуйста, попробуйте позже.');
         }
     }, []);
 
@@ -598,7 +598,7 @@ const PostFeed: React.FC<PostFeedProps> = ({
         );
         
         console.log('Жалоба успешно отправлена');
-        alert('Жалоба успешно отправлена. Спасибо за помощь!');
+        toast.success('Жалоба успешно отправлена. Спасибо за помощь!');
     }, []);
 
     if (loading) {

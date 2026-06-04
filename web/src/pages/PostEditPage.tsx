@@ -180,8 +180,7 @@ const PostEditPage: React.FC = () => {
             toast.error("Нельзя удалить единственный слайд!");
             return;
         }
-        if (!window.confirm("Вы уверены, что хотите удалить этот слайд?")) return;
-
+ 
         setSlides(prev => {
             const newSlides = prev.filter((_, index) => index !== currentSlideIndex);
             setCurrentSlideIndex(prevIdx => (prevIdx >= newSlides.length ? newSlides.length - 1 : prevIdx));
@@ -298,8 +297,7 @@ const PostEditPage: React.FC = () => {
             return;
         }
         
-        if (!window.confirm("Вы уверены, что хотите удалить этот пост безвозвратно?")) return;
-        
+ 
         try {
             await axios.delete(`/api/posts/${id}`, { withCredentials: true });
             toast.success('Пост успешно удален');

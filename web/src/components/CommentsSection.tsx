@@ -5,6 +5,7 @@ import { useAuth } from '../context/AuthContext.tsx';
 import { Comment, CommentsResponse, CreateCommentRequest } from '../types/comment';
 import { FaCommentSlash, FaReply, FaChevronDown, FaSpinner, FaTrash, FaHeart } from 'react-icons/fa';
 import './CommentsSection.css';
+import toast from 'react-hot-toast';
 
 interface CommentsSectionProps {
   postId: number;
@@ -222,11 +223,11 @@ const CommentsSection: React.FC<CommentsSectionProps> = ({
     } catch (err: any) {
       console.error('Ошибка при создании комментария:', err);
       if (err.response?.status === 401) {
-        alert('Необходимо авторизоваться для комментирования');
+        toast.error('Необходимо авторизоваться для комментирования');
       } else if (err.response?.status === 404) {
-        alert('Сервис комментариев временно недоступен');
+        toast.error('Сервис комментариев временно недоступен');
       } else {
-        alert('Ошибка при отправке комментария');
+        toast.error('Ошибка при отправке комментария');
       }
     } finally {
       setSubmittingComment(false);
@@ -272,9 +273,9 @@ const CommentsSection: React.FC<CommentsSectionProps> = ({
     } catch (err: any) {
       console.error('Ошибка при создании ответа:', err);
       if (err.response?.status === 401) {
-        alert('Необходимо авторизоваться для ответа');
+        toast.error('Необходимо авторизоваться для ответа');
       } else {
-        alert('Ошибка при отправке ответа');
+        toast.error('Ошибка при отправке ответа');
       }
     } finally {
       setSubmittingReply(false);
@@ -297,7 +298,6 @@ const CommentsSection: React.FC<CommentsSectionProps> = ({
   };
 
   const handleDelete = async (commentId: number, isReply = false, rootCommentId?: number) => {
-    if (!window.confirm('Удалить комментарий?')) return;
 
     try {
       await axios.delete(
@@ -320,7 +320,7 @@ const CommentsSection: React.FC<CommentsSectionProps> = ({
         setReplyStates(newReplyStates);
       }
     } catch (err) {
-      alert('Ошибка при удалении комментария');
+      toast.error('Ошибка при удалении комментария');
     }
   };
 
@@ -380,7 +380,7 @@ const CommentsSection: React.FC<CommentsSectionProps> = ({
         { reason },
         { withCredentials: true }
       );
-      alert('Жалоба отправлена');
+      toast.success('Жалоба отправлена');
     } catch (err: any) {
       console.error('Ошибка при отправке жалобы:', err);
       throw err;
@@ -587,7 +587,6 @@ const CommentsSection: React.FC<CommentsSectionProps> = ({
     <div className="comments-section">
       {commentsDisabled ? (
         <div className="comments-disabled-message">
-          <FaCommentSlash size={32} color="#8c57ff" />
           <h3>Комментарии отключены автором</h3>
           <p>Автор публикации решил отключить возможность комментирования</p>
         </div>

@@ -3,6 +3,8 @@ import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.tsx';
 import axios from 'axios';
 import { IoMdCompass } from 'react-icons/io';
+import exitIcon from '../assets/sidebar-icons/exit.png';
+import lawIcon from '../assets/sidebar-icons/law.png';
 
 
 // Импорты иконок
@@ -246,7 +248,10 @@ const Sidebar: React.FC = () => {
                                 }
                             }}
                         >
-                            <span style={{ fontSize: '20px' }}>⚙️</span>
+                            
+                            <span style={{ fontSize: '20px' }}>
+                                <img src={lawIcon} alt="Правила" style={{ width: '20px', height: '20px' }} />
+                            </span>
                             <span style={{ flex: 1 }}>Правила</span>
                         </Link>
                         
@@ -270,7 +275,9 @@ const Sidebar: React.FC = () => {
                                 e.currentTarget.style.backgroundColor = 'transparent';
                             }}
                         >
-                            <span style={{ fontSize: '20px' }}><FaSignOutAlt /></span>
+                            <span style={{ fontSize: '20px', display: 'flex', alignItems: 'center' }}>
+                                <img src={exitIcon} alt="Выход" style={{ width: '20px', height: '20px' }} />
+                            </span>
                             <span>Выход</span>
                         </div>
                     </>

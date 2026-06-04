@@ -368,7 +368,7 @@
 }
 
 .sp-photo-area::after {
-    content: '🔍 Нажмите для увеличения';
+    content: 'Нажмите для увеличения';
     position: absolute;
     bottom: 10px;
     left: 50%;

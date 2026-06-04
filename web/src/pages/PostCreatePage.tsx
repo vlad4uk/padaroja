@@ -104,7 +104,6 @@ const PostCreatePage: React.FC = () => {
             toast.error("Нельзя удалить единственный слайд!");
             return;
         }
-        if (!window.confirm("Вы уверены, что хотите удалить этот слайд?")) return;
 
         setSlides(prev => {
             const newSlides = prev.filter((_, index) => index !== currentSlideIndex);
@@ -514,7 +513,7 @@ const PostCreatePage: React.FC = () => {
                                     <div key={collab.user_id} className="collaborator-chip">
                                         <span>@{collab.username}</span>
                                         {collab.status === 'pending' && (
-                                            <span className="status-badge pending">⏳ ожидает</span>
+                                            <span className="status-badge pending">ожидает</span>
                                         )}
                                         <button 
                                             className="remove-collaborator"

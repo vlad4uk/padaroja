@@ -440,13 +440,13 @@ body {
 
 .edit-input {
     width: 100%;
-    padding: 8px 12px;
-    border: 1px solid #dbdbdb;
-    border-radius: 3px;
-    font-size: 0.95rem;
-    background-color: #fafafa;
-    transition: all 0.2s;
-    flex: 1;
+    padding: 15px 20px;
+    border: 1px solid #8c57ff;
+    border-radius: 20px;
+    outline: none;
+    font-size: 16px;
+    color: #333;
+    box-sizing: border-box;
 }
 
 .edit-input:focus {

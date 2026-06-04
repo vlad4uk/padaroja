@@ -4,7 +4,7 @@ import { useAuth } from '../context/AuthContext.tsx';
 import FollowersModal from './FollowersModal.tsx';
 import '../components/MainLayout.css'; 
 import '../components/FollowersModal.css';
-import avatar from '../assets/bird04.png';
+import avatar from '../assets/null-user-avatar.jpg';
 
 const DEFAULT_AVATAR = avatar;
 

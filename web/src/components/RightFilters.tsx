@@ -164,7 +164,7 @@ const RightFilters: React.FC<RightFiltersProps> = ({
 
                 {!topUsersLoading && !topUsersError && topUsers.length > 0 && (
                     <div className="top-users-list">
-                        {topUsers.slice(0, 5).map((user) => (
+                        {topUsers.slice(0, 3).map((user) => (
                             <div 
                                 key={user.id} 
                                 className="top-user-card"

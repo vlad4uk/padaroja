@@ -5,6 +5,7 @@ import axios from 'axios';
 import ContentLayout from '../components/ContentLayout.tsx';
 import './AdminPage.css';
 import { FaUserPlus, FaUserMinus, FaChartLine, FaUsers, FaFileAlt, FaUserShield } from 'react-icons/fa';
+import toast from 'react-hot-toast';
 
 // Интерфейсы
 interface User {
@@ -127,8 +128,7 @@ const AdminPage: React.FC = () => {
 
     // Назначение модератора
     const assignModeratorRole = async (userId: number, username: string) => {
-        if (!window.confirm(`Вы уверены, что хотите назначить пользователя "${username}" модератором?`)) return;
-        
+
         try {
             setAssignLoading(userId);
             setAssignSuccess('');
@@ -145,7 +145,7 @@ const AdminPage: React.FC = () => {
             setTimeout(() => setAssignSuccess(''), 3000);
         } catch (err: any) {
             console.error('Ошибка назначения модератора:', err);
-            alert(err.response?.data?.error || 'Не удалось назначить модератора');
+            toast.error(err.response?.data?.error || 'Не удалось назначить модератора');
         } finally {
             setAssignLoading(null);
         }
@@ -153,8 +153,7 @@ const AdminPage: React.FC = () => {
 
     // Снятие модератора
     const removeModeratorRole = async (userId: number, username: string) => {
-        if (!window.confirm(`Вы уверены, что хотите снять пользователя "${username}" с позиции модератора?`)) return;
-        
+
         try {
             setRemoveLoading(userId);
             setAssignSuccess('');
@@ -172,7 +171,7 @@ const AdminPage: React.FC = () => {
             setTimeout(() => setAssignSuccess(''), 3000);
         } catch (err: any) {
             console.error('Ошибка снятия модератора:', err);
-            alert(err.response?.data?.error || 'Не удалось снять модератора');
+            toast.error(err.response?.data?.error || 'Не удалось снять модератора');
         } finally {
             setRemoveLoading(null);
         }
@@ -180,17 +179,16 @@ const AdminPage: React.FC = () => {
 
     // Блокировка пользователя
     const blockUser = async (userId: number, username: string) => {
-        if (!window.confirm(`Вы уверены, что хотите заблокировать пользователя "${username}"?`)) return;
-        
+
         try {
             setBlockLoading(userId);
             await axios.post(`/api/admin/users/${userId}/block`, {}, { withCredentials: true });
-            alert(`Пользователь "${username}" успешно заблокирован!`);
+            toast.success(`Пользователь "${username}" успешно заблокирован!`);
             await fetchAllUsers();
             await fetchModerators();
         } catch (err: any) {
             console.error('Ошибка блокировки пользователя:', err);
-            alert(err.response?.data?.error || 'Не удалось заблокировать пользователя');
+            toast.error(err.response?.data?.error || 'Не удалось заблокировать пользователя');
         } finally {
             setBlockLoading(null);
         }
@@ -198,17 +196,16 @@ const AdminPage: React.FC = () => {
 
     // Разблокировка пользователя
     const unblockUser = async (userId: number, username: string) => {
-        if (!window.confirm(`Вы уверены, что хотите разблокировать пользователя "${username}"?`)) return;
-        
+  
         try {
             setUnblockLoading(userId);
             await axios.post(`/api/admin/users/${userId}/unblock`, {}, { withCredentials: true });
-            alert(`Пользователь "${username}" успешно разблокирован!`);
+            toast.success(`Пользователь "${username}" успешно разблокирован!`);
             await fetchAllUsers();
             await fetchModerators();
         } catch (err: any) {
             console.error('Ошибка разблокировки пользователя:', err);
-            alert(err.response?.data?.error || 'Не удалось разблокировать пользователя');
+            toast.error(err.response?.data?.error || 'Не удалось разблокировать пользователя');
         } finally {
             setUnblockLoading(null);
         }

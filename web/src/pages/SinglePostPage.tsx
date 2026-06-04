@@ -9,6 +9,7 @@ import { BsGlobeAmericas } from "react-icons/bs";
 import { FaRegBookmark, FaBookmark, FaAngleDoubleLeft, FaAngleDoubleRight, FaTimes, FaComment, FaCommentSlash, FaHeart, FaRegHeart } from 'react-icons/fa';
 import { useAuth } from '../context/AuthContext.tsx'; 
 import CommentsSection from '../components/CommentsSection.tsx';
+import toast from 'react-hot-toast';
 
 interface ParagraphData {
     id: number;
@@ -218,7 +219,7 @@ const SinglePostPage: React.FC = () => {
 
     const toggleLike = async () => {
         if (!isLoggedIn) {
-            alert("Необходимо авторизоваться");
+            toast.error("Необходимо авторизоваться");
             navigate('/login');
             return;
         }
@@ -249,7 +250,7 @@ const SinglePostPage: React.FC = () => {
             setLikesCount(likesCount);
             
             if (err.response?.status === 401) {
-                alert("Необходимо авторизоваться");
+                toast.error("Необходимо авторизоваться");
                 navigate('/login');
             }
         } finally {
@@ -262,7 +263,7 @@ const SinglePostPage: React.FC = () => {
 
     const toggleFavourite = async () => {
         if (!isLoggedIn) {
-            alert("Необходимо авторизоваться");
+            toast.error("Необходимо авторизоваться");
             navigate('/login');
             return;
         }
@@ -285,7 +286,7 @@ const SinglePostPage: React.FC = () => {
             setIsFavourite(wasFavourite);
             
             if (err.response?.status === 401) {
-                alert("Необходимо авторизоваться");
+                toast.error("Необходимо авторизоваться");
                 navigate('/login');
             }
         } finally {
@@ -298,15 +299,13 @@ const SinglePostPage: React.FC = () => {
     };
 
     const handleDelete = async (postId: number) => {
-        if (!window.confirm('Вы уверены, что хотите удалить этот пост?')) return;
-
         try {
             await axios.delete(`/api/posts/${postId}`, { withCredentials: true });
-            alert('Пост удален!');
+            toast.success('Пост удален!');
             navigate('/profile');
         } catch (error) {
             console.error('Ошибка удаления:', error);
-            alert('Не удалось удалить пост.');
+            toast.error('Не удалось удалить пост.');
         }
     };
     
@@ -316,16 +315,16 @@ const SinglePostPage: React.FC = () => {
                 { reason }, 
                 { withCredentials: true }
             );
-            alert("Жалоба отправлена.");
+            toast.success("Жалоба отправлена.");
             return Promise.resolve();
         } catch (err: any) {
             console.error('Ошибка при отправке жалобы:', err);
             
             if (err.response?.status === 401) {
-                alert("Необходимо авторизоваться");
+                toast.error("Необходимо авторизоваться");
                 navigate('/login');
             } else {
-                alert("Ошибка при отправке жалобы.");
+                toast.error("Ошибка при отправке жалобы.");
             }
             return Promise.reject(err);
         }
@@ -335,7 +334,7 @@ const SinglePostPage: React.FC = () => {
         if (!post || !isLoggedIn) return;
         
         if (user?.id !== post.user_id) {
-            alert("Только автор может изменять настройки комментариев");
+            toast.error("Только автор может изменять настройки комментариев");
             return;
         }
         
@@ -347,10 +346,10 @@ const SinglePostPage: React.FC = () => {
             );
             
             setCommentsDisabled(response.data.comments_disabled);
-            alert(`Комментарии ${response.data.comments_disabled ? 'отключены' : 'включены'}`);
+            toast.success(`Комментарии ${response.data.comments_disabled ? 'отключены' : 'включены'}`);
         } catch (err: any) {
             console.error("Ошибка при изменении статуса комментариев:", err);
-            alert("Не удалось изменить настройки комментариев");
+            toast.error("Не удалось изменить настройки комментариев");
         }
     };
 
@@ -359,13 +358,13 @@ const SinglePostPage: React.FC = () => {
             await axios.post(`/api/posts/${postId}/leave`, {}, {
                 withCredentials: true
             });
-            alert('Вы вышли из соавторов поста');
+            toast.success('Вы вышли из соавторов поста');
             setIsCollaborator(false);
             setCollaboratorRole(null);
             window.location.reload();
         } catch (error: any) {
             console.error('Ошибка при выходе из соавторов:', error);
-            alert(error.response?.data?.error || 'Не удалось выйти из соавторов');
+            toast.error(error.response?.data?.error || 'Не удалось выйти из соавторов');
         }
     };
 
@@ -553,7 +552,7 @@ const SinglePostPage: React.FC = () => {
                                         />
                                         <div className="collaborator-info">
                                             <div className="collaborator-username">{postUserName || 'Автор'}</div>
-                                            <div className="collaborator-role collaborator-role-editor">👑 Владелец</div>
+                                            <div className="collaborator-role collaborator-role-editor">Владелец</div>
                                         </div>
                                     </div>
                                     
@@ -577,9 +576,6 @@ const SinglePostPage: React.FC = () => {
                                             />
                                             <div className="collaborator-info">
                                                 <div className="collaborator-username">{collab.username}</div>
-                                                <div className={`collaborator-role ${collab.role === 'editor' ? 'collaborator-role-editor' : 'collaborator-role-viewer'}`}>
-                                                    {collab.role === 'editor' ? 'Редактор' : 'Читатель'}
-                                                </div>
                                             </div>
                                         </div>
                                     ))}
@@ -666,21 +662,6 @@ const SinglePostPage: React.FC = () => {
                             )}
                         </span>
 
-                        {isCollaborator && collaboratorRole && (
-                            <span className="sp-collaborator-badge" style={{
-                                fontSize: '12px',
-                                background: collaboratorRole === 'editor' ? '#e8f5e9' : '#fff3e0',
-                                color: collaboratorRole === 'editor' ? '#2e7d32' : '#ef6c00',
-                                padding: '4px 10px',
-                                borderRadius: '20px',
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: '5px'
-                            }}>
-                                {collaboratorRole === 'editor' ? '' : ''} 
-                                {collaboratorRole === 'editor' ? 'Редактор' : 'Читатель'}
-                            </span>
-                        )}
                     </div>
                     
                     {post.user_id && (
