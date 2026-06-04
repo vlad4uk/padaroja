@@ -83,8 +83,12 @@ const ReportModal: React.FC<ReportModalProps> = ({
         <div className="modal-overlay" onClick={onClose}>
             <div className="modal-content" onClick={e => e.stopPropagation()}>
                 <div className="modal-header">
-                    <h3>{title}</h3>
-                    <p className="modal-description">{description}</p>
+                    <h3 style={{ margin: '0 0 8px 0' }}>{title}</h3>
+                </div>
+                <div style={{ marginBottom: '16px' }}>
+                    <p className="modal-description" style={{ margin: 0 }}>
+                        {description}
+                    </p>
                 </div>
                 
                 <div className="modal-body">

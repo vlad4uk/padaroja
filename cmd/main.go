@@ -12,7 +12,7 @@ import (
 
 	"padaroja/internal/handlers/admin"
 	"padaroja/internal/handlers/auth"
-	"padaroja/internal/handlers/comment" // ДОБАВИТЬ ЭТОТ ИМПОРТ
+	"padaroja/internal/handlers/comment"
 	"padaroja/internal/handlers/favourite"
 	"padaroja/internal/handlers/follows"
 	"padaroja/internal/handlers/like"

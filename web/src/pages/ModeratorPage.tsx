@@ -177,8 +177,6 @@ const ModeratorPage: React.FC = () => {
         return `${date.getHours().toString().padStart(2, '0')}:${date.getMinutes().toString().padStart(2, '0')} ${date.getDate().toString().padStart(2, '0')}.${(date.getMonth() + 1).toString().padStart(2, '0')}`;
     };
 
-    const getContentStatusClass = (isApproved: boolean) => isApproved ? 'content-visible' : 'content-hidden';
-    const getContentStatusText = (isApproved: boolean) => isApproved ? 'ВИДИМ' : 'СКРЫТ';
     const getVisibilityButtonText = (isApproved: boolean) => isApproved ? 'СКРЫТЬ' : 'ПОКАЗАТЬ';
 
     const renderComplaintsTable = () => {
@@ -197,7 +195,6 @@ const ModeratorPage: React.FC = () => {
                             <th>Причина жалобы</th>
                             <th className="text-right">Время жалобы</th>
                             <th className="text-center">Кол-во жалоб</th>
-                            <th className="text-center">Статус</th>
                             <th className="text-center">Действия</th>
                             <th className="text-right">Статус жалобы</th>
                         </tr>
@@ -231,11 +228,6 @@ const ModeratorPage: React.FC = () => {
                                 </td>
                                 <td className="text-right">{formatDate(complaint.created_at)}</td>
                                 <td className="text-center"><span className="complaint-count">{complaint.complaint_count}</span></td>
-                                <td className="text-center">
-                                    <span className={`content-status ${getContentStatusClass(complaint.is_approved)}`}>
-                                        {getContentStatusText(complaint.is_approved)}
-                                    </span>
-                                </td>
                                 <td className="text-center" onClick={(e) => e.stopPropagation()}>
                                     <div className="visibility-actions">
                                         {complaint.type === 'POST' && complaint.post_id && (
@@ -255,7 +247,6 @@ const ModeratorPage: React.FC = () => {
                                             >
                                                 {visibilityLoading[`comment_${complaint.comment_id}`] ? '...' : (
                                                     <>
-                                                        {complaint.is_approved ? <FaEyeSlash size={12} /> : <FaEye size={12} />}
                                                         {getVisibilityButtonText(complaint.is_approved)}
                                                     </>
                                                 )}
