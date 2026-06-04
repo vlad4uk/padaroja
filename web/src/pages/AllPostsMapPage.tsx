@@ -1,4 +1,3 @@
-// AllPostsMapPage.tsx
 import React, { useState } from 'react';
 import ContentLayout from '../components/ContentLayout.tsx';
 import { useNavigate } from 'react-router-dom';

@@ -57,7 +57,6 @@ const SearchBox: React.FC<SearchBoxProps> = ({
                 .then(res => res.json())
                 .then(data => {
                     console.log('Search results:', data);
-                    // Убедитесь, что data.results существует и это массив
                     setResults(data.results || []);
                     setLoading(false);
                 })
@@ -79,7 +78,7 @@ const SearchBox: React.FC<SearchBoxProps> = ({
         console.log('Selected result:', result);
         setQuery(result.name);
         setShowDropdown(false);
-        onSelect(result); // Передаем полный объект результата
+        onSelect(result);
     };
 
     return (

@@ -1,4 +1,3 @@
-// ModeratorPage.tsx (обновленная - только для модераторов)
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';

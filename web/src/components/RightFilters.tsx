@@ -1,4 +1,3 @@
-// RightFilters.tsx - исправленная версия
 import React, { useState, useEffect } from 'react';
 import { FaSearch, FaMap, FaFire } from 'react-icons/fa';
 import { useNavigate } from 'react-router-dom';

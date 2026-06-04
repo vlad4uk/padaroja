@@ -28,7 +28,7 @@ type ModeratorAssignment struct {
 	ID                uint      `gorm:"primaryKey;autoIncrement" json:"id"`
 	UserID            int       `gorm:"not null;index" json:"user_id"`
 	AssignedByAdminID int       `gorm:"not null" json:"assigned_by_admin_id"`
-	Action            string    `gorm:"size:20;not null" json:"action"` // assign, revoke
+	Action            string    `gorm:"size:20;not null" json:"action"`
 	AssignedAt        time.Time `gorm:"default:CURRENT_TIMESTAMP" json:"assigned_at"`
 
 	User       User `gorm:"foreignKey:UserID" json:"user"`

@@ -8,7 +8,7 @@ import '../components/UserPostsFeed.css';
 const FeedPage: React.FC = () => {
     const [searchTerm, setSearchTerm] = useState('');
     const [tagSearch, setTagSearch] = useState('');
-    const [sortBy, setSortBy] = useState('new'); // 'popular', 'new', 'trending'
+    const [sortBy, setSortBy] = useState('new');
     const { isLoading } = useAuth();
 
     if (isLoading) {
@@ -26,7 +26,7 @@ const FeedPage: React.FC = () => {
                     <PostFeed 
                         searchQuery={searchTerm} 
                         tagQuery={tagSearch} 
-                        sortBy={sortBy} // Добавляем
+                        sortBy={sortBy}
                     />
                 </div>
 
@@ -36,8 +36,8 @@ const FeedPage: React.FC = () => {
                         setSearchTerm={setSearchTerm}
                         tagSearch={tagSearch}
                         setTagSearch={setTagSearch}
-                        sortBy={sortBy} // Добавляем
-                        setSortBy={setSortBy} // Добавляем
+                        sortBy={sortBy}
+                        setSortBy={setSortBy}
                     />
                 </div>
             </div>

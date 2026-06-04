@@ -154,7 +154,6 @@ func GetFavourites(c *gin.Context) {
 			continue
 		}
 
-		// ИСПРАВЛЕНИЕ: Используем post_tags вместо place_tags
 		var tags []string
 		database.DB.Table("tags").
 			Joins("JOIN post_tags ON post_tags.tag_id = tags.id").

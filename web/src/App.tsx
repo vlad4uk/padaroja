@@ -1,7 +1,6 @@
-// App.tsx
 import React, { Suspense } from 'react';
 import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import { Toaster } from 'react-hot-toast'; // Импортируем Toaster
+import { Toaster } from 'react-hot-toast'; 
 import LoginPage from './pages/LoginPage.tsx';
 import RegisterPage from './pages/RegisterPage.tsx';
 import MainLayout from './components/MainLayout.tsx';

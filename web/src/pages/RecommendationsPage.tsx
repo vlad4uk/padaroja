@@ -50,7 +50,6 @@ const RecommendationsPage: React.FC = () => {
             const response = await axios.get(url, { withCredentials: true });
             setPosts(response.data.posts || []);
             
-            // Загружаем статусы для авторизованного пользователя
             if (isLoggedIn && response.data.posts?.length) {
                 const postIds = response.data.posts.map((p: PostData) => p.id);
                 await loadInteractionStatuses(postIds);

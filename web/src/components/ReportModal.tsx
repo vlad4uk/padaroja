@@ -28,7 +28,6 @@ const ReportModal: React.FC<ReportModalProps> = ({
     const textareaRef = useRef<HTMLTextAreaElement>(null);
     const submitCountRef = useRef(0);
 
-    // Сброс при открытии
     useEffect(() => {
         if (isOpen) {
             console.log('🔵 ReportModal OPENED - сброс состояния');

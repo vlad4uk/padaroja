@@ -850,7 +850,6 @@ func UnblockUser(c *gin.Context) {
 	})
 }
 
-// В moderation.go
 func checkModeratorRights(c *gin.Context) bool {
 	userIDValue, exists := c.Get("userID")
 	if !exists {
@@ -870,7 +869,6 @@ func checkModeratorRights(c *gin.Context) bool {
 		return false
 	}
 
-	// Модераторы (role_id=2) и администраторы (role_id=3) имеют доступ
 	if currentUser.RoleID < 2 {
 		c.JSON(http.StatusForbidden, gin.H{"error": "Access denied. Moderator rights required."})
 		return false

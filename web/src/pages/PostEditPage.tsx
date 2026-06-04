@@ -4,7 +4,7 @@ import axios from 'axios';
 import toast from 'react-hot-toast';
 import ContentLayout from '../components/ContentLayout.tsx';
 import SearchBox from '../components/SearchBox.tsx';
-import './PostCreatePage.css'; // Используем те же стили, что и при создании
+import './PostCreatePage.css';
 import { uploadImage } from '../firebase/uploadImage'; 
 import { FaPlus, FaAngleDoubleLeft, FaAngleDoubleRight, FaTimes, FaTrashAlt } from 'react-icons/fa';
 import { useAuth } from '../context/AuthContext.tsx';
@@ -51,7 +51,6 @@ const PostEditPage: React.FC = () => {
 
     const fileInputRef = useRef<HTMLInputElement>(null);
 
-    // Проверка прав доступа
     useEffect(() => {
         const checkCollaboratorStatus = async () => {
             if (!id || !isLoggedIn) return;
@@ -89,7 +88,6 @@ const PostEditPage: React.FC = () => {
         checkCollaboratorStatus();
     }, [id, isLoggedIn, navigate]);
 
-    // Загрузка данных поста
     useEffect(() => {
         const fetchPostData = async () => {
             try {
