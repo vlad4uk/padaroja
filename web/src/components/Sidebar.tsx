@@ -6,8 +6,6 @@ import { IoMdCompass } from 'react-icons/io';
 import exitIcon from '../assets/sidebar-icons/exit.png';
 import lawIcon from '../assets/sidebar-icons/law.png';
 
-
-// Импорты иконок
 import { FaSearch, FaSignOutAlt, FaSignInAlt, FaUserPlus, FaHome, FaHeart, FaBookmark, FaPlusCircle, FaShieldAlt, FaMapMarkedAlt, FaBell, FaUserShield } from 'react-icons/fa';
 
 const Sidebar: React.FC = () => {
@@ -17,16 +15,14 @@ const Sidebar: React.FC = () => {
     const navigate = useNavigate();
     const location = useLocation();
     
-    // Получаем данные авторизации
     const auth = useAuth();
     const isLoggedIn = auth.isLoggedIn;
     const user = auth.user;
     const logout = auth.logout;
     
-    const isAdmin = user?.role_id === 3;      // Администратор
-    const isModerator = user?.role_id === 2;   // Модератор
+    const isAdmin = user?.role_id === 3;   
+    const isModerator = user?.role_id === 2;  
     
-    // Загрузка количества приглашений
     const fetchInvitesCount = async () => {
         if (!isLoggedIn) return;
         
@@ -68,7 +64,6 @@ const Sidebar: React.FC = () => {
         navigate('/login');
     };
     
-    // Стили для активного пункта меню
     const getLinkStyle = (path: string) => ({
         display: 'flex',
         alignItems: 'center',
@@ -83,7 +78,6 @@ const Sidebar: React.FC = () => {
         transition: 'all 0.2s ease'
     });
     
-    // Элементы меню
     const mainNavItems = [
         { path: '/profile', label: 'Профиль', icon: <FaHome />, authRequired: true },
         { path: '/search', label: 'Лента', icon: <FaSearch />, authRequired: false },
@@ -106,7 +100,6 @@ const Sidebar: React.FC = () => {
             flexDirection: 'column',
             padding: '20px 16px'
         }}>
-            {/* Логотип */}
             <div style={{
                 fontSize: '32px',
                 fontWeight: 700,
@@ -119,7 +112,6 @@ const Sidebar: React.FC = () => {
                 Padaroja
             </div>
             
-            {/* Основная навигация */}
             <nav style={{ flex: 1 }}>
                 {mainNavItems
                     .filter(item => !item.authRequired || isLoggedIn)

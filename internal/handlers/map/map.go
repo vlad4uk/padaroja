@@ -9,9 +9,6 @@ import (
 	"github.com/gin-gonic/gin"
 )
 
-// Найдите функцию GetUserMapData или GetMapDataByUserID
-// И добавьте Preload("Photos") в запрос:
-
 func GetMapDataByUserID(c *gin.Context) {
 	userIDStr := c.Param("userID")
 	userID, err := strconv.Atoi(userIDStr)
@@ -20,17 +17,15 @@ func GetMapDataByUserID(c *gin.Context) {
 		return
 	}
 
-	// Получаем пользователя
 	var user models.User
 	if err := database.DB.First(&user, userID).Error; err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
 		return
 	}
 
-	// Получаем посты пользователя ТОЛЬКО одобренные
 	var posts []models.Post
 	if err := database.DB.
-		Where("user_id = ? AND is_approved = ?", userID, true). // Добавлен фильтр is_approved
+		Where("user_id = ? AND is_approved = ?", userID, true).
 		Preload("Photos").
 		Preload("Settlement").
 		Find(&posts).Error; err != nil {
@@ -38,10 +33,8 @@ func GetMapDataByUserID(c *gin.Context) {
 		return
 	}
 
-	// Формируем ответ для карты
 	var markers []gin.H
 	for _, post := range posts {
-		// Извлекаем URL фото
 		var photoURLs []string
 		for _, photo := range post.Photos {
 			photoURLs = append(photoURLs, photo.Url)
@@ -71,7 +64,6 @@ func GetMapDataByUserID(c *gin.Context) {
 	})
 }
 
-// GetUserMapData - получение данных для карты текущего пользователя
 func GetUserMapData(c *gin.Context) {
 	userIDValue, exists := c.Get("userID")
 	if !exists {
@@ -81,17 +73,15 @@ func GetUserMapData(c *gin.Context) {
 
 	userID := userIDValue.(uint)
 
-	// Получаем пользователя
 	var user models.User
 	if err := database.DB.First(&user, userID).Error; err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "User not found"})
 		return
 	}
 
-	// Получаем посты пользователя ТОЛЬКО одобренные
 	var posts []models.Post
 	if err := database.DB.
-		Where("user_id = ? AND is_approved = ?", userID, true). // Добавлен фильтр is_approved
+		Where("user_id = ? AND is_approved = ?", userID, true).
 		Preload("Photos").
 		Preload("Settlement").
 		Find(&posts).Error; err != nil {
@@ -99,10 +89,8 @@ func GetUserMapData(c *gin.Context) {
 		return
 	}
 
-	// Формируем ответ для карты
 	var markers []gin.H
 	for _, post := range posts {
-		// Извлекаем URL фото
 		var photoURLs []string
 		for _, photo := range post.Photos {
 			photoURLs = append(photoURLs, photo.Url)
@@ -135,25 +123,22 @@ func GetUserMapData(c *gin.Context) {
 func GetAllPostsMapData(c *gin.Context) {
 	var posts []models.Post
 
-	// Загружаем все одобренные посты с их поселениями и фото
 	if err := database.DB.
 		Preload("Settlement").
 		Preload("Photos").
-		Where("is_approved = ?", true). // Только одобренные посты
+		Where("is_approved = ?", true).
 		Order("created_at DESC").
 		Find(&posts).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "failed to fetch posts"})
 		return
 	}
 
-	// Формируем ответ для карты
 	var postMarkers []gin.H
 	for _, post := range posts {
 		if post.SettlementID == 0 || post.Settlement.Latitude == 0 || post.Settlement.Longitude == 0 {
 			continue
 		}
 
-		// Формируем массив URL фото
 		var photoUrls []string
 		for _, photo := range post.Photos {
 			if photo.Url != "" {
@@ -161,7 +146,6 @@ func GetAllPostsMapData(c *gin.Context) {
 			}
 		}
 
-		// Получаем имя пользователя
 		var user models.User
 		userName := ""
 		if err := database.DB.Select("username").First(&user, post.UserID).Error; err == nil {

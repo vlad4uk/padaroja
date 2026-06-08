@@ -1,7 +1,6 @@
-// pages/LoginPage.tsx
 import React, { useState } from 'react';
 import axios from 'axios';
-import toast from 'react-hot-toast'; // Импортируем toast
+import toast from 'react-hot-toast'; 
 import AuthLayout from '../components/AuthLayout.tsx';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext.tsx'; 
@@ -22,7 +21,6 @@ const LoginPage: React.FC = () => {
     e.preventDefault();
     setLoading(true);
 
-    // Клиентская валидация с всплывающими сообщениями
     if (!email.trim()) {
       toast.error('Пожалуйста, введите email или имя пользователя');
       setLoading(false);
@@ -51,7 +49,6 @@ const LoginPage: React.FC = () => {
       
       login(response.data); 
       
-      // Успешный вход
       toast.success(`Добро пожаловать, ${response.data.user.username}!`);
       
       navigate('/profile');
@@ -60,7 +57,6 @@ const LoginPage: React.FC = () => {
       if (axios.isAxiosError(err) && err.response) {
         const errorMessage = err.response.data.error;
         
-        // Понятные сообщения об ошибках
         if (errorMessage.includes('не найден')) {
           toast.error('Пользователь с таким email или именем не найден');
         } else if (errorMessage.includes('заблокирован')) {
@@ -90,7 +86,7 @@ const LoginPage: React.FC = () => {
       <form onSubmit={handleSubmit} style={{ width: '100%' }}>
         <div style={{ marginBottom: '16px' }}>
           <label htmlFor="email" style={{ fontWeight: 600, fontSize: '0.875rem', color: '#3f4254', display: 'block', marginBottom: '4px' }}>
-            Email или Имя пользователя <span style={{ color: '#f44336' }}>*</span>
+              Почта или Имя пользователя <span style={{ color: '#f44336' }}>*</span>
           </label>
           <input 
             type="text" 

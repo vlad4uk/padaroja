@@ -1,5 +1,3 @@
-// internal/sse/hub.go - Add heartbeat functionality
-
 package sse
 
 import (
@@ -37,7 +35,6 @@ func NewHub() *SSEHub {
 }
 
 func (hub *SSEHub) Run() {
-	// Start heartbeat
 	go hub.heartbeat()
 
 	for {
@@ -73,7 +70,6 @@ func (hub *SSEHub) Run() {
 				select {
 				case client <- msg:
 				default:
-					// Client is slow, close it
 					delete(hub.AllPosts, client)
 					close(client)
 				}
@@ -85,7 +81,6 @@ func (hub *SSEHub) Run() {
 					select {
 					case client <- um.Data:
 					default:
-						// Client is slow, close it
 						delete(clients, client)
 						close(client)
 					}
@@ -95,7 +90,6 @@ func (hub *SSEHub) Run() {
 	}
 }
 
-// heartbeat sends a ping every 30 seconds to keep connections alive
 func (hub *SSEHub) heartbeat() {
 	ticker := time.NewTicker(30 * time.Second)
 	defer ticker.Stop()
@@ -105,16 +99,13 @@ func (hub *SSEHub) heartbeat() {
 		case <-ticker.C:
 			heartbeatMsg, _ := json.Marshal(map[string]string{"type": "HEARTBEAT"})
 
-			// Send to all clients
 			for client := range hub.AllPosts {
 				select {
 				case client <- heartbeatMsg:
 				default:
-					// Client is slow, will be cleaned up in main loop
 				}
 			}
 
-			// Send to all user streams
 			for _, clients := range hub.UserPosts {
 				for client := range clients {
 					select {

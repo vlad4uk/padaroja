@@ -1,4 +1,3 @@
-// AdminPage.tsx
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
@@ -7,7 +6,6 @@ import './AdminPage.css';
 import { FaUserPlus, FaUserMinus, FaChartLine, FaUsers, FaFileAlt, FaUserShield } from 'react-icons/fa';
 import toast from 'react-hot-toast';
 
-// Интерфейсы
 interface User {
     id: number;
     username: string;
@@ -66,7 +64,6 @@ const AdminPage: React.FC = () => {
     
     const navigate = useNavigate();
 
-    // Загрузка статистики для дашборда
     const fetchDashboardStats = async () => {
         try {
             const response = await axios.get('/api/admin/stats', { withCredentials: true });
@@ -77,7 +74,6 @@ const AdminPage: React.FC = () => {
         }
     };
 
-    // Загрузка всех пользователей
     const fetchAllUsers = async () => {
         try {
             setUsersLoading(true);
@@ -91,7 +87,6 @@ const AdminPage: React.FC = () => {
         }
     };
 
-    // Загрузка модераторов с историей
     const fetchModerators = async () => {
         try {
             setModeratorsLoading(true);
@@ -105,7 +100,6 @@ const AdminPage: React.FC = () => {
         }
     };
 
-    // Поиск пользователей для назначения модератором
     const searchUsers = async () => {
         if (!searchQuery.trim()) {
             setError('Введите имя пользователя или email');
@@ -126,7 +120,6 @@ const AdminPage: React.FC = () => {
         }
     };
 
-    // Назначение модератора
     const assignModeratorRole = async (userId: number, username: string) => {
 
         try {
@@ -137,7 +130,6 @@ const AdminPage: React.FC = () => {
             
             setAssignSuccess(`Пользователь "${username}" успешно назначен модератором!`);
             
-            // Обновляем списки
             setSearchResults(prev => prev.map(user => user.id === userId ? { ...user, role_id: 2 } : user));
             await fetchModerators();
             await fetchDashboardStats();
@@ -151,7 +143,6 @@ const AdminPage: React.FC = () => {
         }
     };
 
-    // Снятие модератора
     const removeModeratorRole = async (userId: number, username: string) => {
 
         try {
@@ -162,7 +153,6 @@ const AdminPage: React.FC = () => {
             
             setAssignSuccess(`Пользователь "${username}" снят с позиции модератора!`);
             
-            // Обновляем списки
             setSearchResults(prev => prev.map(user => user.id === userId ? { ...user, role_id: 1 } : user));
             await fetchModerators();
             await fetchAllUsers();
@@ -177,7 +167,6 @@ const AdminPage: React.FC = () => {
         }
     };
 
-    // Блокировка пользователя
     const blockUser = async (userId: number, username: string) => {
 
         try {
@@ -194,7 +183,6 @@ const AdminPage: React.FC = () => {
         }
     };
 
-    // Разблокировка пользователя
     const unblockUser = async (userId: number, username: string) => {
   
         try {
@@ -236,7 +224,6 @@ const AdminPage: React.FC = () => {
         }
     }, [activeTab]);
 
-    // Рендер дашборда со статистикой
     const renderDashboard = () => {
         if (!dashboardStats) {
             return <div className="loading-state">Загрузка статистики...</div>;
@@ -246,9 +233,6 @@ const AdminPage: React.FC = () => {
             <div className="dashboard-container">
                 <div className="stats-cards">
                     <div className="stat-card">
-                        <div className="stat-icon blue">
-                            <FaUsers size={24} />
-                        </div>
                         <div className="stat-info">
                             <h3>Всего пользователей</h3>
                             <div className="stat-value">{dashboardStats.total_users}</div>
@@ -260,9 +244,6 @@ const AdminPage: React.FC = () => {
                     </div>
 
                     <div className="stat-card">
-                        <div className="stat-icon green">
-                            <FaFileAlt size={24} />
-                        </div>
                         <div className="stat-info">
                             <h3>Всего постов</h3>
                             <div className="stat-value">{dashboardStats.total_posts}</div>
@@ -274,9 +255,6 @@ const AdminPage: React.FC = () => {
                     </div>
 
                     <div className="stat-card">
-                        <div className="stat-icon purple">
-                            <FaUserShield size={24} />
-                        </div>
                         <div className="stat-info">
                             <h3>Модераторы</h3>
                             <div className="stat-value">{dashboardStats.total_moderators}</div>
@@ -285,9 +263,6 @@ const AdminPage: React.FC = () => {
                     </div>
 
                     <div className="stat-card">
-                        <div className="stat-icon orange">
-                            <FaUserShield size={24} />
-                        </div>
                         <div className="stat-info">
                             <h3>Администраторы</h3>
                             <div className="stat-value">{dashboardStats.total_admins}</div>
@@ -295,26 +270,10 @@ const AdminPage: React.FC = () => {
                         </div>
                     </div>
                 </div>
-
-                <div className="quick-actions">
-                    <h3>Быстрые действия</h3>
-                    <div className="action-buttons-grid">
-                        <button className="quick-action-btn" onClick={() => setActiveTab('manage_moderators')}>
-                            <FaUserPlus /> Назначить модератора
-                        </button>
-                        <button className="quick-action-btn" onClick={() => setActiveTab('moderators')}>
-                            <FaUserShield /> Управление модераторами
-                        </button>
-                        <button className="quick-action-btn" onClick={() => setActiveTab('all_users')}>
-                            <FaUsers /> Все пользователи
-                        </button>
-                    </div>
-                </div>
             </div>
         );
     };
 
-    // Рендер таблицы всех пользователей
     const renderAllUsersTable = () => {
         if (usersLoading) return <div className="loading-state">Загрузка пользователей...</div>;
         if (!allUsers || allUsers.length === 0) return <div className="no-data">Пользователей не найдено</div>;
@@ -349,13 +308,13 @@ const AdminPage: React.FC = () => {
                                 </td>
                                 <td>{user.email}</td>
                                 <td>
-                                    <span className={`role-badge ${user.role_id === 2 ? 'role-moderator' : user.role_id === 3 ? 'role-admin' : 'role-user'}`}>
+                                    <span className="role-user">
                                         {user.role_id === 3 ? 'Администратор' : user.role_id === 2 ? 'Модератор' : 'Пользователь'}
                                     </span>
                                 </td>
                                 <td>{formatDate(user.created_at)}</td>
                                 <td>
-                                    <span className={`status-badge ${user.is_blocked ? 'status-blocked' : 'status-active'}`}>
+                                    <span className="status-badge">
                                         {user.is_blocked ? 'Заблокирован' : 'Активен'}
                                     </span>
                                 </td>
@@ -388,7 +347,6 @@ const AdminPage: React.FC = () => {
         );
     };
 
-    // Рендер таблицы модераторов с историей
     const renderModeratorsTable = () => {
         if (moderatorsLoading) return <div className="loading-state">Загрузка модераторов...</div>;
         if (!moderators || moderators.length === 0) return <div className="no-data">Модераторов не найдено</div>;
@@ -424,7 +382,7 @@ const AdminPage: React.FC = () => {
                                 <td className="text-center">{mod.complaint_count || 0}</td>
                                 <td>{formatDate(mod.last_active)}</td>
                                 <td>
-                                    <span className={`status-badge ${mod.is_blocked ? 'status-blocked' : 'status-active'}`}>
+                                    <span className="status-badge">
                                         {mod.is_blocked ? 'Заблокирован' : 'Активен'}
                                     </span>
                                 </td>
@@ -464,7 +422,6 @@ const AdminPage: React.FC = () => {
         );
     };
 
-    // Рендер формы назначения модераторов
     const renderManageModerators = () => {
         return (
             <div className="manage-moderators-container">
@@ -530,7 +487,7 @@ const AdminPage: React.FC = () => {
                                             </span>
                                         </td>
                                         <td>
-                                            <span className={`status-badge ${user.is_blocked ? 'status-blocked' : 'status-active'}`}>
+                                            <span className="status-badge">
                                                 {user.is_blocked ? 'Заблокирован' : 'Активен'}
                                             </span>
                                         </td>
@@ -584,16 +541,16 @@ const AdminPage: React.FC = () => {
             <div className="admin-container">
                 <div className="admin-header-tabs">
                     <div className={`admin-tab ${activeTab === 'dashboard' ? 'active' : ''}`} onClick={() => setActiveTab('dashboard')}>
-                        <FaChartLine /> Дашборд
+                        Статистика
                     </div>
                     <div className={`admin-tab ${activeTab === 'all_users' ? 'active' : ''}`} onClick={() => setActiveTab('all_users')}>
-                        <FaUsers /> Все пользователи
+                        Все пользователи
                     </div>
                     <div className={`admin-tab ${activeTab === 'moderators' ? 'active' : ''}`} onClick={() => setActiveTab('moderators')}>
-                        <FaUserShield /> Модераторы
+                        Модераторы
                     </div>
                     <div className={`admin-tab ${activeTab === 'manage_moderators' ? 'active' : ''}`} onClick={() => setActiveTab('manage_moderators')}>
-                        <FaUserPlus /> Назначить модератора
+                        Назначить модератора
                     </div>
                 </div>
 

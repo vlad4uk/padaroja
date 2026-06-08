@@ -72,12 +72,10 @@ const PostFeed: React.FC<PostFeedProps> = ({
         });
     }, []);
 
-    // Загрузка статусов избранного и лайков
     const loadInteractionStatuses = useCallback(async (postIds: number[]) => {
         if (!isLoggedIn || postIds.length === 0 || isFavourites || isLikes) return;
 
         try {
-            // Загружаем статусы избранного
             const favResponse = await axios.get<{[key: string]: boolean}>('/api/favourites/check-multiple', {
                 params: { post_ids: postIds.join(',') },
                 withCredentials: true,
@@ -90,7 +88,6 @@ const PostFeed: React.FC<PostFeedProps> = ({
             });
             setFavourites(favouriteIds);
 
-            // Загружаем статусы лайков по одному (более надежно)
             const likedIds = new Set<number>();
             
             for (const postId of postIds) {
@@ -114,7 +111,6 @@ const PostFeed: React.FC<PostFeedProps> = ({
         }
     }, [isLoggedIn, isFavourites, isLikes]);
 
-    // Загрузка количества лайков
     const loadLikesCounts = useCallback(async (postIds: number[]) => {
         if (postIds.length === 0) return;
 
@@ -144,7 +140,6 @@ const PostFeed: React.FC<PostFeedProps> = ({
         }
     }, []);
 
-    // Загрузка постов
     const loadPosts = useCallback(async () => {
         setLoading(true);
         setError('');
@@ -173,7 +168,6 @@ const PostFeed: React.FC<PostFeedProps> = ({
 
             let postsData = response.data || [];
             
-            // Нормализуем данные
             postsData = postsData.map(post => ({
                 ...post,
                 likes_count: post.likes_count || 0
@@ -181,7 +175,6 @@ const PostFeed: React.FC<PostFeedProps> = ({
             
             setPosts(postsData);
 
-            // Загружаем дополнительные данные
             if (postsData.length > 0) {
                 const postIds = postsData.map(post => post.id);
 
@@ -218,7 +211,6 @@ const PostFeed: React.FC<PostFeedProps> = ({
         }
     }, [searchQuery, tagQuery, sortBy, isFavourites, isLikes, isLoggedIn, loadInteractionStatuses, loadLikesCounts]);
 
-    // SSE подключение - НЕ подключаемся на страницах избранного и лайков
     useEffect(() => {
         if (isFavourites || isLikes) {
             return;
@@ -344,7 +336,6 @@ const PostFeed: React.FC<PostFeedProps> = ({
         };
     }, [searchQuery, tagQuery, sortBy, isFavourites, isLikes, isLoggedIn, loadInteractionStatuses, loadLikesCounts]);
 
-    // Загрузка постов при изменении параметров
     useEffect(() => {
         const delayDebounceFn = setTimeout(() => {
             loadPosts();
@@ -353,7 +344,6 @@ const PostFeed: React.FC<PostFeedProps> = ({
         return () => clearTimeout(delayDebounceFn);
     }, [loadPosts]);
 
-    // Обработчик избранного
     const toggleFavourite = useCallback(async (postId: number, event: React.MouseEvent) => {
         event.stopPropagation();
 
@@ -420,7 +410,6 @@ const PostFeed: React.FC<PostFeedProps> = ({
         }
     }, [favourites, isFavourites, isLoggedIn, navigate, processingFavourite]);
 
-    // Обработчик лайков
     const toggleLike = useCallback(async (postId: number, event: React.MouseEvent) => {
         event.stopPropagation();
 
@@ -584,7 +573,6 @@ const PostFeed: React.FC<PostFeedProps> = ({
         }
     }, []);
 
-    // Прямая отправка жалобы без промежуточных состояний
     const handleReportPost = useCallback(async (postId: number, reason: string) => {
         console.log('Отправка жалобы на пост:', postId, reason);
         

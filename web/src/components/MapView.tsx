@@ -7,9 +7,6 @@ import { useAuth } from '../context/AuthContext.tsx';
 import { useNavigate } from 'react-router-dom';
 import './MapView.css';
 
-// ==========================================================
-// ФИКС ИКОНОК LEAFLET
-// ==========================================================
 delete (L.Icon.Default.prototype as any)._getIconUrl;
 L.Icon.Default.mergeOptions({
   iconRetinaUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-icon-2x.png',
@@ -17,13 +14,9 @@ L.Icon.Default.mergeOptions({
   shadowUrl: 'https://unpkg.com/leaflet@1.7.1/dist/images/marker-shadow.png',
 });
 
-// ==========================================================
-// ГРАНИЦЫ И МАСШТАБ
-// ==========================================================
 const BelarusBounds: L.LatLngBoundsLiteral = [[51.1, 23.0], [56.3, 32.5]];
 const BELARUS_CENTER: L.LatLngTuple = [53.9, 27.5667];
 
-// Кастомные иконки для постов (только синие)
 const postIcon = L.icon({
   iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png',
   iconSize: [25, 41],
@@ -31,9 +24,6 @@ const postIcon = L.icon({
   popupAnchor: [1, -34]
 });
 
-// ==========================================================
-// КОМПОНЕНТ ДЛЯ ПЛАВНОГО ПЕРЕЛЕТА К МАРКЕРУ
-// ==========================================================
 function FlyToMarker({ position }: { position: [number, number] | null }) {
   const map = useMap();
   
@@ -75,7 +65,6 @@ interface PostMarker {
   user_name?: string;
 }
 
-// Компонент превью поста с фото
 interface PostPreviewProps {
   post: PostMarker;
   onViewPost: (postId: number) => void;

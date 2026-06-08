@@ -1,4 +1,3 @@
-// components/CommentsSection.tsx (исправленный)
 import React, { useState, useEffect, useCallback, ReactElement } from 'react';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext.tsx';
@@ -33,7 +32,6 @@ const CommentsSection: React.FC<CommentsSectionProps> = ({
   const [submittingComment, setSubmittingComment] = useState(false);
   const [submittingReply, setSubmittingReply] = useState(false);
 
-  // Загрузка ВСЕХ комментариев
   const fetchComments = useCallback(async () => {
     if (commentsDisabled) {
       setLoading(false);
@@ -44,7 +42,6 @@ const CommentsSection: React.FC<CommentsSectionProps> = ({
       setLoading(true);
       setError('');
       
-      // Проверяем, существует ли эндпоинт, пробуем разные варианты
       let response;
       try {
         response = await axios.get<CommentsResponse>(
@@ -53,7 +50,6 @@ const CommentsSection: React.FC<CommentsSectionProps> = ({
         );
       } catch (err: any) {
         if (err.response?.status === 404) {
-          // Пробуем альтернативный эндпоинт
           response = await axios.get<CommentsResponse>(
             `/api/posts/${postId}/comments`,
             { withCredentials: true }
@@ -65,11 +61,9 @@ const CommentsSection: React.FC<CommentsSectionProps> = ({
       
       const allComments = response.data.comments || response.data || [];
       
-      // Фильтруем корневые комментарии
       const rootComments = allComments.filter((comment: Comment) => !comment.parent_id);
       setComments(rootComments);
       
-      // Группируем ответы
       const repliesByParentId: Record<number, Comment[]> = {};
       
       allComments.forEach((comment: Comment) => {
@@ -81,7 +75,6 @@ const CommentsSection: React.FC<CommentsSectionProps> = ({
         }
       });
       
-      // Инициализируем состояния
       const initialReplyStates: Record<number, ReplyState> = {};
       
       rootComments.forEach((comment: Comment) => {
@@ -92,7 +85,6 @@ const CommentsSection: React.FC<CommentsSectionProps> = ({
         };
       });
       
-      // Для вложенных ответов
       Object.keys(repliesByParentId).forEach(parentIdStr => {
         const parentId = parseInt(parentIdStr);
         const replies = repliesByParentId[parentId];
@@ -113,7 +105,6 @@ const CommentsSection: React.FC<CommentsSectionProps> = ({
     } catch (err: any) {
       console.error('Ошибка загрузки комментариев:', err);
       if (err.response?.status === 404) {
-        // Если эндпоинт не найден, просто показываем пустой список
         setComments([]);
         setError('');
       } else {
@@ -124,7 +115,6 @@ const CommentsSection: React.FC<CommentsSectionProps> = ({
     }
   }, [postId, commentsDisabled]);
 
-  // Загрузка ответов
   const fetchReplies = async (commentId: number) => {
     try {
       setReplyStates(prev => ({
@@ -189,7 +179,6 @@ const CommentsSection: React.FC<CommentsSectionProps> = ({
     fetchComments();
   }, [fetchComments]);
 
-  // Отправка нового комментария
   const handleSubmitComment = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!newComment.trim() || submittingComment || commentsDisabled) return;
@@ -234,7 +223,6 @@ const CommentsSection: React.FC<CommentsSectionProps> = ({
     }
   };
 
-  // Отправка ответа
   const handleSubmitReply = async (parentId: number, isReplyToReply = false) => {
     if (!replyContent.trim() || submittingReply || commentsDisabled) return;
 

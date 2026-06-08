@@ -111,7 +111,7 @@ return (
 
             {/* Поле Username */}
             <div className="edit-field-group">
-                <label htmlFor="username" className="edit-label">Username</label>
+                <label htmlFor="username" className="edit-label">Имя</label>
                 <input
                     type="text"
                     id="username"

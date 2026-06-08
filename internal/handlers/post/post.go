@@ -27,7 +27,7 @@ type PostCreationRequest struct {
 	Tags           []string           `json:"tags"`
 	Paragraphs     []models.Paragraph `json:"paragraphs"`
 	Photos         []models.PostPhoto `json:"photos"`
-	Invites        []InviteRequest    `json:"invites"` // НОВОЕ
+	Invites        []InviteRequest    `json:"invites"`
 }
 
 type InviteRequest struct {
@@ -141,11 +141,9 @@ func validateSettlement(tx *gorm.DB, settlementID uint, inputName string) (strin
 	log.Printf("Найден settlement: ID=%d, Name=%s, Alternatenames=%s",
 		settlement.Geonameid, settlement.Name, settlement.Alternatenames)
 
-	// Извлекаем русское/белорусское название из alternatenames
 	correctName := extractRussianName(settlement.Alternatenames)
 	log.Printf("Извлеченное русское название: %s", correctName)
 
-	// Если введенное название не совпадает с корректным, используем корректное
 	if inputName != correctName && correctName != "" {
 		log.Printf("Заменяем название '%s' на '%s'", inputName, correctName)
 		return correctName, nil
@@ -161,7 +159,6 @@ func CreatePost(c *gin.Context) {
 		return
 	}
 
-	// Логируем входящий запрос для отладки
 	body, _ := io.ReadAll(c.Request.Body)
 	log.Printf("Входящий запрос: %s", string(body))
 	c.Request.Body = io.NopCloser(bytes.NewBuffer(body))
@@ -179,7 +176,6 @@ func CreatePost(c *gin.Context) {
 	log.Printf("Распарсенные данные: SettlementID=%d, SettlementName=%s, Invites=%d",
 		input.SettlementID, input.SettlementName, len(input.Invites))
 
-	// Валидация
 	if input.SettlementID == 0 {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "SettlementID is required and cannot be 0"})
 		return
@@ -190,20 +186,17 @@ func CreatePost(c *gin.Context) {
 		return
 	}
 
-	// Очищаем название от лишних символов
 	input.SettlementName = utils.CleanSettlementName(input.SettlementName)
 
 	var newPost models.Post
 
 	err := database.DB.Transaction(func(tx *gorm.DB) error {
-		// Проверяем существование settlement
 		var settlement models.Settlement
 		if err := tx.First(&settlement, "geonameid = ?", input.SettlementID).Error; err != nil {
 			log.Printf("Населенный пункт с ID %d не найден", input.SettlementID)
 			return fmt.Errorf("settlement with ID %d not found", input.SettlementID)
 		}
 
-		// Создаем пост с явным указанием likes_count = 0
 		newPost = models.Post{
 			UserID:           int(userID),
 			SettlementID:     input.SettlementID,
@@ -219,9 +212,8 @@ func CreatePost(c *gin.Context) {
 			return result.Error
 		}
 
-		log.Printf("✅ Пост создан с ID: %d, LikesCount: %d", newPost.ID, newPost.LikesCount)
+		log.Printf("Пост создан с ID: %d, LikesCount: %d", newPost.ID, newPost.LikesCount)
 
-		// Создаем параграфы
 		if len(input.Paragraphs) > 0 {
 			for i := range input.Paragraphs {
 				input.Paragraphs[i].PostID = newPost.ID
@@ -231,7 +223,6 @@ func CreatePost(c *gin.Context) {
 			}
 		}
 
-		// Создаем фото
 		if len(input.Photos) > 0 {
 			for i := range input.Photos {
 				input.Photos[i].PostID = newPost.ID
@@ -242,7 +233,6 @@ func CreatePost(c *gin.Context) {
 			}
 		}
 
-		// Создаем теги
 		if len(input.Tags) > 0 {
 			var postTags []models.PostTag
 			for _, tagName := range input.Tags {
@@ -291,7 +281,6 @@ func CreatePost(c *gin.Context) {
 					continue
 				}
 
-				// Всегда создаём с ролью editor
 				collabInvite := models.CollaborationInvite{
 					PostID:    newPost.ID,
 					InviterID: int(userID),
@@ -306,7 +295,7 @@ func CreatePost(c *gin.Context) {
 					return err
 				}
 
-				log.Printf("✅ Приглашение создано для пользователя %d в пост %d", invite.UserID, newPost.ID)
+				log.Printf("Приглашение создано для пользователя %d в пост %d", invite.UserID, newPost.ID)
 			}
 		}
 
@@ -314,7 +303,7 @@ func CreatePost(c *gin.Context) {
 	})
 
 	if err != nil {
-		log.Printf("❌ Ошибка создания поста: %v", err)
+		log.Printf("Ошибка создания поста: %v", err)
 		c.JSON(http.StatusInternalServerError, gin.H{
 			"error":   "Failed to create post",
 			"details": err.Error(),
@@ -322,13 +311,11 @@ func CreatePost(c *gin.Context) {
 		return
 	}
 
-	// Загружаем пользователя для получения имени и аватара
 	var user models.User
 	if err := database.DB.First(&user, userID).Error; err != nil {
 		log.Printf("Предупреждение: не удалось загрузить данные пользователя: %v", err)
 	}
 
-	// Формируем данные для отправки
 	postData := gin.H{
 		"id":              newPost.ID,
 		"user_id":         newPost.UserID,
@@ -343,7 +330,6 @@ func CreatePost(c *gin.Context) {
 		"user_avatar":     user.ImageUrl,
 	}
 
-	// Создаем SSE сообщение
 	message := map[string]interface{}{
 		"type": "NEW_POST",
 		"data": postData,
@@ -351,7 +337,6 @@ func CreatePost(c *gin.Context) {
 
 	data, _ := json.Marshal(message)
 
-	// Отправляем через глобальный хаб (асинхронно)
 	go func() {
 		if sse.GlobalHub != nil {
 			sse.GlobalHub.BroadcastAll <- data
@@ -359,22 +344,19 @@ func CreatePost(c *gin.Context) {
 				UserID: int(userID),
 				Data:   data,
 			}
-			log.Printf("📢 SSE broadcast sent for post %d", newPost.ID)
+			log.Printf("SSE broadcast sent for post %d", newPost.ID)
 		} else {
-			log.Printf("⚠️ GlobalHub is nil, SSE not sent")
+			log.Printf("GlobalHub is nil, SSE not sent")
 		}
 	}()
 
-	log.Printf("✅ Post creation completed successfully for post ID: %d", newPost.ID)
+	log.Printf("Post creation completed successfully for post ID: %d", newPost.ID)
 	c.JSON(http.StatusCreated, gin.H{
 		"message": "Post created successfully",
 		"id":      newPost.ID,
 	})
 }
 
-// SearchSettlements - хендлер для поиска населенных пунктов (адаптированный из вашего working кода)
-// SearchSettlements - хендлер для поиска населенных пунктов
-// SearchSettlements - поиск населенных пунктов с использованием GORM
 func SearchSettlements(c *gin.Context) {
 	query := c.Query("q")
 	if query == "" {
@@ -386,8 +368,6 @@ func SearchSettlements(c *gin.Context) {
 
 	var settlements []models.Settlement
 
-	// Используем сырой SQL для полнотекстового поиска с similarity
-	// PostgreSQL расширение pg_trgm должно быть установлено
 	err := database.DB.Raw(`
 		SELECT geonameid, name, asciiname, alternatenames, latitude, longitude,
 			   similarity(alternatenames, ?) as sim
@@ -402,7 +382,6 @@ func SearchSettlements(c *gin.Context) {
 	if err != nil {
 		log.Printf("Ошибка поиска с similarity: %v", err)
 
-		// Пробуем без similarity, если расширение не установлено
 		err = database.DB.Where("alternatenames ILIKE ? OR name ILIKE ?",
 			"%"+query+"%", "%"+query+"%").
 			Limit(15).
@@ -416,16 +395,14 @@ func SearchSettlements(c *gin.Context) {
 	}
 
 	var results []gin.H
-	seen := make(map[string]bool) // для избежания дубликатов
+	seen := make(map[string]bool)
 
 	for _, s := range settlements {
-		// Извлекаем русское название
 		russianName := utils.ExtractRussianName(s.Alternatenames)
 		if russianName == "" {
 			russianName = s.Name
 		}
 
-		// Проверяем на дубликаты (по ID)
 		if seen[russianName] {
 			continue
 		}
@@ -434,8 +411,8 @@ func SearchSettlements(c *gin.Context) {
 		results = append(results, gin.H{
 			"id":             s.Geonameid,
 			"name":           russianName,
-			"display_name":   russianName, // для отображения
-			"original_name":  s.Name,      // оригинальное название
+			"display_name":   russianName,
+			"original_name":  s.Name,
 			"alternatenames": s.Alternatenames,
 			"latitude":       s.Latitude,
 			"longitude":      s.Longitude,
@@ -450,9 +427,6 @@ func SearchSettlements(c *gin.Context) {
 	})
 }
 
-// Остальные функции (GetUserPosts, GetPost, GetPublicFeed, UpdatePost, DeletePost, ReportPost, GetUserPostsByID, ToggleComments)
-// остаются без изменений, но для полноты я их тоже включу
-
 func GetUserPosts(c *gin.Context) {
 	userID, exists := getUserIDFromContext(c)
 
@@ -466,7 +440,7 @@ func GetUserPosts(c *gin.Context) {
 
 	var posts []models.Post
 	result := database.DB.
-		Where("user_id = ? AND is_approved = ?", userID, true). // Добавлен фильтр is_approved
+		Where("user_id = ? AND is_approved = ?", userID, true).
 		Preload("User").
 		Preload("Photos").
 		Preload("Paragraphs").
@@ -551,7 +525,6 @@ func GetPost(c *gin.Context) {
 		return
 	}
 
-	// Проверка прав доступа для неодобренных постов
 	if !post.IsApproved {
 		userID, isLoggedIn := getUserIDFromContext(c)
 
@@ -609,7 +582,6 @@ func GetPublicFeed(c *gin.Context) {
 	searchQuery := c.Query("search")
 	if searchQuery != "" {
 		searchTerm := "%" + searchQuery + "%"
-		// Ищем по названию поста или названию населенного пункта
 		db = db.Where(
 			database.DB.Where("posts.title ILIKE ?", searchTerm).
 				Or("posts.settlement_name ILIKE ?", searchTerm),
@@ -635,13 +607,11 @@ func GetPublicFeed(c *gin.Context) {
 		}
 	}
 
-	// НОВЫЙ КОД: Сортировка
 	sortBy := c.Query("sort")
 	switch sortBy {
 	case "popular":
 		db = db.Order("likes_count DESC, created_at DESC")
 	case "trending":
-		// Актуальные: лайки за последние 24 часа
 		db = db.Joins(`
             LEFT JOIN (
                 SELECT post_id, COUNT(*) as recent_likes 
@@ -650,7 +620,7 @@ func GetPublicFeed(c *gin.Context) {
                 GROUP BY post_id
             ) recent ON recent.post_id = posts.id
         `).Order("COALESCE(recent.recent_likes, 0) DESC, posts.created_at DESC")
-	default: // "new" или любой другой
+	default:
 		db = db.Order("created_at DESC")
 	}
 
@@ -744,9 +714,9 @@ func UpdatePost(c *gin.Context) {
 			err := tx.Where("post_id = ? AND user_id = ? AND role = ?", postID, userID, "editor").First(&collaborator).Error
 			if err == nil {
 				isEditor = true
-				log.Printf("✅ Пользователь %d является соавтором (editor) поста %d", userID, postID)
+				log.Printf("Пользователь %d является соавтором (editor) поста %d", userID, postID)
 			} else {
-				log.Printf("❌ Пользователь %d НЕ является соавтором: %v", userID, err)
+				log.Printf("Пользователь %d НЕ является соавтором: %v", userID, err)
 			}
 		}
 
@@ -851,7 +821,6 @@ func DeletePost(c *gin.Context) {
 
 		fmt.Printf("DEBUG: Found post ID: %d, SettlementID: %d\n", post.ID, post.SettlementID)
 
-		// Удаляем связанные данные
 		if err := tx.Where("post_id = ?", post.ID).Delete(&models.Like{}).Error; err != nil {
 			return err
 		}
@@ -880,21 +849,16 @@ func DeletePost(c *gin.Context) {
 			return err
 		}
 
-		// ========== НОВЫЙ КОД ДЛЯ КОЛЛАБОРАЦИЙ ==========
-		// Удаляем всех соавторов поста
 		if err := tx.Where("post_id = ?", post.ID).Delete(&models.PostCollaborator{}).Error; err != nil {
 			log.Printf("Ошибка при удалении соавторов: %v", err)
 			return err
 		}
 
-		// Удаляем все приглашения, связанные с постом
 		if err := tx.Where("post_id = ?", post.ID).Delete(&models.CollaborationInvite{}).Error; err != nil {
 			log.Printf("Ошибка при удалении приглашений: %v", err)
 			return err
 		}
-		// ==============================================
 
-		// Удаляем пост
 		fmt.Printf("DEBUG: Deleting post ID: %d\n", post.ID)
 		if err := tx.Delete(&post).Error; err != nil {
 			fmt.Printf("DEBUG: Error deleting post: %v\n", err)
@@ -914,7 +878,6 @@ func DeletePost(c *gin.Context) {
 		return
 	}
 
-	// Отправляем SSE уведомление об удалении
 	go func() {
 		notification := map[string]interface{}{
 			"type": "DELETE_POST",
@@ -1018,7 +981,7 @@ func GetUserPostsByID(c *gin.Context) {
 
 	var posts []models.Post
 	result := database.DB.
-		Where("user_id = ? AND is_approved = ?", userID, true). // Добавлен фильтр is_approved
+		Where("user_id = ? AND is_approved = ?", userID, true).
 		Preload("User").
 		Preload("Photos").
 		Preload("Paragraphs").

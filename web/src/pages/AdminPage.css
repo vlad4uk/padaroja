@@ -245,16 +245,6 @@
     color: black;
 }
 
-.role-moderator {
-    background: #fef3c7;
-    color: #b45309;
-}
-
-.role-admin {
-    background: #fef3c7;
-    color: #b45309;
-}
-
 /* Бейджи статусов */
 .status-badge {
     display: inline-block;
@@ -263,16 +253,6 @@
     font-size: 11px;
     font-weight: 600;
     text-transform: uppercase;
-}
-
-.status-active {
-    background: #dcfce7;
-    color: #15803d;
-}
-
-.status-blocked {
-    background: #fee2e2;
-    color: #b91c1c;
 }
 
 /* Кнопки действий */

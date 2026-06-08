@@ -1,4 +1,3 @@
-// pages/RegisterPage.tsx
 import React, { useState } from 'react';
 import axios from 'axios';
 import toast from 'react-hot-toast';
@@ -19,7 +18,6 @@ const RegisterPage: React.FC = () => {
     e.preventDefault();
     setLoading(true);
 
-    // Валидация с всплывающими сообщениями
     if (!username.trim()) {
       toast.error('Пожалуйста, введите имя пользователя');
       setLoading(false);
@@ -77,13 +75,11 @@ const RegisterPage: React.FC = () => {
       
       toast.success('Регистрация успешна! Теперь вы можете войти в систему');
       
-      // Очищаем форму
       setUsername('');
       setEmail('');
       setPassword('');
       setConfirmPassword('');
 
-      // Перенаправляем на страницу входа через 2 секунды
       setTimeout(() => {
         window.location.href = '/login';
       }, 2000);

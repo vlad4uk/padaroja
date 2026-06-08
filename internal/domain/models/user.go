@@ -10,10 +10,8 @@ type User struct {
 	RoleID       int       `gorm:"not null" json:"role_id"`
 	Is_blocked   bool      `gorm:"default:false" json:"is_blocked"`
 	Created_at   time.Time `gorm:"default:CURRENT_TIMESTAMP" json:"created_at"`
-
-	Bio string `gorm:"size:150" json:"bio"`
-
-	ImageUrl string `json:"image_url"`
+	Bio          string    `gorm:"size:150" json:"bio"`
+	ImageUrl     string    `json:"image_url"`
 }
 
 type UserResponse struct {

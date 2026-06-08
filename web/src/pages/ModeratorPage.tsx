@@ -307,7 +307,7 @@ const ModeratorPage: React.FC = () => {
                                 <td className="text-center"><span className="rejected-count">{user.rejected_complaints}</span></td>
                                 <td className="text-right"><span className="last-complaint-date">{formatDate(user.last_complaint_date)}</span></td>
                                 <td className="text-center" onClick={(e) => e.stopPropagation()}>
-                                    <span className={`user-status-badge ${user.is_blocked ? 'user-blocked' : 'user-active'}`}>
+                                    <span className="user-status-badge">
                                         {user.is_blocked ? 'ЗАБЛОКИРОВАН' : 'АКТИВЕН'}
                                     </span>
                                 </td>

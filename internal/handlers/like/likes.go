@@ -77,7 +77,6 @@ func LikePost(c *gin.Context) {
 
 	tx.Commit()
 
-	// Получаем обновленное количество лайков
 	var updatedPost models.Post
 	database.DB.Select("likes_count").First(&updatedPost, postID)
 
@@ -118,10 +117,8 @@ func UnlikePost(c *gin.Context) {
 
 	log.Printf("Attempting to unlike post %d for user %d", postID, userID)
 
-	// Начинаем транзакцию
 	tx := database.DB.Begin()
 
-	// Сначала проверяем существование лайка
 	var like models.Like
 	result := tx.Where("user_id = ? AND post_id = ?", userID, postID).First(&like)
 
@@ -130,7 +127,6 @@ func UnlikePost(c *gin.Context) {
 		if result.Error == gorm.ErrRecordNotFound {
 			log.Printf("Like not found for post %d and user %d", postID, userID)
 
-			// Получаем текущее количество лайков
 			var post models.Post
 			database.DB.Select("likes_count").First(&post, postID)
 
@@ -145,7 +141,6 @@ func UnlikePost(c *gin.Context) {
 		return
 	}
 
-	// Удаляем лайк
 	if err := tx.Delete(&like).Error; err != nil {
 		tx.Rollback()
 		log.Printf("Error deleting like: %v", err)
@@ -153,7 +148,6 @@ func UnlikePost(c *gin.Context) {
 		return
 	}
 
-	// Обновляем счетчик лайков в посте, но не даем уйти в минус
 	var post models.Post
 	if err := tx.Select("likes_count").First(&post, postID).Error; err != nil {
 		tx.Rollback()
@@ -175,7 +169,6 @@ func UnlikePost(c *gin.Context) {
 		return
 	}
 
-	// Подтверждаем транзакцию
 	tx.Commit()
 
 	log.Printf("Successfully unliked post %d for user %d", postID, userID)

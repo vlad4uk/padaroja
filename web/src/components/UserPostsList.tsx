@@ -9,7 +9,6 @@ import ReportModal from './ReportModal.tsx';
 import { useAuth } from '../context/AuthContext.tsx';
 import toast from 'react-hot-toast';
 
-// Интерфейсы
 interface PostData {
     id: number;
     title: string;
@@ -30,14 +29,12 @@ interface UserPostsListProps {
     targetUserId?: number;
 }
 
-// Типы SSE сообщений
 interface SSEMessage {
     type: 'NEW_POST' | 'UPDATE_POST' | 'DELETE_POST' | 'HEARTBEAT' | 'CONNECTED';
     data: any;
 }
 
 const UserPostsList: React.FC<UserPostsListProps> = ({ targetUserId }) => {
-    // Состояния
     const [posts, setPosts] = useState<PostData[]>([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
@@ -50,21 +47,17 @@ const UserPostsList: React.FC<UserPostsListProps> = ({ targetUserId }) => {
     const [sseConnected, setSseConnected] = useState(false);
     const [likesCounts, setLikesCounts] = useState<Map<number, number>>(new Map());
 
-    // Refs
     const eventSourceRef = useRef<EventSource | null>(null);
     const reconnectTimeoutRef = useRef<NodeJS.Timeout>();
     const reconnectAttemptsRef = useRef(0);
     const maxReconnectAttempts = 5;
 
-    // Hooks
     const navigate = useNavigate();
     const { isLoggedIn } = useAuth();
     const params = useParams();
     
-    // Определяем ID пользователя (из пропсов или из URL)
     const effectiveUserId = targetUserId || (params.userId ? parseInt(params.userId) : undefined);
 
-    // Форматирование даты
     const formatDate = useCallback((dateString: string) => {
         if (!dateString) return '';
         const date = new Date(dateString);
@@ -75,7 +68,6 @@ const UserPostsList: React.FC<UserPostsListProps> = ({ targetUserId }) => {
         });
     }, []);
 
-    // Загрузка статуса избранного
     const loadFavouritesStatus = useCallback(async (postIds: number[]) => {
         if (!isLoggedIn || postIds.length === 0) {
             setFavourites(new Set<number>());
@@ -83,7 +75,6 @@ const UserPostsList: React.FC<UserPostsListProps> = ({ targetUserId }) => {
         }
 
         try {
-            // Используем множественный запрос для эффективности
             if (postIds.length > 5) {
                 const response = await axios.get<{[key: string]: boolean}>('/api/favourites/check-multiple', {
                     params: { post_ids: postIds.join(',') },
@@ -98,7 +89,6 @@ const UserPostsList: React.FC<UserPostsListProps> = ({ targetUserId }) => {
                 
                 setFavourites(favouriteIds);
             } else {
-                // Для небольшого количества постов - по одному
                 const favouritePromises = postIds.map(postId =>
                     axios.get<{is_favourite: boolean}>(`/api/favourites/check/${postId}`, {
                         withCredentials: true,
@@ -121,7 +111,6 @@ const UserPostsList: React.FC<UserPostsListProps> = ({ targetUserId }) => {
         }
     }, [isLoggedIn]);
 
-    // Загрузка статуса лайков
     const loadLikesStatus = useCallback(async (postIds: number[]) => {
         if (!isLoggedIn || postIds.length === 0) {
             setLikes(new Set<number>());
@@ -129,7 +118,6 @@ const UserPostsList: React.FC<UserPostsListProps> = ({ targetUserId }) => {
         }
 
         try {
-            // Загружаем статусы лайков по одному (более надежно)
             const likedIds = new Set<number>();
             
             for (const postId of postIds) {
@@ -153,7 +141,6 @@ const UserPostsList: React.FC<UserPostsListProps> = ({ targetUserId }) => {
         }
     }, [isLoggedIn]);
 
-    // Загрузка количества лайков
     const loadLikesCounts = useCallback(async (postIds: number[]) => {
         if (postIds.length === 0) return;
 
@@ -183,7 +170,6 @@ const UserPostsList: React.FC<UserPostsListProps> = ({ targetUserId }) => {
         }
     }, []);
 
-    // Загрузка постов пользователя
     const fetchPosts = useCallback(async () => {
         setLoading(true);
         setError('');
@@ -201,7 +187,7 @@ const UserPostsList: React.FC<UserPostsListProps> = ({ targetUserId }) => {
 
             const response = await axios.get(url, {
                 withCredentials: true,
-                timeout: 10000 // 10 секунд таймаут
+                timeout: 10000
             });
 
             console.log('Posts loaded:', response.data);
@@ -212,7 +198,6 @@ const UserPostsList: React.FC<UserPostsListProps> = ({ targetUserId }) => {
             
             setPosts(postsData);
 
-            // Загружаем статусы для авторизованных пользователей
             if (isLoggedIn && postsData.length > 0) {
                 const postIds = postsData.map((post: PostData) => post.id);
                 
@@ -222,7 +207,6 @@ const UserPostsList: React.FC<UserPostsListProps> = ({ targetUserId }) => {
                     loadLikesCounts(postIds)
                 ]);
             } else {
-                // Сбрасываем статусы для неавторизованных
                 setFavourites(new Set());
                 setLikes(new Set());
             }
@@ -246,12 +230,10 @@ const UserPostsList: React.FC<UserPostsListProps> = ({ targetUserId }) => {
         }
     }, [effectiveUserId, isLoggedIn, loadFavouritesStatus, loadLikesStatus, loadLikesCounts]);
 
-    // SSE подключение для стрима пользователя
     useEffect(() => {
         if (!effectiveUserId) return;
 
         const connectSSE = () => {
-            // Закрываем существующее подключение
             if (eventSourceRef.current) {
                 eventSourceRef.current.close();
             }
@@ -263,31 +245,27 @@ const UserPostsList: React.FC<UserPostsListProps> = ({ targetUserId }) => {
             eventSource.onopen = () => {
                 console.log(`SSE connection opened for user ${effectiveUserId}`);
                 setSseConnected(true);
-                reconnectAttemptsRef.current = 0; // Сбрасываем счетчик попыток
+                reconnectAttemptsRef.current = 0; 
             };
 
             eventSource.onmessage = (event) => {
                 try {
                     const message: SSEMessage = JSON.parse(event.data);
 
-                    // Игнорируем heartbeat сообщения
                     if (message.type === 'HEARTBEAT' || message.type === 'CONNECTED') {
                         return;
                     }
 
-                    // Обрабатываем сообщения в зависимости от типа
                     switch (message.type) {
                         case 'NEW_POST': {
                             const newPost = message.data;
                             
-                            // Добавляем только посты текущего пользователя
                             if (newPost.user_id === effectiveUserId) {
                                 setPosts(prev => [{
                                     ...newPost,
                                     likes_count: newPost.likes_count || 0
                                 }, ...prev]);
 
-                                // Загружаем статусы для нового поста
                                 if (isLoggedIn) {
                                     loadFavouritesStatus([newPost.id]);
                                     loadLikesStatus([newPost.id]);
@@ -310,7 +288,6 @@ const UserPostsList: React.FC<UserPostsListProps> = ({ targetUserId }) => {
                             const postId = message.data.postId;
                             setPosts(prev => prev.filter(post => post.id !== postId));
 
-                            // Очищаем статусы
                             setFavourites(prev => {
                                 const newSet = new Set(prev);
                                 newSet.delete(postId);
@@ -336,10 +313,8 @@ const UserPostsList: React.FC<UserPostsListProps> = ({ targetUserId }) => {
                 console.error('SSE connection error:', err);
                 setSseConnected(false);
 
-                // Закрываем проблемное соединение
                 eventSource.close();
 
-                // Пытаемся переподключиться с экспоненциальной задержкой
                 if (reconnectAttemptsRef.current < maxReconnectAttempts) {
                     const delay = Math.min(1000 * Math.pow(2, reconnectAttemptsRef.current), 30000);
 
@@ -362,7 +337,6 @@ const UserPostsList: React.FC<UserPostsListProps> = ({ targetUserId }) => {
 
         connectSSE();
 
-        // Очистка при размонтировании
         return () => {
             if (reconnectTimeoutRef.current) {
                 clearTimeout(reconnectTimeoutRef.current);
@@ -374,12 +348,10 @@ const UserPostsList: React.FC<UserPostsListProps> = ({ targetUserId }) => {
         };
     }, [effectiveUserId, isLoggedIn, loadFavouritesStatus, loadLikesStatus, loadLikesCounts]);
 
-    // Загрузка постов при изменении пользователя
     useEffect(() => {
         fetchPosts();
     }, [fetchPosts]);
 
-    // Обработчики действий
     const toggleFavourite = useCallback(async (postId: number, event: React.MouseEvent) => {
         event.stopPropagation();
 
@@ -393,7 +365,6 @@ const UserPostsList: React.FC<UserPostsListProps> = ({ targetUserId }) => {
 
         const wasFavourite = favourites.has(postId);
 
-        // Оптимистичное обновление UI
         setFavourites(prev => {
             const newSet = new Set(prev);
             if (wasFavourite) {
@@ -419,7 +390,6 @@ const UserPostsList: React.FC<UserPostsListProps> = ({ targetUserId }) => {
         } catch (err: any) {
             console.error("Ошибка при обновлении закладки:", err);
 
-            // Откатываем изменения при ошибке
             setFavourites(prev => {
                 const newSet = new Set(prev);
                 if (wasFavourite) {
@@ -459,7 +429,6 @@ const UserPostsList: React.FC<UserPostsListProps> = ({ targetUserId }) => {
         const currentPost = posts.find(p => p.id === postId);
         const currentLikesCount = currentPost?.likes_count || 0;
 
-        // Оптимистичное обновление UI
         setLikes(prev => {
             const newSet = new Set(prev);
             if (wasLiked) {
@@ -470,7 +439,6 @@ const UserPostsList: React.FC<UserPostsListProps> = ({ targetUserId }) => {
             return newSet;
         });
 
-        // Оптимистичное обновление счетчика
         setPosts(prev => prev.map(post =>
             post.id === postId
                 ? { ...post, likes_count: Math.max(0, post.likes_count + (wasLiked ? -1 : 1)) }
@@ -490,7 +458,6 @@ const UserPostsList: React.FC<UserPostsListProps> = ({ targetUserId }) => {
                 });
             }
 
-            // После успешного запроса, получаем актуальное количество лайков
             const countResponse = await axios.get<{likes_count: number}>(`/api/likes/count/${postId}`, {
                 withCredentials: true,
                 timeout: 3000
@@ -505,7 +472,6 @@ const UserPostsList: React.FC<UserPostsListProps> = ({ targetUserId }) => {
         } catch (err: any) {
             console.error("Ошибка при обновлении лайка:", err);
 
-            // Откатываем изменения
             setLikes(prev => {
                 const newSet = new Set(prev);
                 if (wasLiked) {
@@ -607,7 +573,6 @@ const UserPostsList: React.FC<UserPostsListProps> = ({ targetUserId }) => {
         }
     }, [reportPostId, navigate]);
 
-    // Рендер состояния загрузки
     if (loading) {
         return (
             <div className="posts-feed-loading">
@@ -617,7 +582,6 @@ const UserPostsList: React.FC<UserPostsListProps> = ({ targetUserId }) => {
         );
     }
 
-    // Рендер ошибки
     if (error) {
         return (
             <div className="posts-feed-error">
@@ -629,7 +593,6 @@ const UserPostsList: React.FC<UserPostsListProps> = ({ targetUserId }) => {
         );
     }
 
-    // Рендер пустого состояния
     if (!posts || posts.length === 0) {
         return (
             <div className="posts-feed-empty">
@@ -638,12 +601,11 @@ const UserPostsList: React.FC<UserPostsListProps> = ({ targetUserId }) => {
         );
     }
 
-    // Основной рендер
     return (
         <>
             {!sseConnected && effectiveUserId && (
                 <div className="sse-connection-warning">
-                    ⚡ Подключение к реальному времени потеряно. Обновления могут задерживаться.
+                    Подключение к реальному времени потеряно. Обновления могут задерживаться.
                 </div>
             )}
 
@@ -709,7 +671,6 @@ const UserPostsList: React.FC<UserPostsListProps> = ({ targetUserId }) => {
                                     >
                                         <BsGlobeAmericas
                                             style={{
-                                                // ИСПРАВЛЕНО: красный для лайкнутых, белый для нелайкнутых
                                                 color: likes.has(post.id) ? '#e74c3c' : '#ffffff'
                                             }}
                                         />

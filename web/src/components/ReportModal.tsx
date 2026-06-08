@@ -30,48 +30,48 @@ const ReportModal: React.FC<ReportModalProps> = ({
 
     useEffect(() => {
         if (isOpen) {
-            console.log('🔵 ReportModal OPENED - сброс состояния');
+            console.log('ReportModal OPENED - сброс состояния');
             setReason('');
             setError('');
             setIsSubmitting(false);
             submitCountRef.current = 0;
             setTimeout(() => textareaRef.current?.focus(), 50);
         } else {
-            console.log('🔴 ReportModal CLOSED');
+            console.log('ReportModal CLOSED');
         }
     }, [isOpen]);
 
     const handleSubmit = async () => {
         submitCountRef.current++;
-        console.log(`📤 Попытка отправки #${submitCountRef.current}`, { reason, length: reason.trim().length });
+        console.log(`Попытка отправки #${submitCountRef.current}`, { reason, length: reason.trim().length });
         
         const trimmed = reason.trim();
         
         if (trimmed.length < minLength) {
-            console.log('❌ Ошибка: слишком коротко');
+            console.log('Ошибка: слишком коротко');
             setError(`Минимум ${minLength} символов`);
             return;
         }
         
         if (trimmed.length > maxLength) {
-            console.log('❌ Ошибка: слишком длинно');
+            console.log('Ошибка: слишком длинно');
             setError(`Максимум ${maxLength} символов`);
             return;
         }
         
-        console.log('✅ Валидация пройдена, отправляем...');
+        console.log('Валидация пройдена, отправляем...');
         setIsSubmitting(true);
         setError('');
         
         try {
             await onSubmit(trimmed);
-            console.log('✅ onSubmit успешно выполнен, закрываем модалку');
+            console.log('onSubmit успешно выполнен, закрываем модалку');
             onClose();
         } catch (err) {
-            console.error('❌ Ошибка в onSubmit:', err);
+            console.error('Ошибка в onSubmit:', err);
             setError('Ошибка отправки. Попробуйте позже.');
         } finally {
-            console.log('🏁 finally: снимаем isSubmitting');
+            console.log('finally: снимаем isSubmitting');
             setIsSubmitting(false);
         }
     };
@@ -97,7 +97,7 @@ const ReportModal: React.FC<ReportModalProps> = ({
                         placeholder={placeholder}
                         value={reason}
                         onChange={e => {
-                            console.log('✏️ Изменение текста:', e.target.value);
+                            console.log('Изменение текста:', e.target.value);
                             setReason(e.target.value);
                             if (error) setError('');
                         }}
@@ -120,7 +120,7 @@ const ReportModal: React.FC<ReportModalProps> = ({
                     <button 
                         className="btn-cancel" 
                         onClick={() => {
-                            console.log('❌ Отмена, закрываем');
+                            console.log('Отмена, закрываем');
                             onClose();
                         }}
                         disabled={isSubmitting}

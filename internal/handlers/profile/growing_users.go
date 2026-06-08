@@ -1,4 +1,3 @@
-// internal/handlers/profile/growing_users.go
 package profile
 
 import (
@@ -17,13 +16,12 @@ type SearchUserResponse struct {
 }
 
 func SearchUsers(c *gin.Context) {
-	limit := 5 // Топ-5 пользователей
+	limit := 5
 
-	sinceDate := time.Now().AddDate(0, 0, -7) // За последнюю неделю
+	sinceDate := time.Now().AddDate(0, 0, -7)
 
 	var users []SearchUserResponse
 
-	// SQL запрос для получения топ-5 растущих пользователей
 	sqlQuery := `
         SELECT 
             u.id,

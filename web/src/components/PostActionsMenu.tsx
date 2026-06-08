@@ -81,7 +81,6 @@ const PostActionsMenu: React.FC<PostActionsMenuProps> = ({
             if (onLeaveCollaboration) {
                 onLeaveCollaboration(postID);
             }
-            // Перезагружаем страницу или обновляем состояние
             window.location.reload();
         } catch (error: any) {
             console.error('Ошибка при выходе из соавторов:', error);
@@ -101,7 +100,6 @@ const PostActionsMenu: React.FC<PostActionsMenuProps> = ({
 
     if (!isLoggedIn) return null;
 
-    // Определяем, какие пункты меню показывать
     const showEdit = canEdit;
     const showDelete = isAuthor;
     const showToggleComments = isAuthor;
@@ -109,7 +107,6 @@ const PostActionsMenu: React.FC<PostActionsMenuProps> = ({
     const showLeaveCollaboration = isCollaborator && !isAuthor;
     const showReport = !isAuthor && !isModerator;
 
-    // Если нет ни одного пункта меню, не показываем кнопку
     if (!showEdit && !showDelete && !showToggleComments && !showManageCollaborators && !showLeaveCollaboration && !showReport) {
         return null;
     }

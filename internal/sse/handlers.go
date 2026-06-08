@@ -1,4 +1,3 @@
-// internal/sse/handlers.go
 package sse
 
 import (
@@ -10,17 +9,14 @@ import (
 )
 
 func (hub *SSEHub) StreamAllPosts(w http.ResponseWriter, r *http.Request) {
-	// Set SSE headers
 	w.Header().Set("Content-Type", "text/event-stream")
 	w.Header().Set("Cache-Control", "no-cache")
 	w.Header().Set("Connection", "keep-alive")
 	w.Header().Set("X-Accel-Buffering", "no")
 
-	// CORS headers
 	w.Header().Set("Access-Control-Allow-Origin", r.Header.Get("Origin"))
 	w.Header().Set("Access-Control-Allow-Credentials", "true")
 
-	// Получаем flusher И ИСПОЛЬЗУЕМ его
 	flusher, ok := w.(http.Flusher)
 	if !ok {
 		http.Error(w, "Streaming unsupported", http.StatusInternalServerError)
@@ -32,10 +28,9 @@ func (hub *SSEHub) StreamAllPosts(w http.ResponseWriter, r *http.Request) {
 
 	log.Printf("Client registered for all posts stream")
 
-	// ИСПОЛЬЗУЕМ flusher для отправки начального сообщения
 	initialMsg, _ := json.Marshal(map[string]string{"type": "CONNECTED"})
 	fmt.Fprintf(w, "data: %s\n\n", initialMsg)
-	flusher.Flush() // <-- ВАЖНО: используем flusher здесь
+	flusher.Flush()
 
 	notify := r.Context().Done()
 	go func() {
@@ -51,7 +46,7 @@ func (hub *SSEHub) StreamAllPosts(w http.ResponseWriter, r *http.Request) {
 				return
 			}
 			fmt.Fprintf(w, "data: %s\n\n", msg)
-			flusher.Flush() // <-- И здесь используем flusher
+			flusher.Flush()
 		case <-notify:
 			return
 		}
@@ -65,13 +60,11 @@ func (hub *SSEHub) StreamUserPosts(w http.ResponseWriter, r *http.Request) {
 		userID = -1
 	}
 
-	// Set SSE headers
 	w.Header().Set("Content-Type", "text/event-stream")
 	w.Header().Set("Cache-Control", "no-cache")
 	w.Header().Set("Connection", "keep-alive")
 	w.Header().Set("X-Accel-Buffering", "no")
 
-	// CORS headers
 	w.Header().Set("Access-Control-Allow-Origin", r.Header.Get("Origin"))
 	w.Header().Set("Access-Control-Allow-Credentials", "true")
 
@@ -87,7 +80,6 @@ func (hub *SSEHub) StreamUserPosts(w http.ResponseWriter, r *http.Request) {
 
 	log.Printf("Client registered for user %d stream", userID)
 
-	// Send initial connection confirmation
 	initialMsg, _ := json.Marshal(map[string]string{"type": "CONNECTED"})
 	fmt.Fprintf(w, "data: %s\n\n", initialMsg)
 	flusher.Flush()

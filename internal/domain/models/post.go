@@ -50,35 +50,31 @@ type Settlement struct {
 }
 
 type PostTag struct {
-	PostID uint `gorm:"not null;index;column:post_id" json:"post_id"` // Явно указываем column:post_id
-	TagID  uint `gorm:"not null;index;column:tag_id" json:"tag_id"`   // Явно указываем column:tag_id
+	PostID uint `gorm:"not null;index;column:post_id" json:"post_id"`
+	TagID  uint `gorm:"not null;index;column:tag_id" json:"tag_id"`
 
 	Post Post `gorm:"foreignKey:PostID" json:"-"`
 	Tag  Tags `gorm:"foreignKey:TagID" json:"-"`
 }
 
-// Таблица Tags остается без изменений
 type Tags struct {
 	ID   uint   `gorm:"primaryKey" json:"id"`
-	Name string `gorm:"size:150;not null;uniqueIndex" json:"name"` // Рекомендую добавить uniqueIndex
+	Name string `gorm:"size:150;not null;uniqueIndex" json:"name"`
 
-	// Опционально: связь с постами через PostTag
 	Posts []Post `gorm:"many2many:post_tags;" json:"-"`
 }
 
-// PostCollaborator - таблица для соавторов
 type PostCollaborator struct {
 	ID       uint      `gorm:"primaryKey;autoIncrement" json:"id"`
 	PostID   uint      `gorm:"not null;index;constraint:OnDelete:CASCADE;" json:"post_id"`
 	UserID   int       `gorm:"not null;index" json:"user_id"`
-	Role     string    `gorm:"size:20;default:'editor';not null" json:"role"` // editor, viewer
+	Role     string    `gorm:"size:20;default:'editor';not null" json:"role"`
 	JoinedAt time.Time `gorm:"default:CURRENT_TIMESTAMP" json:"joined_at"`
 
 	Post Post `gorm:"foreignKey:PostID" json:"-"`
 	User User `gorm:"foreignKey:UserID" json:"user"`
 }
 
-// CollaborationInvite - таблица для приглашений
 type CollaborationInvite struct {
 	ID          uint       `gorm:"primaryKey;autoIncrement" json:"id"`
 	PostID      uint       `gorm:"not null;index;constraint:OnDelete:CASCADE;" json:"post_id"`

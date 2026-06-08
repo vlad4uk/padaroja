@@ -160,7 +160,6 @@ func GetUserProfileByID(c *gin.Context) {
 	})
 }
 
-// SearchUsersForInvite - поиск пользователей для приглашения в соавторы
 func SearchUsersForInvite(c *gin.Context) {
 	query := c.Query("q")
 	if len(query) < 2 {
@@ -182,8 +181,6 @@ func SearchUsersForInvite(c *gin.Context) {
 		IsFollowed bool   `json:"is_followed"`
 	}
 
-	// Ищем среди всех пользователей, исключая текущего
-	// С сортировкой: сначала подписчики, потом остальные
 	err := database.DB.Table("users").
 		Select(`users.id, users.username, users.image_url,
 				CASE 
@@ -203,7 +200,6 @@ func SearchUsersForInvite(c *gin.Context) {
 		return
 	}
 
-	// Форматируем ответ
 	results := make([]gin.H, 0)
 	for _, u := range users {
 		results = append(results, gin.H{

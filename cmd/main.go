@@ -112,15 +112,12 @@ func main() {
 		}
 	}
 
-	// ========== ДОБАВИТЬ МАРШРУТЫ КОММЕНТАРИЕВ ==========
 	commentRoutes := api.Group("/comments")
 	{
-		// Публичные маршруты (чтение)
 		commentRoutes.GET("/post/:postID", comment.GetComments)
 		commentRoutes.GET("/:commentID/replies", comment.GetCommentReplies)
 		commentRoutes.GET("/:commentID/latest-reply", comment.GetLatestReply)
 
-		// Защищенные маршруты (создание, редактирование, удаление)
 		protectedCommentRoutes := commentRoutes.Group("")
 		protectedCommentRoutes.Use(middleware.AuthMiddleware())
 		{
@@ -129,11 +126,9 @@ func main() {
 			protectedCommentRoutes.DELETE("/:commentID", comment.DeleteComment)
 		}
 	}
-	// ===================================================
 
 	postRoutes := api.Group("/posts")
 	{
-		// SSE streams
 		postRoutes.GET("/stream", gin.WrapF(func(w http.ResponseWriter, r *http.Request) {
 			log.Println("SSE connection received for /stream")
 			hub.StreamAllPosts(w, r)
@@ -143,7 +138,6 @@ func main() {
 			hub.StreamUserPosts(w, r)
 		}))
 
-		// Основные маршруты
 		postRoutes.GET("", middleware.OptionalAuthMiddleware(), post.GetPublicFeed)
 		postRoutes.GET("/:postID", middleware.OptionalAuthMiddleware(), post.GetPost)
 		postRoutes.GET("/:postID/collaborators/check", middleware.AuthMiddleware(), post.CheckCollaboratorStatus)
@@ -154,14 +148,11 @@ func main() {
 		postRoutes.POST("/:postID/report", middleware.AuthMiddleware(), post.ReportPost)
 		postRoutes.PATCH("/:postID/comments", middleware.AuthMiddleware(), post.ToggleComments)
 
-		// Маршруты для приглашений
 		postRoutes.GET("/invites/pending", middleware.AuthMiddleware(), post.GetPendingInvites)
 		postRoutes.PUT("/invites/:inviteID/accept", middleware.AuthMiddleware(), post.AcceptInvite)
 		postRoutes.PUT("/invites/:inviteID/decline", middleware.AuthMiddleware(), post.DeclineInvite)
-		// В main.go, в секции postRoutes добавьте:
 		postRoutes.GET("/invites/count", middleware.AuthMiddleware(), post.GetPendingInvitesCount)
 		postRoutes.GET("/invites/sent", middleware.AuthMiddleware(), post.GetSentInvites)
-		// Маршруты для управления соавторами
 		postRoutes.GET("/:postID/collaborators", middleware.AuthMiddleware(), post.GetCollaborators)
 		postRoutes.DELETE("/:postID/collaborators/:userID", middleware.AuthMiddleware(), post.RemoveCollaborator)
 		postRoutes.POST("/:postID/collaborators/invite", middleware.AuthMiddleware(), post.InviteCollaborator)

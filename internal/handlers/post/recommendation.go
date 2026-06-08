@@ -11,7 +11,6 @@ import (
 	"gorm.io/gorm"
 )
 
-// PostRecommendationResponse - структура для ответа с рекомендациями
 type PostRecommendationResponse struct {
 	ID             uint            `json:"id"`
 	Title          string          `json:"title"`
@@ -26,12 +25,10 @@ type PostRecommendationResponse struct {
 	UserName       string          `json:"user_name"`
 }
 
-// PhotoResponse - структура для фото в ответе
 type PhotoResponse struct {
 	URL string `json:"url"`
 }
 
-// GetGeoRecommendations - гео-рекомендации (места, похожие на те, что пользователь уже лайкал)
 func GetGeoRecommendations(c *gin.Context) {
 	userID, exists := getUserIDFromContext(c)
 	if !exists {
@@ -46,7 +43,6 @@ func GetGeoRecommendations(c *gin.Context) {
 		}
 	}
 
-	// 1. Получаем все места, которые пользователь лайкнул или добавил в избранное
 	var likedSettlements []uint
 	database.DB.Table("posts").
 		Select("DISTINCT settlement_id").
@@ -61,7 +57,6 @@ func GetGeoRecommendations(c *gin.Context) {
 		Where("favourites.user_id = ?", userID).
 		Pluck("settlement_id", &favouritedSettlements)
 
-	// Объединяем уникальные settlement_id
 	settlementMap := make(map[uint]bool)
 	for _, s := range likedSettlements {
 		settlementMap[s] = true
@@ -75,7 +70,6 @@ func GetGeoRecommendations(c *gin.Context) {
 		allSettlements = append(allSettlements, s)
 	}
 
-	// 2. Получаем все теги из постов, которые пользователь лайкнул/добавил в избранное
 	var likedTagIDs []uint
 	database.DB.Table("post_tags").
 		Select("DISTINCT tag_id").
@@ -92,7 +86,6 @@ func GetGeoRecommendations(c *gin.Context) {
 		Where("favourites.user_id = ?", userID).
 		Pluck("tag_id", &favouritedTagIDs)
 
-	// Объединяем уникальные tag_id
 	tagMap := make(map[uint]bool)
 	for _, t := range likedTagIDs {
 		tagMap[t] = true
@@ -106,7 +99,6 @@ func GetGeoRecommendations(c *gin.Context) {
 		allTagIDs = append(allTagIDs, t)
 	}
 
-	// Если нет ни одного места и ни одного тега - возвращаем пустой результат
 	if len(allSettlements) == 0 && len(allTagIDs) == 0 {
 		c.JSON(http.StatusOK, gin.H{
 			"posts":   []PostRecommendationResponse{},
@@ -116,7 +108,6 @@ func GetGeoRecommendations(c *gin.Context) {
 		return
 	}
 
-	// 3. Ищем посты, которые находятся в тех же местах ИЛИ имеют те же теги
 	var posts []models.Post
 
 	query := database.DB.Preload("User", func(db *gorm.DB) *gorm.DB {
@@ -132,18 +123,14 @@ func GetGeoRecommendations(c *gin.Context) {
 		Where("id NOT IN (?)", database.DB.Table("likes").Select("post_id").Where("user_id = ?", userID)).
 		Where("id NOT IN (?)", database.DB.Table("favourites").Select("post_id").Where("user_id = ?", userID))
 
-	// Формируем условия поиска
 	if len(allSettlements) > 0 && len(allTagIDs) > 0 {
-		// И по местам, И по тегам
 		query = query.Where("settlement_id IN (?) OR id IN (?)",
 			allSettlements,
 			database.DB.Table("post_tags").Select("post_id").Where("tag_id IN (?)", allTagIDs),
 		)
 	} else if len(allSettlements) > 0 {
-		// Только по местам
 		query = query.Where("settlement_id IN (?)", allSettlements)
 	} else if len(allTagIDs) > 0 {
-		// Только по тегам
 		query = query.Where("id IN (?)",
 			database.DB.Table("post_tags").Select("post_id").Where("tag_id IN (?)", allTagIDs),
 		)
@@ -154,7 +141,6 @@ func GetGeoRecommendations(c *gin.Context) {
 		return
 	}
 
-	// 4. Сортируем посты по релевантности (без score в ответе)
 	type ScoredPost struct {
 		Post  models.Post
 		Score float64
@@ -165,7 +151,6 @@ func GetGeoRecommendations(c *gin.Context) {
 	for _, post := range posts {
 		score := 0.0
 
-		// Вес за совпадение места
 		for _, settlementID := range allSettlements {
 			if post.SettlementID == settlementID {
 				score += 1.0
@@ -173,7 +158,6 @@ func GetGeoRecommendations(c *gin.Context) {
 			}
 		}
 
-		// Вес за совпадение тегов
 		tagMatches := 0
 		for _, postTag := range post.Tags {
 			for _, userTagID := range allTagIDs {
@@ -184,7 +168,6 @@ func GetGeoRecommendations(c *gin.Context) {
 			}
 		}
 
-		// Нормализуем вес тегов (максимум 2.0, если совпали все теги)
 		if len(post.Tags) > 0 {
 			tagScore := float64(tagMatches) / float64(len(post.Tags)) * 2.0
 			score += tagScore
@@ -195,28 +178,23 @@ func GetGeoRecommendations(c *gin.Context) {
 		}
 	}
 
-	// Сортируем по убыванию score
 	sort.Slice(scoredPosts, func(i, j int) bool {
 		return scoredPosts[i].Score > scoredPosts[j].Score
 	})
 
-	// Берем топ-N
 	if len(scoredPosts) > limit {
 		scoredPosts = scoredPosts[:limit]
 	}
 
-	// Форматируем ответ (без relevanceScore)
 	response := make([]PostRecommendationResponse, 0, len(scoredPosts))
 	for _, sp := range scoredPosts {
 		post := sp.Post
 
-		// Получаем теги
 		tags := make([]string, 0)
 		for _, tag := range post.Tags {
 			tags = append(tags, tag.Name)
 		}
 
-		// Получаем фото
 		photos := make([]PhotoResponse, 0)
 		if post.Photos != nil {
 			for _, photo := range post.Photos {
@@ -262,7 +240,6 @@ func GetGeoRecommendations(c *gin.Context) {
 	})
 }
 
-// GetFollowRecommendations - рекомендации от подписок
 func GetFollowRecommendations(c *gin.Context) {
 	userID, exists := getUserIDFromContext(c)
 	if !exists {
@@ -279,19 +256,16 @@ func GetFollowRecommendations(c *gin.Context) {
 
 	var posts []models.Post
 
-	// Сначала проверяем, есть ли у пользователя подписки
 	var followCount int64
 	database.DB.Model(&models.Followers{}).
 		Where("follower_id = ?", userID).
 		Count(&followCount)
 
 	if followCount == 0 {
-		// Если нет подписок, возвращаем пустой результат
 		c.JSON(http.StatusOK, gin.H{"posts": []PostRecommendationResponse{}, "type": "follow"})
 		return
 	}
 
-	// Основной запрос - посты от подписок
 	err := database.DB.Preload("User", func(db *gorm.DB) *gorm.DB {
 		return db.Select("id, username, image_url, bio")
 	}).
@@ -322,23 +296,19 @@ func GetFollowRecommendations(c *gin.Context) {
 		return
 	}
 
-	// Форматируем ответ
 	response := formatRecommendationResponse(posts)
 	c.JSON(http.StatusOK, gin.H{"posts": response, "type": "follow"})
 }
 
-// formatRecommendationResponse - форматирует посты для ответа с рекомендациями
 func formatRecommendationResponse(posts []models.Post) []PostRecommendationResponse {
 	response := make([]PostRecommendationResponse, 0, len(posts))
 
 	for _, post := range posts {
-		// Получаем теги
 		tags := make([]string, 0)
 		for _, tag := range post.Tags {
 			tags = append(tags, tag.Name)
 		}
 
-		// Получаем фото
 		photos := make([]PhotoResponse, 0)
 		if post.Photos != nil {
 			for _, photo := range post.Photos {
@@ -346,13 +316,11 @@ func formatRecommendationResponse(posts []models.Post) []PostRecommendationRespo
 			}
 		}
 
-		// Получаем имя поселения - Settlement это встроенная структура, проверяем по ID
 		settlementName := ""
 		if post.Settlement.Geonameid != 0 {
 			settlementName = post.Settlement.Name
 		}
 
-		// Получаем аватар и имя пользователя - User это встроенная структура, проверяем по ID
 		userAvatar := ""
 		userName := ""
 		if post.User.ID != 0 {

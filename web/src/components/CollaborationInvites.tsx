@@ -128,8 +128,8 @@ const CollaborationInvites: React.FC = () => {
                     ));
                     
                     const message = data.data.status === 'accepted' 
-                        ? `✅ ${data.data.username} принял(а) ваше приглашение в пост "${data.data.post_title}"`
-                        : `❌ ${data.data.username} отклонил(а) ваше приглашение в пост "${data.data.post_title}"`;
+                        ? `${data.data.username} принял(а) ваше приглашение в пост "${data.data.post_title}"`
+                        : `${data.data.username} отклонил(а) ваше приглашение в пост "${data.data.post_title}"`;
                     
                         if (data.data.status === 'accepted') {
                         toast.success(message);

@@ -21,7 +21,6 @@ func GetCollaborators(c *gin.Context) {
 		return
 	}
 
-	// Получаем владельца поста
 	var post models.Post
 	if err := database.DB.First(&post, postID).Error; err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Post not found"})
@@ -39,7 +38,6 @@ func GetCollaborators(c *gin.Context) {
 		return
 	}
 
-	// Форматируем ответ для фронтенда
 	result := make([]gin.H, 0)
 	for _, collab := range collaborators {
 		result = append(result, gin.H{
@@ -75,7 +73,6 @@ func RemoveCollaborator(c *gin.Context) {
 		return
 	}
 
-	// Проверяем, что текущий пользователь - владелец поста
 	var post models.Post
 	if err := database.DB.First(&post, postID).Error; err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Post not found"})
@@ -87,7 +84,6 @@ func RemoveCollaborator(c *gin.Context) {
 		return
 	}
 
-	// Удаляем соавтора
 	result := database.DB.Where("post_id = ? AND user_id = ?", postID, collaboratorID).Delete(&models.PostCollaborator{})
 	if result.Error != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to remove collaborator"})
@@ -97,7 +93,6 @@ func RemoveCollaborator(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "Collaborator removed"})
 }
 
-// Улучшенная функция AcceptInvite с уведомлением автору
 func AcceptInvite(c *gin.Context) {
 	userIDVal, exists := c.Get("userID")
 	if !exists {
@@ -130,7 +125,6 @@ func AcceptInvite(c *gin.Context) {
 		return
 	}
 
-	// Проверяем, что приглашение адресовано текущему пользователю
 	if invite.InviteeID != currentID {
 		c.JSON(http.StatusForbidden, gin.H{"error": "This invite is not for you"})
 		return
@@ -141,7 +135,6 @@ func AcceptInvite(c *gin.Context) {
 		return
 	}
 
-	// Получаем информацию о пользователе, который принимает приглашение
 	var invitee models.User
 	if err := database.DB.First(&invitee, currentID).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get user info"})
@@ -149,7 +142,6 @@ func AcceptInvite(c *gin.Context) {
 	}
 
 	err = database.DB.Transaction(func(tx *gorm.DB) error {
-		// Обновляем статус приглашения
 		now := time.Now()
 		if err := tx.Model(&invite).Updates(map[string]interface{}{
 			"status":       "accepted",
@@ -158,7 +150,6 @@ func AcceptInvite(c *gin.Context) {
 			return err
 		}
 
-		// Добавляем пользователя как соавтора
 		collaborator := models.PostCollaborator{
 			PostID:   invite.PostID,
 			UserID:   invite.InviteeID,
@@ -178,7 +169,6 @@ func AcceptInvite(c *gin.Context) {
 		return
 	}
 
-	// Отправляем уведомление автору приглашения через SSE
 	go func() {
 		notification := map[string]interface{}{
 			"type": "INVITE_RESPONSE",
@@ -198,19 +188,17 @@ func AcceptInvite(c *gin.Context) {
 		data, _ := json.Marshal(notification)
 
 		if sse.GlobalHub != nil {
-			// Отправляем уведомление автору приглашения (InviterID)
 			sse.GlobalHub.BroadcastUser <- sse.UserMessage{
 				UserID: invite.InviterID,
 				Data:   data,
 			}
-			log.Printf("📢 Уведомление об ACCEPT отправлено пользователю %d", invite.InviterID)
+			log.Printf("Уведомление об ACCEPT отправлено пользователю %d", invite.InviterID)
 		}
 	}()
 
 	c.JSON(http.StatusOK, gin.H{"message": "Invite accepted"})
 }
 
-// Улучшенная функция DeclineInvite с уведомлением автору
 func DeclineInvite(c *gin.Context) {
 	userIDVal, exists := c.Get("userID")
 	if !exists {
@@ -253,7 +241,6 @@ func DeclineInvite(c *gin.Context) {
 		return
 	}
 
-	// Получаем информацию о пользователе, который отклоняет приглашение
 	var invitee models.User
 	if err := database.DB.First(&invitee, currentID).Error; err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to get user info"})
@@ -270,7 +257,6 @@ func DeclineInvite(c *gin.Context) {
 		return
 	}
 
-	// Отправляем уведомление автору приглашения через SSE
 	go func() {
 		notification := map[string]interface{}{
 			"type": "INVITE_RESPONSE",
@@ -289,7 +275,6 @@ func DeclineInvite(c *gin.Context) {
 		data, _ := json.Marshal(notification)
 
 		if sse.GlobalHub != nil {
-			// Отправляем уведомление автору приглашения (InviterID)
 			sse.GlobalHub.BroadcastUser <- sse.UserMessage{
 				UserID: invite.InviterID,
 				Data:   data,
@@ -341,10 +326,8 @@ func GetPendingInvites(c *gin.Context) {
 		return
 	}
 
-	// Форматируем ответ с превью поста
 	result := make([]gin.H, 0)
 	for _, inv := range invites {
-		// Получаем первый параграф для превью текста
 		var previewText string
 		if len(inv.Post.Paragraphs) > 0 {
 			previewText = inv.Post.Paragraphs[0].Content
@@ -353,7 +336,6 @@ func GetPendingInvites(c *gin.Context) {
 			}
 		}
 
-		// Получаем первую фотографию для превью
 		var previewPhoto string
 		if len(inv.Post.Photos) > 0 {
 			previewPhoto = inv.Post.Photos[0].Url
@@ -447,7 +429,6 @@ func InviteCollaborator(c *gin.Context) {
 		return
 	}
 
-	// Всегда создаём с ролью editor
 	invite := models.CollaborationInvite{
 		PostID:    uint(postID),
 		InviterID: currentID,
@@ -483,20 +464,17 @@ func LeaveCollaboration(c *gin.Context) {
 		return
 	}
 
-	// Проверяем, что пост существует
 	var post models.Post
 	if err := database.DB.First(&post, postID).Error; err != nil {
 		c.JSON(http.StatusNotFound, gin.H{"error": "Post not found"})
 		return
 	}
 
-	// Владелец не может выйти, только удалить пост
 	if post.UserID == currentID {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Owner cannot leave the post. Only delete it."})
 		return
 	}
 
-	// Удаляем соавтора
 	result := database.DB.Where("post_id = ? AND user_id = ?", postID, currentID).Delete(&models.PostCollaborator{})
 	if result.Error != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to leave post"})
@@ -508,7 +486,6 @@ func LeaveCollaboration(c *gin.Context) {
 		return
 	}
 
-	// Проверяем, остались ли ещё соавторы
 	var count int64
 	database.DB.Model(&models.PostCollaborator{}).Where("post_id = ?", postID).Count(&count)
 
@@ -519,7 +496,6 @@ func LeaveCollaboration(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "You have left the post"})
 }
 
-// В internal/handlers/post/collaborators.go
 func CheckCollaboratorStatus(c *gin.Context) {
 	userID, exists := getUserIDFromContext(c)
 	if !exists {
@@ -567,7 +543,6 @@ func CheckCollaboratorStatus(c *gin.Context) {
 	})
 }
 
-// post.go - добавьте новую функцию
 func GetPendingInvitesCount(c *gin.Context) {
 	userIDVal, exists := c.Get("userID")
 	if !exists {

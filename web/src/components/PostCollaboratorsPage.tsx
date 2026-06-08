@@ -19,7 +19,7 @@ const PostCollaboratorsPage: React.FC = () => {
     const navigate = useNavigate();
     const [collaborators, setCollaborators] = useState<Collaborator[]>([]);
     const [postTitle, setPostTitle] = useState('');
-    const [postAuthorId, setPostAuthorId] = useState<number | null>(null); // ← добавляем ID автора
+    const [postAuthorId, setPostAuthorId] = useState<number | null>(null); 
     const [postAuthorName, setPostAuthorName] = useState('');
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
@@ -38,7 +38,6 @@ const PostCollaboratorsPage: React.FC = () => {
             setCurrentUserId(response.data.id);
         } catch (error) {
             console.error('Ошибка загрузки текущего пользователя:', error);
-            // Пробуем получить из localStorage как запасной вариант
             const savedId = localStorage.getItem('userId');
             if (savedId) {
                 setCurrentUserId(parseInt(savedId));
@@ -54,7 +53,7 @@ const PostCollaboratorsPage: React.FC = () => {
             });
             setCollaborators(response.data.collaborators || []);
             setPostTitle(response.data.post_title || '');
-            setPostAuthorId(response.data.post_author_id || null); // ← получаем ID автора
+            setPostAuthorId(response.data.post_author_id || null);
             setPostAuthorName(response.data.post_author || '');
         } catch (error: any) {
             console.error('Ошибка загрузки соавторов:', error);
@@ -292,7 +291,6 @@ const PostCollaboratorsPage: React.FC = () => {
                                     </div>
                                 </div>
                                 
-                                {/* ✅ Кнопка удаления показывается только для владельца */}
                                 {isOwner && (
                                     <button
                                         onClick={() => removeCollaborator(collab.user_id, collab.username)}

@@ -1,4 +1,3 @@
-// AllPostsMap.tsx
 import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { MapContainer, TileLayer, Marker, useMap } from 'react-leaflet';
 import axios from 'axios';
@@ -10,12 +9,9 @@ import MarkerClusterGroup from 'react-leaflet-markercluster';
 import { useNavigate } from 'react-router-dom';
 import './AllPostsMap.css';
 
-// Границы Беларуси - смещены левее, чтобы учесть панель справа
 const BelarusBounds: L.LatLngBoundsLiteral = [[51.1, 23.0], [56.3, 32.5]];
-// Смещаем центр карты левее (было 27.5667, стало 26.5)
 const BELARUS_CENTER: L.LatLngTuple = [53.9, 50.0];
 
-// Кастомная иконка для кластеров (только для кластеров с 2+ маркерами)
 const createClusterCustomIcon = (cluster: any) => {
   const count = cluster.getChildCount();
   let bgColor = '#696cff';

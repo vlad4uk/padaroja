@@ -1,4 +1,3 @@
-// internal/handlers/admin/admin.go
 package admin
 
 import (
@@ -13,7 +12,6 @@ import (
 	"gorm.io/gorm"
 )
 
-// GetDashboardStats - получение статистики для дашборда
 func GetDashboardStats(c *gin.Context) {
 	userIDValue, exists := c.Get("userID")
 	if !exists {
@@ -33,38 +31,30 @@ func GetDashboardStats(c *gin.Context) {
 		return
 	}
 
-	// Проверка прав администратора (role_id = 3)
 	if currentUser.RoleID != 3 {
 		c.JSON(http.StatusForbidden, gin.H{"error": "Access denied. Admin rights required."})
 		return
 	}
 
-	// Получаем общее количество пользователей
 	var totalUsers int64
 	database.DB.Model(&models.User{}).Count(&totalUsers)
 
-	// Новые пользователи за неделю
 	var newUsersThisWeek int64
 	weekAgo := time.Now().AddDate(0, 0, -7)
 	database.DB.Model(&models.User{}).Where("created_at >= ?", weekAgo).Count(&newUsersThisWeek)
 
-	// Общее количество постов
 	var totalPosts int64
 	database.DB.Model(&models.Post{}).Count(&totalPosts)
 
-	// Новые посты за неделю
 	var newPostsThisWeek int64
 	database.DB.Model(&models.Post{}).Where("created_at >= ?", weekAgo).Count(&newPostsThisWeek)
 
-	// Количество модераторов (role_id = 2)
 	var totalModerators int64
 	database.DB.Model(&models.User{}).Where("role_id = ?", 2).Count(&totalModerators)
 
-	// Количество администраторов (role_id = 3)
 	var totalAdmins int64
 	database.DB.Model(&models.User{}).Where("role_id = ?", 3).Count(&totalAdmins)
 
-	// Вычисляем процент роста пользователей
 	var usersLastWeek int64
 	twoWeeksAgo := time.Now().AddDate(0, 0, -14)
 	database.DB.Model(&models.User{}).Where("created_at >= ? AND created_at < ?", twoWeeksAgo, weekAgo).Count(&usersLastWeek)
@@ -74,7 +64,6 @@ func GetDashboardStats(c *gin.Context) {
 		usersGrowthPercent = float64(newUsersThisWeek-usersLastWeek) / float64(usersLastWeek) * 100
 	}
 
-	// Процент роста постов
 	var postsLastWeek int64
 	database.DB.Model(&models.Post{}).Where("created_at >= ? AND created_at < ?", twoWeeksAgo, weekAgo).Count(&postsLastWeek)
 
@@ -95,7 +84,6 @@ func GetDashboardStats(c *gin.Context) {
 	})
 }
 
-// GetAllUsers - получение всех пользователей
 func GetAllUsers(c *gin.Context) {
 	if !checkAdminRights(c) {
 		return
@@ -114,10 +102,7 @@ func GetAllUsers(c *gin.Context) {
 	c.JSON(http.StatusOK, users)
 }
 
-// GetModerators - получение списка модераторов с историей назначений
-// GetModerators - получение списка модераторов (упрощенная версия)
 func GetModerators(c *gin.Context) {
-	// Проверяем права администратора
 	userIDValue, exists := c.Get("userID")
 	if !exists {
 		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
@@ -136,13 +121,11 @@ func GetModerators(c *gin.Context) {
 		return
 	}
 
-	// Проверяем, что пользователь - администратор (role_id = 3)
 	if currentUser.RoleID != 3 {
 		c.JSON(http.StatusForbidden, gin.H{"error": "Access denied. Admin rights required."})
 		return
 	}
 
-	// Получаем всех пользователей с ролью модератора (role_id = 2)
 	var moderators []models.User
 	err := database.DB.Where("role_id = ?", 2).Find(&moderators).Error
 
@@ -152,7 +135,6 @@ func GetModerators(c *gin.Context) {
 		return
 	}
 
-	// Формируем ответ
 	type ModeratorInfo struct {
 		ID        int    `json:"id"`
 		Username  string `json:"username"`
@@ -175,7 +157,6 @@ func GetModerators(c *gin.Context) {
 	c.JSON(http.StatusOK, result)
 }
 
-// SearchUsersForAdmin - поиск пользователей для администратора
 func SearchUsersForAdmin(c *gin.Context) {
 	if !checkAdminRights(c) {
 		return
@@ -203,7 +184,6 @@ func SearchUsersForAdmin(c *gin.Context) {
 	c.JSON(http.StatusOK, users)
 }
 
-// AssignModeratorByAdmin - назначение модератора админом
 func AssignModeratorByAdmin(c *gin.Context) {
 	if !checkAdminRights(c) {
 		return
@@ -242,14 +222,11 @@ func AssignModeratorByAdmin(c *gin.Context) {
 		return
 	}
 
-	// Начинаем транзакцию
 	err := database.DB.Transaction(func(tx *gorm.DB) error {
-		// Обновляем роль пользователя
 		if err := tx.Model(&targetUser).Update("role_id", 2).Error; err != nil {
 			return err
 		}
 
-		// Логируем назначение
 		assignment := models.ModeratorAssignment{
 			UserID:            int(targetUserID),
 			AssignedByAdminID: int(adminID),
@@ -278,7 +255,6 @@ func AssignModeratorByAdmin(c *gin.Context) {
 	})
 }
 
-// RemoveModeratorByAdmin - снятие модератора админом
 func RemoveModeratorByAdmin(c *gin.Context) {
 	if !checkAdminRights(c) {
 		return
@@ -307,14 +283,11 @@ func RemoveModeratorByAdmin(c *gin.Context) {
 		return
 	}
 
-	// Начинаем транзакцию
 	err := database.DB.Transaction(func(tx *gorm.DB) error {
-		// Обновляем роль пользователя на обычного пользователя (role_id = 1)
 		if err := tx.Model(&targetUser).Update("role_id", 1).Error; err != nil {
 			return err
 		}
 
-		// Логируем снятие
 		assignment := models.ModeratorAssignment{
 			UserID:            int(targetUserID),
 			AssignedByAdminID: int(adminID),
@@ -343,7 +316,6 @@ func RemoveModeratorByAdmin(c *gin.Context) {
 	})
 }
 
-// BlockUserByAdmin - блокировка пользователя админом
 func BlockUserByAdmin(c *gin.Context) {
 	if !checkAdminRights(c) {
 		return
@@ -397,7 +369,6 @@ func BlockUserByAdmin(c *gin.Context) {
 	})
 }
 
-// UnblockUserByAdmin - разблокировка пользователя админом
 func UnblockUserByAdmin(c *gin.Context) {
 	if !checkAdminRights(c) {
 		return
@@ -436,10 +407,6 @@ func UnblockUserByAdmin(c *gin.Context) {
 	})
 }
 
-// Вспомогательные функции
-
-// В функции checkAdminRights измените:
-// В admin.go
 func checkAdminRights(c *gin.Context) bool {
 	userIDValue, exists := c.Get("userID")
 	if !exists {
@@ -459,7 +426,6 @@ func checkAdminRights(c *gin.Context) bool {
 		return false
 	}
 
-	// Только администраторы (role_id=3)
 	if currentUser.RoleID != 3 {
 		c.JSON(http.StatusForbidden, gin.H{"error": "Access denied. Admin rights required."})
 		return false
