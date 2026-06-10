@@ -6,7 +6,7 @@ services:
     container_name: padaroja-backend
     env_file: .env
     environment:
-      - APP_ENV=development  # Важно: development режим
+      - APP_ENV=development 
       - FRONTEND_URL=http://localhost:3000
     expose:
       - "8080"
@@ -46,8 +46,7 @@ services:
     image: nginx:alpine
     container_name: padaroja-proxy
     ports:
-      - "127.0.0.1:80:80"  # Явно привязываем только к localhost
-      # Альтернатива: - "80:80" - тогда будет доступно и по IP, и по localhost
+      - "127.0.0.1:80:80" 
     volumes:
       - ./nginx.conf:/etc/nginx/nginx.conf:ro
       - ./web/build:/usr/share/nginx/html:ro

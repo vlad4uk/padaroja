@@ -108,7 +108,6 @@ const CommentItem: React.FC<CommentItemProps> = ({
           </button>
         )}
 
-        {/* Кнопка показа/скрытия ответов */}
         {hasReplies && (
           <button 
             className="comment-action-btn"
@@ -121,7 +120,6 @@ const CommentItem: React.FC<CommentItemProps> = ({
         )}
       </div>
 
-      {/* Форма ответа */}
       {showReplyForm && isLoggedIn && (
         <div className="reply-form">
           <textarea
@@ -154,7 +152,6 @@ const CommentItem: React.FC<CommentItemProps> = ({
         </div>
       )}
 
-      {/* Вложенные ответы */}
       {hasReplies && showReplies && (
         <div className="comment-replies">
           {comment.replies!.map(reply => (

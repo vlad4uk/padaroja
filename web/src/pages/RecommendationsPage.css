@@ -1,4 +1,4 @@
-/* RecommendationsPage.css */
+
 .rec-container {
     max-width: 1200px;
     margin: 0 auto;
@@ -49,6 +49,5 @@
 @keyframes spin { to { transform: rotate(360deg); } }
 .hint { color: #999; font-size: 14px; margin-top: 8px; }
 
-/* Стили карточек уже есть в UserPostsFeed.css, они подхватятся автоматически */
 .posts-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 15px; }
 @media (max-width: 768px) { .posts-grid { grid-template-columns: 1fr; } }

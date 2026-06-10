@@ -287,7 +287,6 @@ const MapView: React.FC<MapViewProps> = ({ targetUserId }) => {
 
   return (
     <div className="map-view-container">
-      {/* Карта */}
       <div className="map-container">
         <MapContainer
           center={BELARUS_CENTER}
@@ -305,10 +304,8 @@ const MapView: React.FC<MapViewProps> = ({ targetUserId }) => {
             url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
           />
           
-          {/* Компонент для плавного перелета к маркеру */}
           <FlyToMarker position={flyToPosition} />
           
-          {/* Отображение постов */}
           {mapData.posts.map((post) => (
             <Marker 
               key={`post-${post.id}`} 
@@ -318,7 +315,6 @@ const MapView: React.FC<MapViewProps> = ({ targetUserId }) => {
                 click: () => handlePostClick(post)
               }}
             >
-              {/* Минимальный попап только с названием */}
               <Popup closeButton={false} autoPan={false} offset={[0, -20]}>
                 <div style={{ 
                   padding: '6px 12px',
@@ -338,7 +334,6 @@ const MapView: React.FC<MapViewProps> = ({ targetUserId }) => {
         </MapContainer>
       </div>
 
-      {/* Панель управления */}
       <div 
         className="map-controls" 
         ref={controlsRef}
@@ -355,7 +350,6 @@ const MapView: React.FC<MapViewProps> = ({ targetUserId }) => {
           </h3>
         </div>
 
-        {/* Детали выбранного поста */}
         {selectedPost ? (
           <div className="marker-details">
             <div style={{
@@ -427,7 +421,6 @@ const MapView: React.FC<MapViewProps> = ({ targetUserId }) => {
             </div>
           </div>
         ) : (
-          /* Информация, когда ничего не выбрано */
           <div className="info-message">
             {isOwnProfile ? (
               <>

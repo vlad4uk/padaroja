@@ -1,8 +1,3 @@
-/* src/styles/MainLayout.css */
-
-/* ========================================================================= */
-/* 0. ГЛОБАЛЬНЫЙ СБРОС */
-/* ========================================================================= */
 * {
     box-sizing: border-box; 
     margin: 0; 
@@ -20,18 +15,12 @@ body {
     color: #0F1419;
 }
 
-/* ========================================================================= */
-/* 1. Основной контейнер приложения */
-/* ========================================================================= */
 .app-container {
      display: flex;
      min-height: 100vh;
      background-color: #fff;
 }
 
-/* ========================================================================= */
-/* 2. Боковая панель (Sidebar) */
-/* ========================================================================= */
 .sidebar {
   width: 20%; 
   flex-shrink: 0;
@@ -106,9 +95,6 @@ body {
     padding-bottom: 10px;
 }
 
-/* ========================================================================= */
-/* 3. Основная область контента */
-/* ========================================================================= */
 .main-content {
   flex-grow: 1;
   display: flex;
@@ -124,9 +110,6 @@ body {
   padding: 0;
 }
 
-/* ========================================================================= */
-/* 4. Профиль и вкладки */
-/* ========================================================================= */
 .profile-section {
   background-color: #fff;
   padding: 16px;
@@ -134,7 +117,7 @@ body {
 
 .profile-header {
   display: flex;
-  align-items: center; /* Выравниваем по центру по вертикали */
+  align-items: center;
   margin-bottom: 20px; 
   padding: 10px 0;
   gap: 20px;
@@ -161,25 +144,23 @@ body {
   flex: 1;
   display: flex;
   flex-direction: column;
-  justify-content: center; /* Выравниваем по вертикали по центру */
-  min-height: 150px; /* Минимальная высота как у аватара */
+  justify-content: center;
+  min-height: 150px; 
 }
 
-/* Верхняя строка профиля */
 .profile-top-row {
   display: flex;
   justify-content: space-between;
-  align-items: center; /* Выравниваем по центру по вертикали */
+  align-items: center;
   gap: 40px;
 }
 
-/* Левая часть: имя и био */
 .profile-left {
   flex: 1;
   display: flex;
   flex-direction: column;
   gap: 8px;
-  justify-content: center; /* Выравниваем по центру по вертикали */
+  justify-content: center;
 }
 
 .user-name {
@@ -197,20 +178,18 @@ body {
   max-width: 400px;
 }
 
-/* Правая часть: статистика и кнопка */
 .profile-right {
   display: flex;
   flex-direction: column;
   align-items: flex-end;
   gap: 12px;
   min-width: 200px;
-  justify-content: center; /* Выравниваем по центру по вертикали */
+  justify-content: center; 
 }
 
-/* Статистика подписчиков/подписок В СТРОКУ */
 .follow-stats {
   display: flex;
-  gap: 25px; /* Отступ между элементами статистики */
+  gap: 25px; 
   align-items: center;
 }
 
@@ -237,7 +216,6 @@ body {
   margin-right: 4px;
 }
 
-/* Кнопки подписки */
 .follow-button {
   padding: 8px 20px;
   border: 1px solid #696cff;
@@ -267,7 +245,6 @@ body {
   cursor: not-allowed;
 }
 
-/* Навигационные табы */
 .profile-content {
   position: relative;
   border-bottom: 1px solid #e0e0e0; 
@@ -306,7 +283,6 @@ body {
   font-weight: 600;
 }
 
-/* Адаптивность для мобильных устройств */
 @media (max-width: 768px) {
     .profile-header {
         flex-direction: column;
@@ -344,9 +320,7 @@ body {
         text-align: center;
     }
 }
-/* ========================================================================= */
-/* 5. Лента */
-/* ========================================================================= */
+
 .main-feed {
   margin-top: 0;
 }
@@ -360,9 +334,7 @@ body {
 .post-item:hover {
   background-color: #fafafa;
 }
-/* ========================================================================= */
-/* 6. Форма редактирования (Instagram-like) */
-/* ========================================================================= */
+
 .profile-edit-form-container {
     padding: 0;
     border: none;
@@ -509,7 +481,6 @@ body {
     background-color: #fafafa;
 }
 
-/* Сообщения об ошибках и успехе */
 .error-message {
     color: #ed4956;
     text-align: center;
@@ -530,7 +501,6 @@ body {
     border-radius: 4px;
 }
 
-/* Адаптивность для мобильных устройств */
 @media (max-width: 768px) {
     .profile-edit-form-container {
         padding: 0 16px;

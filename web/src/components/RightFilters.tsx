@@ -70,7 +70,6 @@ const RightFilters: React.FC<RightFiltersProps> = ({
 
     return (
         <aside className="right-filters-sidebar">
-            {/* Заголовок */}
             <div className="right-filters-header">
                 <h3 className="right-filters-title">
                     Фильтры
@@ -78,7 +77,6 @@ const RightFilters: React.FC<RightFiltersProps> = ({
                 <div className="right-filters-title-line"></div>
             </div>
 
-            {/* Поиск по названию или месту */}
             <div className="right-search-box">
                 <div className="right-search-wrapper">
                     <FaSearch className="right-search-icon" />
@@ -92,7 +90,6 @@ const RightFilters: React.FC<RightFiltersProps> = ({
                 </div>
             </div>
 
-            {/* Поиск по тегам */}
             <div className="right-tags-block">
                 <span className="tags-title">Теги</span>
                 <div className="tags-line"></div>
@@ -105,7 +102,6 @@ const RightFilters: React.FC<RightFiltersProps> = ({
                 />
             </div>
 
-            {/* Сортировка - выпадающий список */}
             <div className="right-sort-block">
                 <span className="tags-title">Сортировка</span>
                 
@@ -120,7 +116,6 @@ const RightFilters: React.FC<RightFiltersProps> = ({
                 </select>
             </div>
 
-            {/* Кнопка "Посмотреть на карте" - без стилей при наведении и нажатии */}
             <div className="right-map-button-wrapper">
                 <button
                     onClick={handleViewOnMap}
@@ -131,7 +126,6 @@ const RightFilters: React.FC<RightFiltersProps> = ({
                 </button>
             </div>
 
-            {/* Топ растущих пользователей за неделю - упрощенная версия */}
             <div className="top-users-block">
                 <div className="top-users-header">
                     <div className="top-users-title">

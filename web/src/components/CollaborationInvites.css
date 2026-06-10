@@ -28,12 +28,11 @@
     border-radius: 16px;
     padding: 16px;
     border: 1px solid #e9e1ff;
-    transition: none; /* Убрали анимацию */
+    transition: none;
 }
 
 .invite-card:hover {
-    /* Убрали box-shadow и transform */
-    background: #f9f9ff; /* Оставляем как есть */
+    background: #f9f9ff;
 }
 
 .invite-header {
@@ -121,7 +120,7 @@
     border-radius: 30px;
     cursor: pointer;
     font-weight: 500;
-    transition: opacity 0.2s; /* Только opacity для disabled */
+    transition: opacity 0.2s; 
 }
 
 .accept-btn {
@@ -131,7 +130,6 @@
 
 .accept-btn:hover:not(:disabled) {
     background: #7a46e6;
-    /* Убрали scale */
 }
 
 .decline-btn {
@@ -142,7 +140,6 @@
 
 .decline-btn:hover:not(:disabled) {
     background: #fff0f0;
-    /* Убрали scale */
 }
 
 .accept-btn:disabled, .decline-btn:disabled {
@@ -173,7 +170,6 @@
     color: #999;
 }
 
-/* Добавьте в конец файла */
 
 .invite-post-preview {
     background: white;

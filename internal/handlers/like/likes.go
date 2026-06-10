@@ -232,17 +232,17 @@ func GetUserLikes(c *gin.Context) {
 		}
 
 		response = append(response, gin.H{
-			"id":          like.Post.ID,
-			"user_id":     like.Post.UserID,
-			"title":       like.Post.Title,
-			"created_at":  like.Post.CreatedAt,
-			"place_name":  like.Post.SettlementName,
-			"tags":        tags,
-			"photos":      like.Post.Photos,
-			"likes_count": like.Post.LikesCount,
-			"user_avatar": userAvatar,
-			"user_name":   userName,
-			"is_liked":    true,
+			"id":              like.Post.ID,
+			"user_id":         like.Post.UserID,
+			"title":           like.Post.Title,
+			"created_at":      like.Post.CreatedAt,
+			"settlement_name": like.Post.SettlementName,
+			"tags":            tags,
+			"photos":          like.Post.Photos,
+			"likes_count":     like.Post.LikesCount,
+			"user_avatar":     userAvatar,
+			"user_name":       userName,
+			"is_liked":        true,
 		})
 	}
 

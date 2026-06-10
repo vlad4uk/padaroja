@@ -12,9 +12,7 @@ const ContentLayout: React.FC<ContentLayoutProps> = ({ children }) => {
         <div className="app-container">
             <Sidebar />
 
-            {/* main-content - это область справа от Sidebar */}
             <main className="main-content">
-                {/* content-area - это внутренняя обертка для padding'ов и стилей */}
                 <div className="content-area">
                     {children}
                 </div>

@@ -458,7 +458,6 @@ const PostEditPage: React.FC = () => {
                         style={{ marginTop: '10px' }}
                     />
 
-                    {/* Блок с кнопками Удалить/Сохранить */}
                     <div style={{ display: 'flex', gap: '15px', marginTop: '20px' }}>
                         {isOwner && (
                             <button 

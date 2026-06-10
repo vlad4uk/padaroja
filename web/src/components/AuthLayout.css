@@ -1,4 +1,3 @@
-/* src/components/AuthLayout.css */
 .auth-container {
   min-height: 75vh;
   display: flex;
@@ -17,28 +16,27 @@
 .logo {
   font-size: 24px;
   font-weight: 700;
-  color: #696cff; /* Основной цвет Sneat */
+  color: #696cff; 
 }
 
 .auth-card-wrapper {
   display: flex;
   width: 100%;
-  max-width: 1000px; /* Ширина всей карточки */
+  max-width: 1000px;
   background-color: #fff;
   border-radius: 6px;
-  box-shadow: 0 4px 24px 0 rgba(0, 0, 0, 0.08); /* Имитация тени MUI */
+  box-shadow: 0 4px 24px 0 rgba(0, 0, 0, 0.08);
   overflow: hidden;
   min-height: 600px;
 }
 
 .auth-illustration {
   flex: 1;
-  background-color: #eef1ff; /* Светлый фон для иллюстрации */
+  background-color: #eef1ff;
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 40px;
-  /* Имитация иллюстрации - в реальном проекте здесь будет SVG */
 }
 .auth-illustration img {
   max-width: 100%;
@@ -46,14 +44,13 @@
 }
 
 .auth-form-content {
-  width: 420px; /* Фиксированная ширина для формы */
+  width: 420px; 
   padding: 48px;
   display: flex;
   flex-direction: column;
   justify-content: center;
 }
 
-/* Форматирование заголовков */
 .auth-title {
   font-size: 1.75rem;
   font-weight: 600;
@@ -67,7 +64,6 @@
   margin-bottom: 32px;
 }
 
-/* Стили для полей ввода */
 .form-field-group {
   margin-bottom: 20px;
 }
@@ -92,11 +88,10 @@
 
 .form-input:focus {
   outline: none;
-  border-color: #696cff; /* Акцентный цвет при фокусе */
+  border-color: #696cff;
   box-shadow: 0 0 0 1px #696cff;
 }
 
-/* Стили для основной кнопки */
 .primary-button {
   width: 100%;
   padding: 12px 0;
@@ -115,7 +110,6 @@
   background-color: #5d60e7;
 }
 
-/* Дополнительные стили (OR, Socials) */
 .separator {
   text-align: center;
   margin: 20px 0;
@@ -154,7 +148,6 @@
   }
 }
 
-/* src/components/AuthLayout.css (добавить в конец) */
 .social-button {
   width: 36px;
   height: 36px;

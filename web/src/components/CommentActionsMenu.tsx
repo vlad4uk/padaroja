@@ -51,7 +51,6 @@ const CommentActionsMenu: React.FC<CommentActionsMenuProps> = ({
             
             {isOpen && (
                 <div className="comment-menu-dropdown">
-                    {/* Действия для автора */}
                     {isAuthor && (
                         <button
                             onClick={() => onDelete(commentID)}
@@ -61,7 +60,6 @@ const CommentActionsMenu: React.FC<CommentActionsMenuProps> = ({
                         </button>
                     )}
                     
-                    {/* Действия для всех (кроме автора) */}
                     {!isAuthor && (
                         <CommentReportButton
                             commentID={commentID}

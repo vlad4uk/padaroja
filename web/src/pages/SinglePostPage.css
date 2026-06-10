@@ -1,4 +1,3 @@
-/* src/pages/SinglePostPage.css (ФИНАЛЬНАЯ ВЕРСИЯ С YOUTUBE-СТИЛЕМ) */
 
 .single-post-container {
     width: 100%;
@@ -9,7 +8,6 @@
     font-family: 'Inter', sans-serif;
 }
 
-/* --- Верхняя область (Название, кнопки) --- */
 .sp-top-meta-area {
     margin-bottom: 25px;
     padding-bottom: 5px;
@@ -25,7 +23,6 @@
     padding-right: 60px;
 }
 
-/* Метаинформация (под заголовком) */
 .sp-meta-info {
     display: flex;
     flex-wrap: wrap;
@@ -58,7 +55,6 @@
     cursor: pointer; 
 }
 
-/* Стили для стека аватаров и имен авторов (YouTube-style) */
 .sp-authors-stack {
     display: flex;
     align-items: center;
@@ -152,7 +148,6 @@
     transform: scale(1.02);
 }
 
-/* Выпадающее меню соавторов */
 .collaborators-dropdown {
     position: absolute;
     top: 100%;
@@ -234,7 +229,6 @@
     margin: 8px 0;
 }
 
-/* Иконка меню действий (PostActionsMenu) */
 .sp-author-actions {
     position: absolute;
     top: 0;
@@ -257,7 +251,6 @@
     background: #f0ebff;
 }
 
-/* Стилизация выпадающего меню */
 .menu-dropdown {
     position: absolute;
     top: 35px;
@@ -293,7 +286,6 @@
     color: #ff4d4f;
 }
 
-/* --- Слайдер с контентом --- */
 .sp-content-slider {
     display: flex;
     align-items: center;
@@ -511,7 +503,6 @@
     color: #e74c3c;
 }
 
-/* Модальное окно для фото */
 .image-modal-overlay {
     position: fixed;
     top: 0;
@@ -712,9 +703,6 @@ body.modal-open {
     color: #8c57ff !important;
 }
 
-/* Добавьте в конец файла SinglePostPage.css */
-
-/* Анимация для сердечка лайка */
 @keyframes heartBeat {
     0% {
         transform: scale(1);

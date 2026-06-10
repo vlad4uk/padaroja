@@ -124,7 +124,6 @@ const PostActionsMenu: React.FC<PostActionsMenuProps> = ({
                 
                 {isOpen && (
                     <div className="menu-dropdown">
-                        {/* Редактирование - для владельца и редакторов */}
                         {showEdit && (
                             <button onClick={() => { onEdit(postID); setIsOpen(false); }} className="action-item">
                                 <FaEdit style={{ marginRight: '8px' }} /> 
@@ -132,14 +131,12 @@ const PostActionsMenu: React.FC<PostActionsMenuProps> = ({
                             </button>
                         )}
 
-                        {/* Управление соавторами - только для владельца */}
                         {showManageCollaborators && (
                             <button onClick={handleManageCollaborators} className="action-item action-collaborators">
                                 <FaUsers style={{ marginRight: '8px' }} /> Управление соавторами
                             </button>
                         )}
 
-                        {/* Переключение комментариев - только для владельца */}
                         {showToggleComments && onToggleComments && (
                             <button onClick={() => { onToggleComments(); setIsOpen(false); }} className="action-item action-comments">
                                 {commentsDisabled ? 
@@ -149,7 +146,6 @@ const PostActionsMenu: React.FC<PostActionsMenuProps> = ({
                             </button>
                         )}
 
-                        {/* Выход из соавторов - для соавторов (не владельца) */}
                         {showLeaveCollaboration && (
                             <button 
                                 onClick={handleLeaveCollaboration} 
@@ -161,14 +157,12 @@ const PostActionsMenu: React.FC<PostActionsMenuProps> = ({
                             </button>
                         )}
 
-                        {/* Удаление - только для владельца */}
                         {showDelete && (
                             <button onClick={() => { onDelete(postID); setIsOpen(false); }} className="action-item action-delete">
                                 <FaTrash style={{ marginRight: '8px' }} /> Удалить пост
                             </button>
                         )}
 
-                        {/* Жалоба - для всех остальных */}
                         {showReport && (
                             <button onClick={handleReportClick} className="action-item">
                                 <FaFlag style={{ marginRight: '8px' }} /> Пожаловаться

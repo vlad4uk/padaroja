@@ -85,7 +85,6 @@ return (
     <div className="profile-edit-form-container">
         <form onSubmit={handleSubmit}>
             
-            {/* Секция Аватара */}
             <div className="edit-avatar-section">
                 <div className="edit-user-avatar">
                     <img 
@@ -109,7 +108,6 @@ return (
                 </label>
             </div>
 
-            {/* Поле Username */}
             <div className="edit-field-group">
                 <label htmlFor="username" className="edit-label">Имя</label>
                 <input
@@ -122,7 +120,6 @@ return (
                 />
             </div>
 
-            {/* Поле Bio */}
             <div className="edit-field-group">
                 <label htmlFor="bio" className="edit-label">Описание</label>
                 <div style={{ flex: 1 }}>
@@ -139,7 +136,6 @@ return (
                 </div>
             </div>
             
-            {/* Сообщения об ошибках и успехе */}
             {error && <p className="error-message">{error}</p>}
             {success && <p className="success-message">{success}</p>}
 

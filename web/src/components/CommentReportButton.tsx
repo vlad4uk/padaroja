@@ -42,7 +42,6 @@ const CommentReportButton: React.FC<CommentReportButtonProps> = ({
                 Пожаловаться
             </button>
 
-            {/* Модальное окно для жалоб на комментарии */}
             <ReportModal
                 isOpen={isReportModalOpen}
                 onClose={() => setIsReportModalOpen(false)}

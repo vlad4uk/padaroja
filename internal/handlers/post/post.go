@@ -721,11 +721,11 @@ func UpdatePost(c *gin.Context) {
 		}
 
 		if !isOwner && !isEditor {
-			log.Printf("❌ Доступ запрещен: user=%d, isOwner=%v, isEditor=%v", userID, isOwner, isEditor)
+			log.Printf("Доступ запрещен: user=%d, isOwner=%v, isEditor=%v", userID, isOwner, isEditor)
 			return fmt.Errorf("no permission to edit this post")
 		}
 
-		log.Printf("✅ Разрешение на редактирование: user=%d, isOwner=%v, isEditor=%v", userID, isOwner, isEditor)
+		log.Printf("Разрешение на редактирование: user=%d, isOwner=%v, isEditor=%v", userID, isOwner, isEditor)
 
 		if input.SettlementID != 0 {
 			correctedName, err := validateSettlement(tx, input.SettlementID, input.SettlementName)

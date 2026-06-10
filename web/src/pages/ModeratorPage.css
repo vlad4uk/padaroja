@@ -48,7 +48,6 @@
     overflow-x: auto;
 }
 
-/* Таблица для контента с жалобами и пользователей с жалобами */
 .mod-table {
     width: 100%;
     border-collapse: collapse;
@@ -84,7 +83,6 @@
     text-align: center;
 }
 
-/* --- Стили для таблицы в разделе "Добавить модератора" --- */
 .add-moderator-tab {
     padding: 20px;
     background-color: #f8f9fa;
@@ -98,7 +96,6 @@
     padding: 24px;
 }
 
-/* Таблица результатов поиска в разделе "Добавить модератора" */
 .users-search-table {
     width: 100%;
     border-collapse: collapse;
@@ -130,7 +127,6 @@
     background-color: #f8f9fa;
 }
 
-/* Стили для строк с жалобами */
 .complaint-row, .user-row {
     transition: background-color 0.2s ease;
     cursor: pointer;
@@ -168,7 +164,6 @@
     color: #666;
 }
 
-/* --- Статистика жалоб для пользователей --- */
 .user-total-complaints .total-count {
     font-weight: 600;
     color: #495057;
@@ -210,7 +205,6 @@
     font-size: 13px;
 }
 
-/* --- Статусы --- */
 .post-status, .user-status-badge {
     padding: 4px 8px;
     border-radius: 4px;
@@ -240,7 +234,6 @@
     color: white;
 }
 
-/* --- Кнопки --- */
 .visibility-btn, .block-user-btn, .unblock-user-btn {
     padding: 6px 12px;
     border: none;
@@ -301,7 +294,6 @@
     cursor: not-allowed;
 }
 
-/* Стили для селекта статуса */
 .status-select {
     padding: 6px 12px;
     border: 1px solid #ddd;
@@ -317,7 +309,6 @@
     border-color: #696cff;
 }
 
-/* --- Поисковая секция --- */
 .search-section {
     margin-bottom: 30px;
 }
@@ -402,7 +393,6 @@
     border-left: 4px solid #27ae60;
 }
 
-/* --- Результаты поиска --- */
 .search-results {
     margin-top: 20px;
 }
@@ -429,7 +419,6 @@
     font-weight: 500;
 }
 
-/* --- Бейджи ролей и статусов --- */
 .role-badge, .status-badge {
     padding: 4px 8px;
     border-radius: 4px;
@@ -442,7 +431,6 @@
     color: black;
 }
 
-/* --- Кнопки действий для добавления модератора --- */
 .action-buttons {
     display: flex;
     gap: 8px;
@@ -484,7 +472,6 @@
     cursor: not-allowed;
 }
 
-/* --- Сообщения --- */
 .loading-state, .error-state, .no-data {
     text-align: center;
     padding: 40px;
@@ -552,7 +539,6 @@
     margin-top: 5px;
 }
 
-/* Адаптивность */
 @media (max-width: 768px) {
     .add-moderator-content {
         padding: 16px;
@@ -599,9 +585,6 @@
     }
 }
 
-/* Добавьте в конец файла ModeratorPage.css */
-
-/* Стили для отображения типа контента */
 .type-cell {
     width: 100px;
 }
@@ -624,7 +607,6 @@
     text-transform: uppercase;
 }
 
-/* Стили для превью контента */
 .content-cell {
     min-width: 200px;
     max-width: 300px;
@@ -653,7 +635,6 @@
     border-left: 3px solid #696cff;
 }
 
-/* Обновленные стили статусов */
 .content-visible {
     background: #51cf66;
     color: white;
@@ -664,7 +645,6 @@
     color: white;
 }
 
-/* Обновленные стили для кнопок видимости */
 .visibility-actions {
     display: flex;
     flex-direction: column;
@@ -712,7 +692,6 @@
     opacity: 0.7;
 }
 
-/* Адаптивность для новой колонки */
 @media (max-width: 1200px) {
     .type-cell {
         width: 80px;

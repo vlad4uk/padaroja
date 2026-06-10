@@ -152,7 +152,6 @@ const PostCollaboratorsPage: React.FC = () => {
                     </p>
                 )}
                 
-                {/* Владелец */}
                 <div style={{
                     display: 'flex',
                     alignItems: 'center',
@@ -187,7 +186,6 @@ const PostCollaboratorsPage: React.FC = () => {
                     </div>
                 </div>
                 
-                {/* Заголовок списка соавторов */}
                 <div style={{
                     display: 'flex',
                     justifyContent: 'space-between',
@@ -214,7 +212,6 @@ const PostCollaboratorsPage: React.FC = () => {
                     )}
                 </div>
                 
-                {/* Список соавторов */}
                 {collaborators.length === 0 ? (
                     <div className="posts-feed-empty">
                         <p style={{ fontSize: '16px', margin: 0 }}>
@@ -321,7 +318,6 @@ const PostCollaboratorsPage: React.FC = () => {
                                     </button>
                                 )}
                                 
-                                {/* Если не владелец, показываем заглушку */}
                                 {!isOwner && (
                                     <div style={{
                                         fontSize: '12px',
@@ -336,7 +332,6 @@ const PostCollaboratorsPage: React.FC = () => {
                     </div>
                 )}
                 
-                {/* Отладка: показываем информацию о правах */}
                 <div style={{
                     marginTop: '24px',
                     padding: '12px',

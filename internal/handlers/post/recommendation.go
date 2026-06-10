@@ -204,7 +204,7 @@ func GetGeoRecommendations(c *gin.Context) {
 
 		settlementName := ""
 		if post.Settlement.Geonameid != 0 {
-			settlementName = post.Settlement.Name
+			settlementName = post.SettlementName
 		}
 
 		userAvatar := ""
@@ -318,7 +318,7 @@ func formatRecommendationResponse(posts []models.Post) []PostRecommendationRespo
 
 		settlementName := ""
 		if post.Settlement.Geonameid != 0 {
-			settlementName = post.Settlement.Name
+			settlementName = post.SettlementName
 		}
 
 		userAvatar := ""

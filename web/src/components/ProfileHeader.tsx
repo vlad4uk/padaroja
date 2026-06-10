@@ -190,7 +190,6 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
     return (
         <div className="profile-section"> 
             <div className="profile-header"> 
-                {/* Аватар слева */}
                 <div className="user-avatar"> 
                     <img 
                         src={currentAvatarUrl} 
@@ -201,11 +200,8 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
                     />
                 </div>
 
-                {/* Основная информация справа */}
                 <div className="profile-info"> 
-                    {/* Верхняя строка профиля */}
                     <div className="profile-top-row">
-                        {/* Левая часть: имя и био */}
                         <div className="profile-left">
                             <h2 className="user-name">{userName}</h2>
                             {profileUser?.bio && (
@@ -213,9 +209,7 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
                             )}
                         </div>
                         
-                        {/* Правая часть: статистика и кнопка подписки */}
                         <div className="profile-right">
-                            {/* Статистика подписчиков/подписок в строку */}
                             <div className="follow-stats">
                                 <button 
                                     className="stat-item" 
@@ -234,7 +228,6 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
                                 </button>
                             </div>
 
-                            {/* Кнопка подписки */}
                             {!isOwner && currentUser && currentUser.id !== profileUser?.id && (
                                 <button 
                                     className={`follow-button ${isFollowing ? 'unfollow' : 'follow'}`}
@@ -249,7 +242,6 @@ const ProfileHeader: React.FC<ProfileHeaderProps> = ({
                 </div>
             </div>
 
-            {/* Навигационные табы */}
             <div className="profile-content">
                 <div className="profile-tabs" ref={tabsContainerRef}>
                     <div 

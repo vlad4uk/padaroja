@@ -24,12 +24,10 @@ const FeedHeader: React.FC = () => {
             </div>
             
             <div className="filter-buttons">
-                {/* Кнопка "Фильтр" */}
                 <button className="filter-button">
                     <FaFilter />
                     Фильтр
                 </button>
-                {/* Кнопка "Сортировка" */}
                 <button className="filter-button">
                     <FaListAlt />
                     Сортировка

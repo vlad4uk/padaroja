@@ -136,7 +136,6 @@ const Sidebar: React.FC = () => {
                         </Link>
                     ))}
                 
-                {/* События с бейджем */}
                 {isLoggedIn && (
                     <Link
                         to="/invites"
@@ -179,7 +178,6 @@ const Sidebar: React.FC = () => {
                     </Link>
                 )}
                 
-                {/* Панель модератора - доступна только модераторам */}
                 {isModerator && !isAdmin && (
                     <Link
                         to="/admin"
@@ -200,7 +198,6 @@ const Sidebar: React.FC = () => {
                     </Link>
                 )}
                 
-                {/* Админ панель - доступна только администраторам */}
                 {isAdmin && (
                     <Link
                         to="/adminpanel"
@@ -222,7 +219,6 @@ const Sidebar: React.FC = () => {
                 )}
             </nav>
             
-            {/* Нижняя секция */}
             <div style={{ marginTop: 'auto', borderTop: '1px solid #eee', paddingTop: '16px' }}>
                 {isLoggedIn ? (
                     <>

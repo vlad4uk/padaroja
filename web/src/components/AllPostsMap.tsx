@@ -47,7 +47,6 @@ const createClusterCustomIcon = (cluster: any) => {
   });
 };
 
-// Кастомная иконка для одиночного маркера (синий маркер)
 const singleMarkerIcon = L.icon({
   iconUrl: 'https://raw.githubusercontent.com/pointhi/leaflet-color-markers/master/img/marker-icon-2x-blue.png',
   iconSize: [25, 41],
@@ -58,7 +57,6 @@ const singleMarkerIcon = L.icon({
   shadowAnchor: [12, 41]
 });
 
-// Компонент для анимации к кластеру
 function FlyToBounds({ bounds }: { bounds: L.LatLngBounds | null }) {
   const map = useMap();
   
@@ -125,7 +123,6 @@ const AllPostsMap: React.FC<AllPostsMapProps> = ({ onPlaceSelect }) => {
           );
           console.log(`Постов с координатами: ${validPosts.length}`);
           
-          // Сохраняем посты в Map для быстрого доступа по ID
           validPosts.forEach((post: PostMarker) => {
             postsMapRef.current.set(post.id, post);
           });
@@ -161,11 +158,9 @@ const AllPostsMap: React.FC<AllPostsMapProps> = ({ onPlaceSelect }) => {
     loadAllPosts();
   }, []);
 
-  // Открыть панель с постами
   const openPostsPanel = useCallback((postsToShow: PostMarker[], bounds?: L.LatLngBounds) => {
     if (postsToShow.length === 0) return;
     
-    // Анимация к границам, если они переданы
     if (bounds && mapRef.current) {
       mapRef.current.flyToBounds(bounds, {
         duration: 1.2,
@@ -173,14 +168,12 @@ const AllPostsMap: React.FC<AllPostsMapProps> = ({ onPlaceSelect }) => {
         maxZoom: 12
       });
     } else if (postsToShow.length === 1 && mapRef.current) {
-      // Для одиночного поста анимируем к его координатам
       const post = postsToShow[0];
       mapRef.current.flyTo([post.latitude, post.longitude], 12, {
         duration: 1.2
       });
     }
     
-    // Открываем панель
     const placeName = postsToShow.length === 1 
       ? postsToShow[0].place_name 
       : `Все посты (${postsToShow.length})`;
@@ -199,11 +192,9 @@ const AllPostsMap: React.FC<AllPostsMapProps> = ({ onPlaceSelect }) => {
     }
   }, [onPlaceSelect]);
 
-  // Обработчик клика по кластеру (только для кластеров с 2+ маркерами)
   const handleClusterClick = useCallback((event: any) => {
     console.log('🔵 Клик по кластеру!', event);
     
-    // Получаем кластер
     const cluster = event.layer;
     
     if (!cluster) {
@@ -211,10 +202,8 @@ const AllPostsMap: React.FC<AllPostsMapProps> = ({ onPlaceSelect }) => {
       return;
     }
     
-    // Получаем все дочерние маркеры
     let childMarkers: L.Marker[] = [];
     
-    // Пробуем разные методы получения дочерних маркеров
     if (typeof cluster.getAllChildMarkers === 'function') {
       childMarkers = cluster.getAllChildMarkers();
     } else if (typeof cluster.getChildMarkers === 'function') {
@@ -232,16 +221,13 @@ const AllPostsMap: React.FC<AllPostsMapProps> = ({ onPlaceSelect }) => {
       return;
     }
     
-    // Собираем посты из маркеров
     const postsInCluster: PostMarker[] = [];
     const processedIds = new Set<number>();
     
     childMarkers.forEach((marker: any) => {
-      // Получаем ID поста из маркера
       let postId = null;
       let post = null;
       
-      // Пробуем получить данные из разных мест
       if (marker.options && marker.options.postId) {
         postId = marker.options.postId;
       } else if (marker.postId) {
@@ -250,7 +236,6 @@ const AllPostsMap: React.FC<AllPostsMapProps> = ({ onPlaceSelect }) => {
         postId = marker._postId;
       }
       
-      // Если нашли ID, получаем пост из Map
       if (postId && postsMapRef.current.has(postId)) {
         post = postsMapRef.current.get(postId);
       }
@@ -262,20 +247,18 @@ const AllPostsMap: React.FC<AllPostsMapProps> = ({ onPlaceSelect }) => {
       }
     });
     
-    console.log('📦 Уникальных постов в кластере:', postsInCluster.length);
+    console.log('Уникальных постов в кластере:', postsInCluster.length);
     
     if (postsInCluster.length > 0) {
-      // Получаем границы кластера
       const bounds = cluster.getBounds();
       openPostsPanel(postsInCluster, bounds);
     } else {
-      console.warn('⚠️ В кластере нет постов для отображения!');
+      console.warn('В кластере нет постов для отображения!');
     }
   }, [openPostsPanel]);
 
-  // Обработчик клика по одиночному маркеру
   const handleMarkerClick = useCallback((post: PostMarker) => {
-    console.log('📍 Клик по одиночному маркеру:', post.id, post.title);
+    console.log('Клик по одиночному маркеру:', post.id, post.title);
     openPostsPanel([post]);
   }, [openPostsPanel]);
 

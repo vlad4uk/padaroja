@@ -591,7 +591,6 @@ const SinglePostPage: React.FC = () => {
                             <BsGlobeAmericas size={14}/> {post.settlement_name}
                         </span>
                         
-                        {/* Улучшенная кнопка лайка с визуальной обратной связью */}
                         <button 
                             className={`sp-like-button ${isLiked ? 'liked' : ''} ${isLikeAnimating ? 'animate' : ''}`}
                             onClick={toggleLike}

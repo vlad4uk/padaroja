@@ -38,7 +38,6 @@ const AllPostsMapPage: React.FC = () => {
   return (
     <ContentLayout>
       <div className="map-page-container-full">
-        {/* Шапка страницы */}
         <div className="map-page-header-full">
           <button onClick={handleGoBack} className="back-button-full">
             <FaArrowLeft />
@@ -49,7 +48,6 @@ const AllPostsMapPage: React.FC = () => {
           </div>
         </div>
 
-        {/* Карта на всю оставшуюся высоту */}
         <div className="map-wrapper-full">
           <AllPostsMap onPlaceSelect={handlePlaceSelect} />
         </div>
